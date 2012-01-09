@@ -113,4 +113,5 @@ class TestCartesGeneral(unittest.TestCase):
         self.assertFalse(self.c5<= self.c8)
         self.assertFalse(self.c6<= self.c10)
        
-unittest.main()
+if __name__ == '__main__':
+    unittest.main()

@@ -198,5 +198,5 @@ class TestHexagone(unittest.TestCase):
          self.assertFalse(self.h1.isMaritime())
          self.assertFalse(self.h2.isTerrestre())
          self.assertFalse(self.h2.isMaritime())
-
-unittest.main()
+if __name__ == '__main__':
+    unittest.main()

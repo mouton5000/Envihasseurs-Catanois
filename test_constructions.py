@@ -397,4 +397,5 @@ class TestVoleur(unittest.TestCase):
         self.assertEqual(self.h4.voleur,0)
 
 
-unittest.main()
+if __name__ == '__main__':
+    unittest.main()
