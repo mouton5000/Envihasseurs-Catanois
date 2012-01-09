@@ -1,7 +1,13 @@
-# Test
-class CartesGeneral:    
+import operator
 
-    def __init__(self,argile,ble,bois,caillou,mouton,chevalliers,monopoles,pointsVictoire,decouverte,constructionDeRoute):
+# Test
+class CartesGeneral:
+    attributs = ['argile', 'ble', 'bois', 'caillou', 'mouton', 'chevalliers',
+                 'monopoles', 'pointsVictoire', 'decouverte',
+                 'constructionDeRoute']
+
+    def __init__(self, argile, ble, bois, caillou, mouton, chevalliers,
+                 monopoles, pointsVictoire, decouverte, constructionDeRoute):
         self.argile = argile
         self.ble = ble
         self.bois = bois
@@ -12,78 +18,89 @@ class CartesGeneral:
         self.pointsVictoire = pointsVictoire
         self.decouverte = decouverte
         self.constructionDeRoute = constructionDeRoute
-    
+
+    def _comparison(self, other, operation):
+        return all(operation(getattr(self, att), getattr(other, att))
+            for att in CartesGeneral.attributs)
+
     def __eq__(self,other):
-        return self.argile == other.argile and self.ble == other.ble and self.bois == other.bois and self.caillou == other.caillou and self.mouton == other.mouton and self.chevalliers == other.chevalliers and self.monopoles == other.monopoles and self.pointsVictoire == other.pointsVictoire and self.decouverte == other.decouverte and self.constructionDeRoute == other.constructionDeRoute
+        return self._comparison(other, operator.eq)
 
     def __add__(self,other):
-        return CartesGeneral(self.argile + other.argile, self.ble + other.ble, self.bois + other.bois, self.caillou + other.caillou, self.mouton + other.mouton,self.chevalliers + other.chevalliers, self.monopoles + other.monopoles, self.pointsVictoire + other.pointsVictoire, self.decouverte + other.decouverte, self.constructionDeRoute + other.constructionDeRoute)
+        args = [getattr(self, att) + getattr(other, att)
+                for att in CartesGeneral.attributs]
+        return CartesGeneral(*args)
 
     def __mul__(self,other):
-        return CartesGeneral(self.argile * other, self.ble * other, self.bois * other, self.caillou * other,  self.mouton * other,self.chevalliers * other, self.monopoles * other, self.pointsVictoire * other, self.decouverte * other,  self.constructionDeRoute * other)
+        args = [getattr(self, att) * other
+                for att in CartesGeneral.attributs]
+        return CartesGeneral(*args)
 
     def __sub__(self,other):
         return self + other*(-1)
 
     def size(self):
-        return self.argile + self.ble + self.bois + self.caillou + self.mouton + self.chevalliers + self.monopoles + self.pointsVictoire + self.decouverte + self.constructionDeRoute
+        return sum(getattr(self, att) for att in CartesGeneral.attributs)
 
     def ressources_size(self):
         return self.argile + self.ble + self.bois + self.caillou + self.mouton
-    
+
     def __lt__(self,other):
-        return self.argile < other.argile and self.ble < other.ble and self.bois < other.bois and self.caillou < other.caillou and self.mouton < other.mouton and self.chevalliers < other.chevalliers and self.monopoles < other.monopoles and self.pointsVictoire < other.pointsVictoire and self.decouverte < other.decouverte and self.constructionDeRoute < other.constructionDeRoute
+        return self._comparison(other, operator.lt)
 
     def __gt__(self,other):
-        return self.argile > other.argile and self.ble > other.ble and self.bois > other.bois and self.caillou > other.caillou and self.mouton > other.mouton and self.chevalliers > other.chevalliers and self.monopoles > other.monopoles and self.pointsVictoire > other.pointsVictoire and self.decouverte > other.decouverte and self.constructionDeRoute > other.constructionDeRoute
-    
+        return self._comparison(other, operator.gt)
+
     def __le__(self,other):
-        return self.argile <= other.argile and self.ble <= other.ble and self.bois <= other.bois and self.caillou <= other.caillou and self.mouton <= other.mouton and self.chevalliers <= other.chevalliers and self.monopoles <= other.monopoles and self.pointsVictoire <= other.pointsVictoire and self.decouverte <= other.decouverte and self.constructionDeRoute <= other.constructionDeRoute
+        return self._comparison(other, operator.le)
 
     def __ge__(self,other):
-        return self.argile >= other.argile and self.ble >= other.ble and self.bois >= other.bois and self.caillou >= other.caillou and self.mouton >= other.mouton and self.chevalliers >= other.chevalliers and self.monopoles >= other.monopoles and self.pointsVictoire >= other.pointsVictoire and self.decouverte >= other.decouverte and self.constructionDeRoute >= other.constructionDeRoute
+        return self._comparison(other, operator.ge)
 
     def __str__(self):
-        return '(' + str(self.argile) +','+ str(self.ble) + ',' + str(self.bois) + ',' + str(self.caillou) + ',' + str(self.mouton) + ',' + str(self.chevalliers) +','+ str(self.monopoles) + ',' + str(self.pointsVictoire) + ',' + str(self.decouverte) + ',' + str(self.constructionDeRoute) + ')'
+        return '(' +  ', '.join(str(getattr(self, att)) for att in CartesGeneral.attributs) + ')'
 
     def est_ressource(self):
-        return self.chevalliers == 0 and self.pointsVictoire == 0 and self.decouverte == 0 and self.constructionDeRoute == 0 and self.monopoles == 0
+        return (self.chevalliers == 0 and self.pointsVictoire == 0
+                and self.decouverte == 0 and self.constructionDeRoute == 0
+                and self.monopoles == 0)
 
     def est_entier(self):
-        return type(self.argile) == int and type(self.bois) == int and type(self.ble) == int and type(self.caillou) == int and type(self.mouton) == int and type(self.chevalliers) == int and type(self.monopoles) == int and type(self.pointsVictoire) == int and type(self.decouverte) == int and type(self.constructionDeRoute) == int
+        return all(isinstance(getattr(self, att), int)
+            for att in CartesGeneral.attributs)
 
     def est_physiquement_possible(self):
         return self >= Cartes.RIEN and self.est_entier()
 
     def carte(self,nb):
-        if nb <= 0 and nb > self.ressources_size():
+        if 0 >= nb > self.ressources_size():
             return 0
 
         if nb <= self.argile:
             return Cartes.ARGILE
         else:
             nb -= self.argile
-            
+
         if nb <= self.ble:
             return Cartes.BLE
         else:
             nb -= self.ble
-        
+
         if nb <= self.bois:
             return Cartes.BOIS
         else:
             nb -= self.bois
-        
+
         if nb <= self.caillou:
             return Cartes.CAILLOU
         else:
             nb -= self.caillou
-        
+
         if nb <= self.mouton:
             return Cartes.MOUTON
         else:
             nb -= self.mouton
-        return 0        
+        return 0
 
     def get_cartes_de_type(self,carte):
         if carte == Cartes.ARGILE:
@@ -118,7 +135,7 @@ class CartesRessources(CartesGeneral):
 	CartesGeneral.__init__(self,argile,ble,bois,caillou,mouton,0,0,0,0,0)
 
     def __str__(self):
-        return '(' + str(self.argile) +','+ str(self.ble) + ',' + str(self.bois) + ',' + str(self.caillou) + ',' + str(self.mouton) + ')' 
+        return '(' + str(self.argile) +','+ str(self.ble) + ',' + str(self.bois) + ',' + str(self.caillou) + ',' + str(self.mouton) + ')'
 
 
 class CartesDeveloppement(CartesGeneral):
@@ -126,7 +143,7 @@ class CartesDeveloppement(CartesGeneral):
         CartesGeneral.__init__(self,0,0,0,0,0,chevalliers, monopoles, pointsVictoire, decouverte, constructionDeRoute)
 
     def __str__(self):
-        return '(' + str(self.chevalliers) +','+ str(self.monopoles) + ',' + str(self.pointsVictoire) + ',' + str(self.decouverte) + ',' + str(self.constructionDeRoute) + ')' 
+        return '(' + str(self.chevalliers) +','+ str(self.monopoles) + ',' + str(self.pointsVictoire) + ',' + str(self.decouverte) + ',' + str(self.constructionDeRoute) + ')'
 
 class Cartes:
     RIEN = CartesGeneral(0,0,0,0,0,0,0,0,0,0)
