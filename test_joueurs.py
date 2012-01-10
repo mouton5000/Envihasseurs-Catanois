@@ -1607,4 +1607,5 @@ class TestCartesRessources(unittest.TestCase):
         self.assertEqual(j1.route_la_plus_longue(tg),6)
 
 
-unittest.main()
+if __name__ == '__main__':
+    unittest.main()
