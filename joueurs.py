@@ -2,6 +2,7 @@ from constructions import *
 from plateau import *
 from cartes import *
 import random
+import functools
 class Tarifs:
     COLONIE = CartesRessources(1,1,1,0,1)
     VILLE = CartesRessources(0,3,0,2,0)
@@ -10,6 +11,19 @@ class Tarifs:
     CARGO = CartesRessources(1,0,1,1,0)
     VOILIER = CartesRessources(1,1,1,0,2)
     DEVELOPPEMENT = CartesRessources(0,1,0,1,1)
+
+
+def protection(f):
+    @functools.wraps(f)
+    def helper(*args,**kwargs):
+        peut_f = getattr(Jeu,'peut_' + f.__name__)
+        if peut_f(*args,**kwargs):
+            f(*args,**kwargs)
+            return True
+        else:
+            return False
+
+    return helper
 
 class Joueur:
 
@@ -192,6 +206,7 @@ class Jeu:
 #    Actions dans la journee
 # -----------------------------------------------------
 
+    @staticmethod
     def peut_construire_colonie(j,intersection):
         if intersection.colonie == 0 and not (intersection.isMaritime()) and j.peut_payer(intersection.getTerre(), Tarifs.COLONIE)  :
             
@@ -202,18 +217,26 @@ class Jeu:
                 if a.route != 0 and a.route.joueur == j:
                     return True
         return False
-             
-    peut_construire_colonie = staticmethod(peut_construire_colonie)
 
-    def construire_colonie(j,intersection):
-        if Jeu.peut_construire_colonie(j,intersection):
-            Colonie(j,intersection)
-            j.payer(intersection.getTerre(),Tarifs.COLONIE)
-            return True
-        else:
-            return False
-    construire_colonie = staticmethod(construire_colonie)
+    #@staticmethod
+    #def construire_colonie(j,intersection):
+    #    if Jeu.peut_construire_colonie(j,intersection):
+    #        Colonie(j,intersection)
+    #        j.payer(intersection.getTerre(),Tarifs.COLONIE)
+    #        return True
+    #    else:
+    #        return False
 
+    @staticmethod
+    @protection
+    def construire_colonie(j, intersection):
+        Colonie(j, intersection)
+        j.payer(intersection.getTerre(), Tarifs.COLONIE)
+
+
+
+
+    @staticmethod
     def peut_construire_route(j, arrete, construction_route = False):
         if arrete.route == 0 and not(arrete.isMaritime()) and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.ROUTE)):
             if (arrete.int1.colonie != 0 and arrete.int1.colonie.joueur == j) or (arrete.int2.colonie != 0 and arrete.int2.colonie.joueur == j):
@@ -222,8 +245,8 @@ class Jeu:
                 if (a.route != 0 and a.route.joueur == j):
                     return True
         return False
-    peut_construire_route = staticmethod(peut_construire_route)
 
+    @staticmethod
     def construire_route(j,arrete, construction_route = False):
         if construction_route or Jeu.peut_construire_route(j,arrete):
             Route(j,arrete)
@@ -232,89 +255,72 @@ class Jeu:
             return True
         else:
             return False
-    construire_route = staticmethod(construire_route)
 
 # On suppose que chaque ile est separee d'au moins 2 arrete. Ca evite des ambiguites au niveau de la terre de construction.
+    @staticmethod
     def peut_construire_bateau(j,arrete):
         if arrete.bateau == 0 and arrete.isMaritime() and j.peut_payer(arrete.getTerre(), Tarifs.BATEAUX_TRANSPORT):
             if (arrete.int1.colonie != 0 and arrete.int1.colonie.joueur == j) or (arrete.int2.colonie != 0 and arrete.int2.colonie.joueur == j):
                 return True
         return False
-    peut_construire_bateau = staticmethod(peut_construire_bateau)    
     
+    @staticmethod
+    @protection
     def construire_bateau(j,arrete):
-        if Jeu.peut_construire_bateau(j,arrete):
-            Bateau(j,arrete)
-            j.payer(arrete.getTerre(),Tarifs.BATEAUX_TRANSPORT)
-            return True
-        else:
-            return False
-    construire_bateau = staticmethod(construire_bateau)
+        Bateau(j,arrete)
+        j.payer(arrete.getTerre(),Tarifs.BATEAUX_TRANSPORT)
 
 
+    @staticmethod
     def peut_evoluer_colonie(j, colonie):
         return colonie.joueur == j and j.peut_payer(colonie.position.getTerre(), Tarifs.VILLE)
-         
-    peut_evoluer_colonie = staticmethod(peut_evoluer_colonie)
 
+    @staticmethod
+    @protection
     def evoluer_colonie(j,colonie):
-        if Jeu.peut_evoluer_colonie(j,colonie):
             colonie.evolue()
             j.payer(colonie.position.getTerre(),Tarifs.VILLE)
-            return True
-        else:
-            return False
-    evoluer_colonie = staticmethod(evoluer_colonie)
 
+    @staticmethod
     def peut_acheter_carte_developpement(j,terre):
         return j.peut_payer(terre,Tarifs.DEVELOPPEMENT)
-    peut_acheter_carte_developpement = staticmethod(peut_acheter_carte_developpement)
+    
     def acheter_carte_developpement(j,terre):
-        if Jeu.peut_acheter_carte_developpement(j,terre):
             j.payer(terre,Tarifs.DEVELOPPEMENT)
             return j.piocher_developpement()
-        else:
-            return False
-    acheter_carte_developpement = staticmethod(acheter_carte_developpement)
-   
 
-    def peut_deplacer_bateau(j,bateau,arrete,bdd = False):
-        return bateau.joueur == j and not bateau.position.est_pirate() and arrete.isMaritimeOuCotier() and (arrete in bateau.position.neighb() or (bateau.etat == Bateau.BateauType.VOILIER and arrete in bateau.position.double_neighb() )) and (arrete.bateau == 0 or (not bdd and arrete.bateau.joueur != j)) and not bateau.aBouge
-    peut_deplacer_bateau = staticmethod(peut_deplacer_bateau)
+    @staticmethod
+    def peut_deplacer_bateau(j,bateau,arrete):
+        return bateau.joueur == j and not bateau.position.est_pirate() and arrete.isMaritimeOuCotier() and (arrete in bateau.position.neighb() or (bateau.etat == Bateau.BateauType.VOILIER and arrete in bateau.position.double_neighb() )) and (arrete.bateau == 0 or arrete.bateau.joueur != j) and not bateau.aBouge
     
+    @staticmethod
+    @protection
     def deplacer_bateau(j,bateau,arrete):
-        if (Jeu.peut_deplacer_bateau(j,bateau,arrete)):
             bateau.deplacer(arrete)
             bateau.aBouge = True
-            return True
-        else:
-            return False
-    deplacer_bateau = staticmethod(deplacer_bateau)
 
 
+    @staticmethod
     def peut_echanger_bateau(j,bateau,ct,cb):
         return j == bateau.joueur and bateau.en_position_echange() and j.peut_payer(bateau.position.getTerre(), ct) and bateau.peut_recevoir_et_payer(ct,cb) and ct.est_physiquement_possible() and cb.est_physiquement_possible()
-    peut_echanger_bateau = staticmethod(peut_echanger_bateau)
 
+    @staticmethod
+    @protection
     def echanger_bateau(j,bateau,ct,cb):
-        if (Jeu.peut_echanger_bateau(j,bateau,ct,cb)):
             terre = bateau.position.getTerre()
             j.payer(terre,ct)
             j.recevoir(terre,cb)
             bateau.remove(cb)
             bateau.append(ct)
-            return True
-        else:
-            return False
-    echanger_bateau = staticmethod(echanger_bateau)
-
+    
+    @staticmethod
     def peut_evoluer_bateau(j,bateau):
         return bateau.en_position_echange() and ((bateau.etat == Bateau.BateauType.TRANSPORT and j.peut_payer(bateau.position.getTerre(), Tarifs.CARGO)) or (bateau.etat == Bateau.BateauType.CARGO and j.peut_payer(bateau.position.getTerre(), Tarifs.VOILIER)))
-    peut_evoluer_bateau = staticmethod(peut_evoluer_bateau)
 
     
+    @staticmethod
+    @protection
     def evoluer_bateau(j,bateau):
-        if(Jeu.peut_evoluer_bateau(j,bateau)):
             terre = bateau.position.getTerre()
             if(bateau.etat == Bateau.BateauType.TRANSPORT):
                 bateau.evolue()
@@ -324,48 +330,40 @@ class Jeu:
                 j.payer(terre,Tarifs.VOILIER)
             else:
                 return False
-            return True
-        else:
-            return False
-    evoluer_bateau = staticmethod(evoluer_bateau)
     
+    @staticmethod
     def peut_echanger(j1,j2,terre,c1,c2):
         return j1.peut_payer(terre,c1) and j2.peut_payer(terre,c2) and c1.est_ressource() and c2.est_ressource() and c1.est_physiquement_possible() and c2.est_physiquement_possible()
-    peut_echanger = staticmethod(peut_echanger)
 
+    @staticmethod
+    @protection
     def echanger(j1,j2,terre,c1,c2):
-        if (Jeu.peut_echanger(j1,j2,terre,c1,c2)):
             j1.payer(terre,c1)
             j1.recevoir(terre,c2)
             j2.payer(terre,c2)
             j2.recevoir(terre,c1)
-            return True
-        else:
-            return False
-    echanger = staticmethod(echanger)
     
-    # Ne pas oublier de verifier que le commerce est present.
-
+    @staticmethod
     def peut_echanger_classique(j,terre,t1,t2):
         return t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible() and terre in j.terres and j.peut_payer(terre,t1*4)
-    peut_echanger_classique = staticmethod(peut_echanger_classique)
 
+    @staticmethod
+    @protection
     def echanger_classique(j,terre,t1,t2):
-        if Jeu.peut_echanger_classique(j,terre,t1,t2):
             j.payer(terre,t1*4)
             j.recevoir(terre,t2)
-    echanger_classique = staticmethod(echanger_classique)
     
+    @staticmethod
     def peut_echanger_commerce_tous(j,terre,t1,t2):
         return t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and terre in j.terres and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*3) and j.contient_commerce_utilisable(terre,CommerceType.TOUS)
-    peut_echanger_commerce_tous = staticmethod(peut_echanger_commerce_tous)
     
+    @staticmethod
+    @protection
     def echanger_commerce_tous(j,terre,t1,t2):
-        if Jeu.peut_echanger_commerce_tous(j,terre,t1,t2):
             j.payer(terre,t1*3)
             j.recevoir(terre,t2)
-    echanger_commerce_tous = staticmethod(echanger_commerce_tous)
     
+    @staticmethod
     def peut_echanger_commerce(j,terre,t1,t2):
         if t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and terre in j.terres and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*2):
             if t1 == Cartes.ARGILE:
@@ -383,44 +381,38 @@ class Jeu:
             
             return j.contient_commerce_utilisable(terre,comType)
         return False
-    peut_echanger_commerce = staticmethod(peut_echanger_commerce)
     
+    @staticmethod
+    @protection
     def echanger_commerce(j,terre,t1,t2):
-        if Jeu.peut_echanger_commerce(j,terre,t1,t2):
             j.payer(terre,t1*2)
             j.recevoir(terre,t2)
-    echanger_commerce = staticmethod(echanger_commerce)
         
+    @staticmethod
     def peut_recolter_ressources(des):
         if des < 2 or des == 7 or des > 12:
             return False
         else:
             return True
-    peut_recolter_ressources = staticmethod(peut_recolter_ressources)
 
+    @staticmethod
+    @protection
     def recolter_ressources(des):
-        if Jeu.peut_recolter_ressources(des):
             for j in Jeu.get_all_joueurs():
                 j.recolter_ressources(des)
-            return True
-        else:
-            return False
-    recolter_ressources = staticmethod(recolter_ressources)
 
 
+    @staticmethod
     def peut_acheter_ressource(j,terre,carte):
         return j.getOr(terre) > 0 and carte.est_ressource() and carte.size() == 1 and carte.est_physiquement_possible()
-    peut_acheter_ressource = staticmethod(peut_acheter_ressource)
 
+    @staticmethod
+    @protection
     def acheter_ressource(j,terre, carte):
-        if Jeu.peut_acheter_ressource(j,terre,carte):
             j.payerOr(terre)
             j.recevoir(terre,carte)
-            return True
-        else:
-            return False
-    acheter_ressource = staticmethod(acheter_ressource)
 
+    @staticmethod
     def peut_coloniser(j,bateau,position,transfert):
         if j == bateau.joueur and transfert.est_physiquement_possible() and transfert <= (bateau.cargaison-Tarifs.COLONIE) and Tarifs.COLONIE <= bateau.cargaison and j.getTerreIndex(position.getTerre()) == -1 and position.colonie == 0:
             for i in position.neighb():
@@ -429,11 +421,11 @@ class Jeu:
             return position in bateau.positions_colonisables()
         else:
             return False
-    peut_coloniser = staticmethod(peut_coloniser)
 
 
+    @staticmethod
+    @protection
     def coloniser(j,bateau,position,transfert):
-        if Jeu.peut_coloniser(j,bateau,position,transfert):
             Colonie(j,position)
             terre = position.getTerre()
             j.terres.append(terre)
@@ -443,11 +435,8 @@ class Jeu:
             j.deplacement_voleur.append(False)
             j.recevoir(terre,transfert)
             bateau.remove(Tarifs.COLONIE + transfert)
-            return True
-        else:
-            return False
-    coloniser = staticmethod(coloniser)
-
+    
+    @staticmethod
     def positions_possibles_voleur(joueur,terre,voleurType):
         b = voleurType == Voleur.VoleurType.PIRATE
         if not (b or voleurType == Voleur.VoleurType.BRIGAND):
@@ -481,10 +470,10 @@ class Jeu:
                     if h.etat == HexaType.DESERT and h.commerceType == 0:
                         possibilite.append((h,0))
         return possibilite 
-    positions_possibles_voleur = staticmethod(positions_possibles_voleur)
 
 
 
+    @staticmethod
     def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,chevallier = False):
         if joueur.deplacement_voleur or chevallier:
             if voleurType == Voleur.VoleurType.BRIGAND:
@@ -493,8 +482,8 @@ class Jeu:
                 voleur = terre.pirate
             return terre in joueur.terres and (hex,jvol) in Jeu.positions_possibles_voleur(joueur,terre,voleurType)
         return False
-    peut_deplacer_voleur = staticmethod(peut_deplacer_voleur)
 
+    @staticmethod
     def voler(j1,terre,j2):
         ressources_terrestres = j2.getCartes(terre)
         nc = ressources_terrestres.ressources_size()
@@ -521,8 +510,8 @@ class Jeu:
                     j1.recevoir(terre,c)
                 else:
                     u -= rb[0]
-    voler = staticmethod(voler)
 
+    @staticmethod
     def deplacer_voleur(joueur,terre,voleurType,hex,jvol, chevallier = False):
         if chevallier or Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol):
             terre.deplacer_voleur(voleurType,hex)
@@ -532,9 +521,9 @@ class Jeu:
             return True
         else:
             return False
-    deplacer_voleur = staticmethod(deplacer_voleur)
 
 
+    @staticmethod
     def peut_defausser(joueur,terre,cartes):
         if 7 in Jeu.des and terre in joueur.terres:
             c = joueur.getCartes(terre)
@@ -565,63 +554,50 @@ class Jeu:
                         return False
                 return ss == ds
         return False
-    peut_defausser = staticmethod(peut_defausser)
 
+    @staticmethod
+    @protection
     def defausser(joueur,terre,cartes):
-        if Jeu.peut_defausser(joueur,terre,cartes):
             joueur.payer(terre,cartes[0])
             for cb in cartes[1]:
                 cb[0].remove(cb[1])
-            return True
-        else:
-            return False
-    defausser = staticmethod(defausser)
 
+    @staticmethod
     def peut_jouer_chevallier(joueur,terre,voleurType, hex,jvol):
         return Cartes.CHEVALLIER <= joueur.getCartes(terre) and terre in joueur.terres and Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
-    peut_jouer_chevallier = staticmethod(peut_jouer_chevallier)
 
+    @staticmethod
+    @protection
     def jouer_chevallier(joueur,terre,voleurType, hex,jvol):
-        if Jeu.peut_jouer_chevallier(joueur,terre,voleurType,hex,jvol):
             joueur.add_chevallier(terre)
             joueur.payer(terre,Cartes.CHEVALLIER)
             Jeu.deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
-            return True
-        else:
-            return False
-
-    jouer_chevallier = staticmethod(jouer_chevallier)
 
 
 
+    @staticmethod
     def peut_jouer_decouverte(joueur,terre,cartes):
         return Cartes.DECOUVERTE <= joueur.getCartes(terre) and terre in joueur.terres and cartes.size() == 2 and cartes.est_ressource() and cartes.est_physiquement_possible()
-    peut_jouer_decouverte = staticmethod(peut_jouer_decouverte)
 
+    @staticmethod
+    @protection
     def jouer_decouverte(joueur,terre,cartes):
-        if Jeu.peut_jouer_decouverte(joueur,terre,cartes):
             joueur.recevoir(terre,cartes)
             joueur.payer(terre,Cartes.DECOUVERTE)
-            return True
-        else:
-            return False
-    jouer_decouverte = staticmethod(jouer_decouverte)
     
 
+    @staticmethod
     def peut_jouer_construction_routes(joueur,terre,a1,a2):
         return a1 != a2 and Cartes.CONSTRUCTION_ROUTES <= joueur.getCartes(terre) and terre in joueur.terres and a1.getTerre() == terre and a2.getTerre() == terre and Jeu.peut_construire_route(joueur,a1,True) and Jeu.peut_construire_route(joueur,a2,True)
-    peut_jouer_construction_routes = staticmethod(peut_jouer_construction_routes)
 
+    @staticmethod
+    @protection
     def jouer_construction_routes(joueur,terre,a1,a2):
-        if Jeu.peut_jouer_construction_routes(joueur,terre,a1,a2):
             joueur.payer(terre,Cartes.CONSTRUCTION_ROUTES)
             Jeu.construire_route(joueur,a1,True)
             Jeu.construire_route(joueur,a2,True)
-            return True
-        else:
-            return False
-    jouer_construction_routes = staticmethod(jouer_construction_routes)
 
+    @staticmethod
     def peut_jouer_monopole(joueur,terre,t1, jvols):
         b = Cartes.MONOPOLE <= joueur.getCartes(terre) and terre in joueur.terres and t1.est_ressource() and t1.size() == 1 and t1.est_physiquement_possible() and len(jvols) <= 3 and not joueur in jvols
 
@@ -629,20 +605,14 @@ class Jeu:
             b = b and terre in j.terres
 
         return b
-    peut_jouer_monopole = staticmethod(peut_jouer_monopole)
 
+    @staticmethod
+    @protection
     def jouer_monopole(joueur,terre,t1,jvols):
-        if (Jeu.peut_jouer_monopole(joueur,terre,t1,jvols)):
-            i = 0
-            for j in jvols:
-                r =  j.getCartes(terre).get_cartes_de_type(t1)
-                i += r
-                j.payer(terre,t1*r)
-            joueur.recevoir(terre,t1*i)
-            return True
-        else:
-            return False
-    jouer_monopole = staticmethod(jouer_monopole)
-
-
+        i = 0
+        for j in jvols:
+            r =  j.getCartes(terre).get_cartes_de_type(t1)
+            i += r
+            j.payer(terre,t1*r)
+        joueur.recevoir(terre,t1*i)
 

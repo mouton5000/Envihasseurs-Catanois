@@ -439,7 +439,6 @@ class TestCartesRessources(unittest.TestCase):
         b2 = Bateau(j2,a57)
 
         self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a77)) # Trop loin
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a57,True)) # Deja un bateau adverse
         self.assertTrue(Jeu.peut_deplacer_bateau(j1,b1,a57)) # Bateau adverse qui peut se deplacer
         self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a56)) # Bateau allie
         self.assertFalse(Jeu.peut_deplacer_bateau(j1,b13,a55)) # En pleine terre
