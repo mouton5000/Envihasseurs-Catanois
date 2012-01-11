@@ -1570,7 +1570,6 @@ class TestCartesRessources(unittest.TestCase):
         j1.terres = [tg,td]
         j2.terres = [tg,td]
 
-        Route(j1,self.it[33].lien(self.it[43]))
         Route(j1,self.it[43].lien(self.it[54]))
         Route(j1,self.it[54].lien(self.it[65]))
         Route(j1,self.it[65].lien(self.it[75]))
@@ -1581,7 +1580,6 @@ class TestCartesRessources(unittest.TestCase):
         Route(j1,self.it[86].lien(self.it[96]))
         Route(j1,self.it[54].lien(self.it[44]))
         Route(j1,self.it[44].lien(self.it[55]))
-        Route(j1,self.it[55].lien(self.it[66]))
         
         Route(j1,self.it[107].lien(self.it[117]))
         Route(j1,self.it[117].lien(self.it[108]))

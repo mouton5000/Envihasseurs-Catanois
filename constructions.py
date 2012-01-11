@@ -68,31 +68,17 @@ class Route:
         j.routes.append(self)
 
 
-# A refaire
     def voisins_routables(self,l):
         a = self.position
         j = self.joueur
         ar = []
         for n in a.neighb():
-            if n.route != 0 and n.route.joueur == j:
+            if(n.route != 0 and n.route.joueur == j):
                 i = n.lien(a)
-                ari = i.neighb()
-                if a.int1 in ari:
-                    ari.remove(a.int1)
-                if a.int2 in ari:
-                    ari.remove(a.int2)
-                if n.int1 in ari:
-                    ari.remove(n.int1)
-                if n.int2 in ari:
-                    ari.remove(n.int2)
-                if len(ari) > 0:
-                    n2 = ari[0]
-                else:
-                    n2 = 0
-                
-                if i.colonie == 0 or i.colonie.joueur == j and not n.route in l and (n2 == 0 or not(n2.route != 0 and n2.route.joueur == j and n2.route in l)):
+                if (i.colonie == 0 or i.colonie.joueur == j) and not(n.route in l) and (len(l) == 0 or l[len(l)-1].position.lien(n) == 0):
                     ar.append(n.route)
         return ar
+
    
     def est_extremite(self):
         i1 = self.position.int1 
