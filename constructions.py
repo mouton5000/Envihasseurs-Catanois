@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 from plateau import *
 from cartes import *
 
