@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 import random
 
 # Ensemble des etats de tuile, un port est une tuile MER, avec un port dessus. Un marche est une tuile DESERT avec un port dessus.
@@ -11,7 +12,7 @@ class HexaType:
    DESERT = 'desert'
    OR = 'or'
 
-
+# Ensemble des commerces disponnible. TOUS est le commerce avec une pastille "?". 
 class CommerceType:
     TOUS = 'commerce_tous'
     BOIS = 'commerce_bois'
@@ -20,7 +21,7 @@ class CommerceType:
     BLE = 'commerce_ble'
     MOUTON = 'commerce_mouton'
 
-# Intersection entre 1 hexagones, ou 3 arretes. Chaque intersection est reperee par un numero.
+# Intersection entre 3 hexagones, ou 3 arretes. Chaque intersection est reperee par un numero.
 class Intersection:
     # num ; identifiant de l'intersection
     # neigh : intersections voisines de l'intersection
@@ -34,11 +35,13 @@ class Intersection:
        self.hexagones = []
        self.colonie = 0
 
+	# Ajoute l'intersection i à ses voisins, et l'arrête a à ses arrêtes voisines.
     def addNeighbour(self,i,a):
        if(a.int1 == i and a.int2 == self or a.int1 == self and a.int2 == i):
            self.neigh.append(i)
            self.liens.append(a)
 
+	# Ajoute l'hexagone h aux hexagones de self
     def addHexa(self,h):
        if (not h in self.hexagones):
             self.hexagones.append(h)
@@ -46,12 +49,14 @@ class Intersection:
     def __str__(self):
        return str(self.num)
 
+	# Renvoie s'il existe l'unique arc qui relie self et i
     def lien(self,i):
        for a in self.liens:
             if(a.int1 == i and a.int2 == self or a.int1 == self and a.int2 == i):
                 return a
        return 0
 
+	# Renvoie vrai si l'intersection est au bord de la mer
     def isCotier(self):
        mer = False
        terre = False
@@ -60,6 +65,7 @@ class Intersection:
            terre = terre or (h.etat != HexaType.MER)
        return mer and terre
     
+	# Renvoie vrai si l'intersection est dans la terre, pas au bord de la mer
     def isTerrestre(self):
        mer = False 
        terre = False
@@ -68,11 +74,13 @@ class Intersection:
            terre = terre or (h.etat != HexaType.MER)
        return not(mer) and terre
 
+	# Renvoie vrai si l'intersection est sur terre, au bord de la mer ou pas
     def isTerrestreOuCotier(self):
        for h in self.hexagones:
            if (h.etat != HexaType.MER) : return True
        return False
 
+	# Renvoie vrai si l'intersection est dans la mer, pas au bord de la mer
     def isMaritime(self):
        mer = False
        terre = False
@@ -81,11 +89,13 @@ class Intersection:
            terre = terre or (h.etat != HexaType.MER)
        return mer and not(terre)
 
+	# Renvoie vrai si l'intersection est dans la mer, au bord de la mer ou pas
     def isMaritimeOuCotier(self):
        for h in self.hexagones:
            if (h.etat == HexaType.MER) : return True
        return False
 
+	# Renvoie la taille du chemin minimal reliant self et i. Si force est vrai, le calcul est refait, sinon on renvoie le résultat déjà enregistré.
     def dist(self,i, force = False):
         d = Distances.dist(self,i)
         if(d == -1 or force):
@@ -93,52 +103,62 @@ class Intersection:
             d = Distances.dist(self,i)
         return d
   
+	# Renvoie tous les voisins de l'intersection
     def neighb(self):
         return self.neigh
 
+	# Renvoie vrai si l'intersection est sur un hexagone de type marché, parmi les espaces de commerce
     def isMarche(self):
         for h in self.hexagones:
             if (h.isMarche() and self in h.lintp):
                 return True
         return False
  
+	# Renvoie vrai si l'intersection est sur un hexagone de type marché, parmi les espaces de commerce non occupé par un brigand
     def isMarcheNonBrigande(self):
         for h in self.hexagones:
             if (h.isMarche() and h.voleur == 0 and self in h.lintp):
                 return True
         return False
     
+	# Renvoie l'ensemble des hexagones cette intersection de type marché, parmi les espaces de commerce, non occupés par un brigand
     def marcheNonBrigande(self):
         for h in self.hexagones:
             if (h.isMarche() and h.voleur == 0 and self in h.lintp):
                 return h
         return 0
-           
+    
+	# Renvoie vrai si l'intersection est sur un hexagone de type port, parmi les espaces de commerce
     def isPort(self):
         for h in self.hexagones:
             if (h.isPort() and self in h.lintp):
                 return True
         return False
 
+	# Renvoie vrai si l'intersection est sur un hexagone de type port, parmi les espaces de commerce, non occupé par un pirate
     def isPortNonPirate(self):
         for h in self.hexagones:
             if (h.isPort() and h.voleur == 0 and self in h.lintp):
                 return True
         return False
-    
+
+	# Renvoie l'ensemble des hexagones de l'intersection de type port, parmi les espaces de commerce, non occupé par un pirate		
     def portNonPirate(self):
         for h in self.hexagones:
             if (h.isPort() and h.voleur == 0 and self in h.lintp):
                 return h
         return 0
-   
+
+	# Renvoie la terre à laquelle appartient cette intersection, si elle est terrestre, 0 sinon
     def getTerre(self):
        for h in self.hexagones:
            if (h.etat != HexaType.MER) : return h.terre
        return 0
 
-
+# Cette classe représente les liens entre les intersections, ou un côté d'un hexagone.
 class Arrete:
+
+	# Crée une arrête entre les deux intersections i1 et i2.
     def __init__(self,i1,i2):
         self.int1 = i1
         self.int2 = i2
@@ -150,6 +170,7 @@ class Arrete:
         self.neigh = []
         self.neigh2 = []
     
+	# Ajoute h aux heagones de cette arrête
     def addHexa(self,h):
        if (not h in self.hexagones):
            self.hexagones.append(h)
@@ -157,6 +178,7 @@ class Arrete:
     def __str__(self):
        return str(self.int1) + "--" + str(self.int2)
     
+	# Renvoie vrai si l'arrête est au bord de la mer
     def isCotier(self):
        mer = False
        terre = False
@@ -164,7 +186,8 @@ class Arrete:
            mer = mer or (h.etat == HexaType.MER)
            terre = terre or (h.etat != HexaType.MER)
        return mer and terre
-    
+
+	# Renvoie vrai si l'arrête est dans la terre, pas au bord de la mer	   
     def isTerrestre(self):
        mer = False
        terre = False
@@ -173,11 +196,13 @@ class Arrete:
            terre = terre or (h.etat != HexaType.MER)
        return not(mer) and terre
     
+	# Renvoie vrai si l'arrête est dans la terre, au bord de la mer ou pas
     def isTerrestreOuCotier(self):
        for h in self.hexagones:
            if (h.etat != HexaType.MER) : return True
        return False
-    
+
+	# Renvoie vrai si l'arrête est en mer, pas au bord de la mer	   
     def isMaritime(self):
        mer = False
        terre = False
@@ -186,11 +211,13 @@ class Arrete:
            terre = terre or (h.etat != HexaType.MER)
        return mer and not(terre)
 
+	# Renvoie vrai si l'arrête est en mer, au bord de la mer ou pas
     def isMaritimeOuCotier(self):
        for h in self.hexagones:
            if (h.etat == HexaType.MER) : return True
        return False
 
+	# Renvoie les voisins de cette arrête. Si force est vrai, les voisins sont recalculés.
     def neighb(self, force = False):
         if self.neigh == [] or force:
             n = []
@@ -204,6 +231,7 @@ class Arrete:
         else:
             return self.neigh
 
+	# Renvoie les voisins à une distance 2, si force est vrai, alors ce calcul est refait.
     def doubleNeighb(self, force = False):
         if self.neigh2 == [] or force:
             neigh = self.neighb(force)
@@ -215,14 +243,16 @@ class Arrete:
             return n2
 
 
- 
+	# Renvoie la distance entre self et a, force à True force le calcul à être refait.
     def dist(self,a,force = False):
         d = Distances.dist(self,a)
         if(d == -1 or force):
             Distances.computeDistances(self)
             d = Distances.dist(self,a)
         return d
-       
+      
+	  
+	# Renvoie la terre à laquelle appartient cette arrête, si elle est terrestre, sinon 0.
     def getTerre(self):
         for h in self.hexagones:
            if (h.etat != HexaType.MER) : return h.terre
@@ -234,12 +264,14 @@ class Arrete:
             return t2
         return 0
 
+	#Renvoie vrai si l'arrete est occupée par le pirate
     def est_pirate(self):
         for h in self.hexagones:
             if (h.etat == HexaType.MER and h.voleur != 0):
                 return True
         return False
 
+	#Renvoie vrai si l'arrete est occupée par le pirate
     def lien(self,a):
         if a != self:
             if a.int1 == self.int1 or a.int2 == self.int1:
@@ -247,8 +279,12 @@ class Arrete:
             elif a.int1 == self.int2 or a.int2 == self.int2:
                 return self.int2
         return 0
-       
+		
+# Cette classe correspond à un hexagone du terrain.
 class Hexagone:
+
+	# Crée un hexagone entre les 6 intersection i1 à i6, de type t, avec une pastille p, de type de commerce ComType (si c'est une Mer -> Port, si c'est un désert -> marché), accessibles via les emplacements lintp.
+	# lintp doit être un sous ensemble de i1 i2 ... i6. Les arrêtes entre i1 i2, i2 i3 ... i6 i1 sont créées toutes seules.
     def __init__(self,i1,i2,i3,i4,i5,i6,t,p,comType=0,lintp=[]):
         self.int1 = i1
         self.int2 = i2
@@ -280,36 +316,44 @@ class Hexagone:
 
     def __str__(self):
         return str(self.etat)+","+str(self.past)+","+str(self.int1) + "--" + str(self.int2) + "--" + str(self.int3) + "--" + str(self.int4) + "--" + str(self.int5) + "--" + str(self.int6) 
+		
+	#Renvoie vrai si cet exagone est marin, à côté de la terre
     def isMaritimeCotier(self):
        cote = False
        for lien in self.liens:
            cote = cote or lien.isCotier()
        return (self.etat==HexaType.MER) and cote
     
+	#Renvoie vrai si cet exagone est terrestre, à côté de la mer
     def isTerrestreCotier(self):
        cote = False
        for lien in self.liens:
            cote = cote or lien.isCotier()
        return (self.etat!=HexaType.MER) and cote
     
+	#Renvoie vrai si cet exagone est marin, pas à côté de la terre
     def isMaritime(self):
        cote = False
        for lien in self.liens:
            cote = cote or lien.isCotier()
        return (self.etat==HexaType.MER) and not(cote)
     
+	#Renvoie vrai si cet exagone est terrestre, pas à côté de la mer
     def isTerrestre(self):
        cote = False
        for lien in self.liens:
            cote = cote or lien.isCotier()
        return (self.etat!=HexaType.MER) and not(cote)
 
+	# REnvoie vrai si cet hexagone est un marché
     def isMarche(self):
         return self.commerceType != 0 and self.etat != HexaType.MER
     
+	# REnvoie vrai si cet hexagone est un port
     def isPort(self):
         return self.commerceType != 0 and self.etat == HexaType.MER
 
+	# REnvoie les voisins de cet hexagone, force à True force le recalcul.
     def neighb(self,force = False):
         if self.neigh == 0 or force:
             hf = []
@@ -321,16 +365,22 @@ class Hexagone:
             return hf
         else:
             return self.neigh
+			
+# Classe représentant le pion voleur.
 class Voleur:
+	
+	# Les type de voleur : briguand sur terre, pirate sur mer
     class VoleurType:
         BRIGAND = 'voleur_brigand'
         PIRATE = 'voleur_pirate'
 
+	# Pose un voleur de type etat, sur l'hexagone hex.
     def __init__(self,hex,etat):
         self.position = hex
         hex.voleur = self
         self.etat = etat
 
+	# Déplace le voleur sur l'hexagone hex
     def deplacer(self,hex):
         if self.position != 0:
             self.position.voleur = 0
@@ -338,7 +388,10 @@ class Voleur:
         hex.voleur = self
        
 
+# Cette classe représente un ensemble d'hexagones regroupés pour former une terre avec un espace maritime.
 class Terre:
+
+	# Crée un terre de nom nom en regroupant les hexagones terrestres dans hexsTerre et les marins dans hexsMer
     def __init__(self,nom,hexsTerre,hexsMer):
         self.hexagones = hexsTerre
         self.espaceMarin = hexsMer
@@ -357,25 +410,29 @@ class Terre:
         for h in hexsMer:
             h.terre = self
 
+	# Ajoute le joueur j aux joueur ayant colonisé cette terre
     def addJoueur(self, j):
         self.joueurs.append(j)
         j.terre.append(self)
 
+	# Déplace le voleur de type vT de cette terre sur l'hexagone h
     def deplacer_voleur(self,vT,h):
         if vT == Voleur.VoleurType.BRIGAND:
             self.deplacer_brigand(h)
         elif vT == Voleur.VoleurType.PIRATE:
             self.deplacer_pirate(h)
 
+	#Déplace le brigand de cette terre sur l'hexagone h
     def deplacer_brigand(self,h):
         self.brigand.deplacer(h)
 
+	#Déplace le pirate de cette terre sur l'hexagone h
     def deplacer_pirate(self,h):
         self.pirate.deplacer(h)
 
 
 
-
+# Classe qui gère le calcule des distances entre arrêtes ou intersection (l'algo est le même).
 class Distances:
 
     dists = []

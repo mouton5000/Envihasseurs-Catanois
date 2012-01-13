@@ -1,7 +1,11 @@
+# -*- coding: utf8 -*-
 from plateau import *
 from cartes import *
 
+# Suprise totale, cette classe représente les pions de type colonies et ville. Cette classe ne se préoccupe pas des règles du jeu (pas de vérifications avant de faire les actions).
 class Colonie:
+
+	# Pose sur le terrain une colonie du joueur j à l'emplacement int.
     def __init__(self,j,int):
        self.joueur = j
        self.position = int
@@ -10,22 +14,28 @@ class Colonie:
        self.enRuine = False
        j.colonies.append(self)
     
+	# Transforme la colonie en ville
     def evolue(self):
         self.isVille = True
         self.joueur.colonies.remove(self)
         self.joueur.villes.append(self)
     
+	# Renvoie vrai si la colonie est au bord de la mer.
     def isCotier(self):
         return self.position.isCotier()
 
+	# Renvoie dans un tableau l'ensemble des ressources au format (numéro de pastille, ensemble des ressources acquises si ce numéro tombe, or acquis si ce numéro tombe).
+	# Par exemple, si la colonie est entourée par un hexagone Bois de pastille 4, un Argile de pastille 5 et un Or de pastille 5, la méthode renverra
+	# [(4,Cartes.BOIS,0), (5,Cartes.ARGILE,1)]
     def ressources(self):
     	t = []
-        for i in range(12):
-           u = self.ressources_from_past(i+1)
+        for i in range(10):
+           u = self.ressources_from_past(i+3)
            if u != 0:
-               t.append((i+1,u[0],u[1]))
+               t.append((i+3,u[0],u[1]))
         return t
 
+	# Renvoie un 2 upplet contenant les ressources et le nombre de pépites d'or acquies si le nombre past tombe.
     def ressources_from_past(self,past):
         t = []
         bois = 0
@@ -57,7 +67,10 @@ class Colonie:
         else:
             return 0
 
+# Tout autant une surprise, cette classe est identifiée au pion de type route.
 class Route:
+
+	# Pose une route appartenant au joueur j sur l'arrête a.
     def __init__(self,j,a):
         self.joueur = j
         self.position = a
@@ -114,14 +127,16 @@ class Route:
         return i + 1
         
 
-
+# Classe identifiée au pion bateau
 class Bateau:
 
+	# Ensemble des types de bateau qui existent
     class BateauType :
         VOILIER = 'bateauType_voilier'
         CARGO = 'bateauType_cargo'
         TRANSPORT = 'bateauType_transport'
 
+	# Pose un bateau appartenant au joueur j sur l'arrête a
     def __init__(self,j,a):
         self.joueur = j
         self.position = a
@@ -134,6 +149,7 @@ class Bateau:
         j.bateaux_transport.append(self)
         self.aBouge = False
     
+	# Transforme ce bateau en Cargo si c'est un bateau de transport, ou en voillier si c'est un cargo.
     def evolue(self):
         if(self.etat == Bateau.BateauType.TRANSPORT):
              self.etat = Bateau.BateauType.CARGO
@@ -146,22 +162,27 @@ class Bateau:
              self.joueur.cargo.remove(self)
              self.joueur.voilier.append(self)
 
-    def append(self,carte):
-        if (self.cargaison + carte).size() <= self.cargaisonMax:
-            self.cargaison += carte
+	# Ajoute les cartes à la cargaison du bateau
+    def append(self,cartes):
+        if (self.cargaison + cartes).size() <= self.cargaisonMax:
+            self.cargaison += cartes
 
-    def remove(self,carte):
-        if(carte <= self.cargaison):
-           self.cargaison -= carte
+	# Retire les cartes de la cargaison
+    def remove(self,cartes):
+        if(cartes <= self.cargaison):
+           self.cargaison -= cartes
 
+	# Pose ce bateau sur l'arrête a (sans se soucier de savoir s'il a le droit)
     def deplacer(self,a):
         self.position.bateau = 0
         self.position = a
         a.bateau = self
 
+	# Vérifie si le bateau peut recevoir les cartes cr et donner (en même temps) les cartes cp.
     def peut_recevoir_et_payer(self,cr,cp):
         return cp <= self.cargaison and (self.cargaison + cr - cp).size() <= self.cargaisonMax
 
+	# Renvoie toutes les positions terrestres situées à deux hexagones d'un bateau sur la cote.
     def positions_colonisables(self):
         hc = []
         for i in [self.position.int1, self.position.int2]:
@@ -183,6 +204,7 @@ class Bateau:
                     intf.append(pos)
         return intf
 
+	# Vérifie que le bateau est sur un emplacement où il peut échanger avec une terre : un port ou une colonie cotière
     def en_position_echange(self):
         i1 = self.position.int1
         i2 = self.position.int2
