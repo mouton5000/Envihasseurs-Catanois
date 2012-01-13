@@ -91,6 +91,11 @@ class TestCartesRessources(unittest.TestCase):
         self.j4 = Jeu.get_joueur(4)
 
         Jeu.JOUEURS = [self.j1, self.j2, self.j3, self.j4]
+        Jeu.des = []
+        Jeu.joueurs_origine = [0,0]
+        Jeu.terres = [self.tg,self.td]
+        Jeu.routes_les_plus_longues = [0,0]
+        Jeu.armees_les_plus_grandes = [0,0]
 
         self.j1.terres = [self.tg,self.td]
         self.j2.terres = [self.tg,self.td]
@@ -140,6 +145,8 @@ class TestCartesRessources(unittest.TestCase):
         Jeu.des = []
         Jeu.joueurs_origine = [0,0]
         Jeu.terres = [self.tg,self.td]
+        Jeu.routes_les_plus_longues = [0,0]
+        Jeu.armees_les_plus_grandes = [0,0]
     
 
         for j in [self.j1,self.j2,self.j3]:
@@ -353,7 +360,7 @@ class TestCartesRessources(unittest.TestCase):
         self.assertEqual(len(j1.routes),i+1)
         self.assertEqual(j1.getCartes(self.tg),Cartes.RIEN)
 
-        j1.setCartes(self.tg,Tarifs.BATEAUX_TRANSPORT)
+        j1.setCartes(self.tg,Tarifs.BATEAU_TRANSPORT)
         self.assertFalse(Jeu.peut_construire_bateau(j1,a67)) # Aucun lien
 
 
@@ -375,7 +382,7 @@ class TestCartesRessources(unittest.TestCase):
         
         j1.setCartes(self.tg,Cartes.RIEN)
         self.assertFalse(Jeu.peut_construire_bateau(j1,a67))
-        j1.setCartes(self.tg,Tarifs.BATEAUX_TRANSPORT)
+        j1.setCartes(self.tg,Tarifs.BATEAU_TRANSPORT)
         i = len(j1.bateaux_transport)
         Jeu.construire_bateau(j1,a67)
         self.assertEqual(len(j1.bateaux_transport),i+1)
@@ -872,11 +879,13 @@ class TestCartesRessources(unittest.TestCase):
         j1.chevalliers = [0]
         j1.routes_les_plus_longues = [0]
         j1.deplacement_voleur = [False]
+        j1.points = [0]
         j2.mains = [c,c]
         j2.aur = [0,0]
         j2.chevalliers = [0,0]
         j2.routes_les_plus_longues = [0,0]
         j2.deplacement_voleur = [False,False]
+        j2.points = [0,0]
           
         # Colonisation avec un bateau, l'emplacement de la colonie et la partie de la cargaison a transferer
         # Le bateau n'est pas sur une cote
@@ -953,6 +962,10 @@ class TestCartesRessources(unittest.TestCase):
         self.assertEqual(j1.get_deplacement_voleur(td),False)
         self.assertEqual(j1.get_chevalliers(td),0)
         self.assertEqual(j1.get_route_la_plus_longue(td),0)
+        self.assertEqual(j1.getPoints(td),1) 
+        self.assertEqual(j1.get_carte_armee_la_plus_grande(td),False) 
+        self.assertEqual(j1.get_carte_route_la_plus_longue(td),False) 
+        j2.cartes_routes_les_plus_longues = [False,False]
         self.assertEqual(b1.cargaison,carg2 - transf2 - Tarifs.COLONIE )
         self.assertEqual(len(j1.colonies),1)
         self.assertEqual(len(j1.routes),0)
@@ -1619,24 +1632,111 @@ class TestCartesRessources(unittest.TestCase):
     def test_compter_points(self):
     # Les colonies rapportent un points
     # Les villes rapportent deux points
-    # Les cartes point de victoire, pas dans un bateau, rapportnt un point
+    # Les cartes point de victoire, pas dans un bateau, rapportent un point
     # Les cargos rapportent un point
     # Les voiliers rapportent deux point
     # Les routes les plus longue rapportent deux points
     # Les armees les plus grandes rapportent deux points
     # Chaque total de points est calculé sur une terre en particulier
     # Pour le cas des bateaux, les points sont attribués [a la terre où le bateau est construit, a la terre où le bateau est actuellement]
-        pass
+        j1 = self.j1 
+        j2 = self.j2
+        
+        tg = self.tg
+        td = self.td
 
 
+        cg = Tarifs.COLONIE * 2 + Tarifs.VILLE * 1 + Tarifs.ROUTE * 6 + Tarifs.BATEAU_TRANSPORT + Tarifs.CARGO + Tarifs.VOILIER
+        cd = Cartes.RIEN
 
+        j1.terres = [tg,td]
+        j1.mains = [cg,cd]
+        j1.aur = [0,0]
+        j1.chevalliers = [0,0]
+        j1.routes_les_plus_longues = [0,0]
+        j1.deplacement_voleur = [False, False]
+        j1.points = [1,0]
+        
+        j2.terres = [tg,td]
+        j2.mains = [Tarifs.ROUTE * 3,Cartes.RIEN]
+        j2.aur = [0,0]
+        j2.chevalliers = [0,0]
+        j2.routes_les_plus_longues = [0,0]
+        j2.deplacement_voleur = [False, False]
+        j2.points = [1,0]
+        
+        Colonie(j1,self.it[44])
+        
+        self.assertEqual(j1.getPoints(tg),1) 
+        self.assertEqual(j1.getPoints(td),0) 
+        # Une colonie posée et non construite, le calcul n'est pas fait
+        
+        Jeu.construire_route(j1,self.it[44].lien(self.it[55]))
+        self.assertEqual(j1.getPoints(tg),1) # Route = 0 point
 
+        Jeu.construire_route(j1,self.it[55].lien(self.it[45]))
+        self.assertEqual(j1.getPoints(tg),1)
+        
+        Jeu.construire_colonie(j1,self.it[45])
+        self.assertEqual(j1.getPoints(tg),2) # Colonie = 1 point
 
+        Jeu.construire_route(j1,self.it[45].lien(self.it[56]))
+        Jeu.construire_route(j1,self.it[56].lien(self.it[67]))
+        self.assertEqual(j1.getPoints(tg),2)
+        
+        Jeu.construire_colonie(j1,self.it[67])
+        self.assertEqual(j1.getPoints(tg),3)
+        self.assertEqual(j1.getPoints(td),0) 
 
+        Jeu.evoluer_colonie(j1, self.it[67].colonie)
+        self.assertEqual(j1.getPoints(tg),4) # Ville = 2 points
 
+        j1.recevoir(tg,Cartes.POINT_VICTOIRE)
+        self.assertEqual(j1.getPoints(tg),5) # Carte pv = 1 point
+        j1.payer(tg,Cartes.POINT_VICTOIRE)
+        self.assertEqual(j1.getPoints(tg),4)
 
+        # Le bateau vaut 0 point
+        Jeu.construire_bateau(j1,self.it[67].lien(self.it[78]))
+        self.assertEqual(j1.getPoints(tg),4) 
+        b = self.it[67].lien(self.it[78]).bateau
+        Jeu.evoluer_bateau(j1,b)
+        self.assertEqual(j1.getPoints(tg),4)
+        Jeu.evoluer_bateau(j1,b)
+        self.assertEqual(j1.getPoints(tg),4)
+        self.assertEqual(j1.getPoints(td),0) 
 
+        # La route la plus longue vaut 2 points
+        Jeu.construire_route(j1,self.it[67].lien(self.it[77]))
+        self.assertEqual(j1.getPoints(tg),6)
+        
+        Route(j2,self.it[64].lien(self.it[53]))
+        Route(j2,self.it[53].lien(self.it[43]))
+        Route(j2,self.it[43].lien(self.it[33]))
+        Route(j2,self.it[33].lien(self.it[22])) 
+        Jeu.construire_route(j2,self.it[22].lien(self.it[11])) # Une égalisation de la route la plus longue ne la donne pas
+        self.assertEqual(j1.getPoints(tg),6)
+        Jeu.construire_route(j2,self.it[11].lien(self.it[1])) # Un dépassement de la route la plus longue octroie la récompense
+        self.assertEqual(j1.getPoints(tg),4)
 
+        # La plus grande armee vaut 2 points
+        # Le challenge est fait manuellement pour éviter d'avoir à déplacer le voleur.
+        j1.add_chevallier(tg)
+        j1.add_chevallier(tg)
+        Jeu.challenge_armee_la_plus_grande(j1,tg)
+        self.assertEqual(j1.getPoints(tg),4)
+        j1.add_chevallier(tg)
+        Jeu.challenge_armee_la_plus_grande(j1,tg)
+        self.assertEqual(j1.getPoints(tg),6)
+        j2.add_chevallier(tg)
+        j2.add_chevallier(tg)
+        j2.add_chevallier(tg)
+        Jeu.challenge_armee_la_plus_grande(j2,tg)
+        self.assertEqual(j1.getPoints(tg),6)
+        j2.add_chevallier(tg)
+        Jeu.challenge_armee_la_plus_grande(j2,tg)
+        self.assertEqual(j1.getPoints(tg),4)
+        self.assertEqual(j1.getPoints(td),0) 
 
 
 

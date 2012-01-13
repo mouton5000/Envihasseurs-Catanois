@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# *-* coding: iso-8859-1 *-*
 import random
 
 # Ensemble des etats de tuile, un port est une tuile MER, avec un port dessus. Un marche est une tuile DESERT avec un port dessus.

@@ -1,4 +1,5 @@
-# -*- coding: utf8 -*-
+# *-* coding: iso-8859-1 *-*
+
 import operator
 
 # Cette classe représente les cartes que les joueurs ont en main. 

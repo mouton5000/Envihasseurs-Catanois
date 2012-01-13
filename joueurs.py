@@ -1,3 +1,4 @@
+# *-* coding: iso-8859-1 *-*
 from constructions import *
 from plateau import *
 from cartes import *
@@ -7,7 +8,7 @@ class Tarifs:
     COLONIE = CartesRessources(1,1,1,0,1)
     VILLE = CartesRessources(0,3,0,2,0)
     ROUTE = CartesRessources(1,0,1,0,0)
-    BATEAUX_TRANSPORT = CartesRessources(0,0,1,0,1)
+    BATEAU_TRANSPORT = CartesRessources(0,0,1,0,1)
     CARGO = CartesRessources(1,0,0,1,0)
     VOILIER = CartesRessources(1,0,0,0,2)
     DEVELOPPEMENT = CartesRessources(0,1,0,1,1)
@@ -41,6 +42,7 @@ class Joueur:
         self.deplacement_voleur = []
         self.chevalliers = []
         self.routes_les_plus_longues = []
+        self.points = []
 
     def getTerreIndex(self,terre):
         if terre in self.terres:
@@ -136,6 +138,10 @@ class Joueur:
             return self.chevalliers[i]
         else:
             return -1
+    
+    def get_carte_armee_la_plus_grande(self,terre):
+        u = Jeu.get_armee_la_plus_grande(terre)
+        return u!=0 and u[0] == self
  
     def get_deplacement_voleur(self,terre):
         i = self.getTerreIndex(terre)
@@ -173,6 +179,26 @@ class Joueur:
                 return self.get_route_la_plus_longue(terre)
         else:
             return 0
+                       
+    def get_carte_route_la_plus_longue(self,terre):
+        u = Jeu.get_route_la_plus_longue(terre)
+        return u!=0 and u[0]== self
+
+    def addStaticPoint(self,terre,nb):
+        i = self.getTerreIndex(terre)
+        if i!=-1:
+            self.points[i] += nb
+
+    def getPoints(self,terre):
+        i = self.getTerreIndex(terre)
+        p = 0
+        if (self.get_carte_route_la_plus_longue(terre)):
+            p += 2
+        if (self.get_carte_armee_la_plus_grande(terre)):
+            p += 2
+        if i!=-1:
+            return self.points[i] + self.getCartes(terre).get_cartes_de_type(Cartes.POINT_VICTOIRE) + p
+
 
 class Jeu:
 
@@ -181,41 +207,83 @@ class Jeu:
     des = []
     joueurs_origine = []
     terres = []
+
+    routes_les_plus_longues = []
+    armees_les_plus_grandes = []
     
 
 
+    @staticmethod
     def get_joueur(num):
         return Jeu.JOUEURS[num-1]
-    get_joueur = staticmethod(get_joueur) 
 
+    @staticmethod
     def get_all_joueurs():
         return Jeu.JOUEURS
-    get_all_joueurs = staticmethod(get_all_joueurs)
 
+    @staticmethod
     def get_terre_index(terre):
         if terre in Jeu.terres:
             return Jeu.terres.index(terre)
         else:
             return -1
-    get_terre_index = staticmethod(get_terre_index)
 
+    @staticmethod
     def get_joueurs_origine(terre):
         n = Jeu.get_terre_index(terre)
         if n != -1 and len(Jeu.joueurs_origine)-1 >= n:
             return Jeu.joueurs_origine[n]
         else:
             return 0
-    get_joueurs_origine = staticmethod(get_joueurs_origine)
 
+    @staticmethod
     def designer_deplaceur_de_voleur():
         b = False
         for i in range(0,3):
             if Jeu.des[i] == 7:
                 for terre in Jeu.terres:
                     Jeu.JOUEURS[(i + Jeu.get_joueurs_origine(terre))%len(Jeu.JOUEURS)].deplacement_voleur.set_deplacement_voleur(terre,True)
-    designer_deplaceur_de_voleur = staticmethod(designer_deplaceur_de_voleur)
 
+    # Renvoie le joueur qui possède la route la plus longue sur la terre terre et sa longueur.
+    @staticmethod
+    def get_route_la_plus_longue(terre):
+        n = Jeu.get_terre_index(terre)
+        if n != -1:
+            return Jeu.routes_les_plus_longues[n]
 
+    # Vérifie si j a une route plus longue que la route la plus longue sur la terre terre. Si la route actuelle est nulle, alors vérifie si j a une route de plus de 5 troncons. Si c'est le cas, j prend la plus du joueur actuellement en position
+    @staticmethod
+    def challenge_route_la_plus_longue(j,terre):
+        i = Jeu.get_terre_index(terre)
+        if i != -1:
+            n = j.get_route_la_plus_longue(terre)
+            if n>=5:
+                u = Jeu.routes_les_plus_longues[i]
+                if u == 0 or  n > u[1]:
+                    Jeu.routes_les_plus_longues[i] = (j,n)
+                    
+    
+        
+
+    # Renvoie le joueur qui possède l'armee la plus grande sur la terre terre et sa longueur.
+    @staticmethod
+    def get_armee_la_plus_grande(terre):
+        n = Jeu.get_terre_index(terre)
+        if n != -1:
+            return Jeu.armees_les_plus_grandes[n]
+
+                
+    # Vérifie si j a une armee plus grande que la armee la plus grande sur la terre terre. Si l'armee actuelle est nulle, alors vérifie si j a une armee de plus de 3 chevalliers. Si c'est le cas, j prend la plus du joueur actuellement en position
+    @staticmethod
+    def challenge_armee_la_plus_grande(j,terre):
+        i = Jeu.get_terre_index(terre)
+        if i != -1:
+            n = j.get_chevalliers(terre)
+            if n>=3:
+                u = Jeu.armees_les_plus_grandes[i]
+                if u == 0 or  n > u[1]:
+                    Jeu.armees_les_plus_grandes[i] = (j,n)
+    
 
 # -----------------------------------------------------
 #    Actions dans la journee
@@ -238,7 +306,9 @@ class Jeu:
     @protection
     def construire_colonie(j, intersection):
         Colonie(j, intersection)
-        j.payer(intersection.getTerre(), Tarifs.COLONIE)
+        terre = intersection.getTerre()
+        j.payer(terre, Tarifs.COLONIE)
+        j.addStaticPoint(terre,1)
 
 
 
@@ -261,6 +331,7 @@ class Jeu:
             if not construction_route:
                 j.payer(terre,Tarifs.ROUTE)
             j.route_la_plus_longue(terre, True)
+            Jeu.challenge_route_la_plus_longue(j,terre)
             return True
         else:
             return False
@@ -268,7 +339,7 @@ class Jeu:
 # On suppose que chaque ile est separee d'au moins 2 arrete. Ca evite des ambiguites au niveau de la terre de construction.
     @staticmethod
     def peut_construire_bateau(j,arrete):
-        if arrete.bateau == 0 and arrete.isMaritime() and j.peut_payer(arrete.getTerre(), Tarifs.BATEAUX_TRANSPORT):
+        if arrete.bateau == 0 and arrete.isMaritime() and j.peut_payer(arrete.getTerre(), Tarifs.BATEAU_TRANSPORT):
             if (arrete.int1.colonie != 0 and arrete.int1.colonie.joueur == j) or (arrete.int2.colonie != 0 and arrete.int2.colonie.joueur == j):
                 return True
         return False
@@ -277,7 +348,7 @@ class Jeu:
     @protection
     def construire_bateau(j,arrete):
         Bateau(j,arrete)
-        j.payer(arrete.getTerre(),Tarifs.BATEAUX_TRANSPORT)
+        j.payer(arrete.getTerre(),Tarifs.BATEAU_TRANSPORT)
 
 
     @staticmethod
@@ -287,8 +358,10 @@ class Jeu:
     @staticmethod
     @protection
     def evoluer_colonie(j,colonie):
-            colonie.evolue()
-            j.payer(colonie.position.getTerre(),Tarifs.VILLE)
+        colonie.evolue()
+        terre = colonie.position.getTerre()
+        j.payer(terre,Tarifs.VILLE)
+        j.addStaticPoint(terre,1)
 
     @staticmethod
     def peut_acheter_carte_developpement(j,terre):
@@ -442,6 +515,7 @@ class Jeu:
             j.aur.append(0)
             j.chevalliers.append(0)
             j.routes_les_plus_longues.append(0)
+            j.points.append(1)
             j.deplacement_voleur.append(False)
             j.recevoir(terre,transfert)
             bateau.remove(Tarifs.COLONIE + transfert)
@@ -581,6 +655,7 @@ class Jeu:
     def jouer_chevallier(joueur,terre,voleurType, hex,jvol):
             joueur.add_chevallier(terre)
             joueur.payer(terre,Cartes.CHEVALLIER)
+            Jeu.challenge_armee_la_plus_grande(joueur,terre)
             Jeu.deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
 
 
