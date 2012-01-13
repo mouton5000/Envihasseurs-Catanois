@@ -8,8 +8,8 @@ class Tarifs:
     VILLE = CartesRessources(0,3,0,2,0)
     ROUTE = CartesRessources(1,0,1,0,0)
     BATEAUX_TRANSPORT = CartesRessources(0,0,1,0,1)
-    CARGO = CartesRessources(1,0,1,1,0)
-    VOILIER = CartesRessources(1,1,1,0,2)
+    CARGO = CartesRessources(1,0,0,1,0)
+    VOILIER = CartesRessources(1,0,0,0,2)
     DEVELOPPEMENT = CartesRessources(0,1,0,1,1)
 
 
@@ -40,6 +40,7 @@ class Joueur:
         self.aur = []
         self.deplacement_voleur = []
         self.chevalliers = []
+        self.routes_les_plus_longues = []
 
     def getTerreIndex(self,terre):
         if terre in self.terres:
@@ -149,13 +150,27 @@ class Joueur:
             self.deplacement_voleur[i] = dep
 
 
-    def route_la_plus_longue(self,terre):
+    def get_route_la_plus_longue(self,terre):
+        i = self.getTerreIndex(terre)
+        if i!=-1:
+            return self.routes_les_plus_longues[i]
+        
+    def set_route_la_plus_longue(self,terre, l):
+        i = self.getTerreIndex(terre)
+        if i!=-1:
+            self.routes_les_plus_longues[i] = l
+
+    def route_la_plus_longue(self,terre, recalculer=False):
         if terre in self.terres:
-            i = 0
-            for r in self.routes:
-                if r.position.getTerre() == terre and r.est_extremite():
-                    i = max(i, r.rlplfr())
-            return i
+            if recalculer:
+                i = 0
+                for r in self.routes:
+                    if r.position.getTerre() == terre and r.est_extremite():
+                        i = max(i, r.rlplfr())
+                self.set_route_la_plus_longue(terre,i)
+                return i
+            else:
+                return self.get_route_la_plus_longue(terre)
         else:
             return 0
 
@@ -218,14 +233,6 @@ class Jeu:
                     return True
         return False
 
-    #@staticmethod
-    #def construire_colonie(j,intersection):
-    #    if Jeu.peut_construire_colonie(j,intersection):
-    #        Colonie(j,intersection)
-    #        j.payer(intersection.getTerre(),Tarifs.COLONIE)
-    #        return True
-    #    else:
-    #        return False
 
     @staticmethod
     @protection
@@ -250,8 +257,10 @@ class Jeu:
     def construire_route(j,arrete, construction_route = False):
         if construction_route or Jeu.peut_construire_route(j,arrete):
             Route(j,arrete)
+            terre = arrete.getTerre()
             if not construction_route:
-                j.payer(arrete.getTerre(),Tarifs.ROUTE)
+                j.payer(terre,Tarifs.ROUTE)
+            j.route_la_plus_longue(terre, True)
             return True
         else:
             return False
@@ -432,6 +441,7 @@ class Jeu:
             j.mains.append(Cartes.RIEN)
             j.aur.append(0)
             j.chevalliers.append(0)
+            j.routes_les_plus_longues.append(0)
             j.deplacement_voleur.append(False)
             j.recevoir(terre,transfert)
             bateau.remove(Tarifs.COLONIE + transfert)

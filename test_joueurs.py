@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 import unittest
 from joueurs import *
 from constructions import *
@@ -260,7 +261,6 @@ class TestCartesRessources(unittest.TestCase):
         self.assertEqual(j3.ressources(tg), Cartes.RIEN)
         self.assertEqual(j3.ressources(td), Cartes.RIEN)
     """
-
 # Les joueurs construisent. Ils doivent avoir assez de ressources, et construire sur des cases reglementaire.
 
 #                                                  
@@ -870,10 +870,12 @@ class TestCartesRessources(unittest.TestCase):
         j1.mains = [c]
         j1.aur = [0]
         j1.chevalliers = [0]
+        j1.routes_les_plus_longues = [0]
         j1.deplacement_voleur = [False]
         j2.mains = [c,c]
         j2.aur = [0,0]
         j2.chevalliers = [0,0]
+        j2.routes_les_plus_longues = [0,0]
         j2.deplacement_voleur = [False,False]
           
         # Colonisation avec un bateau, l'emplacement de la colonie et la partie de la cargaison a transferer
@@ -950,6 +952,7 @@ class TestCartesRessources(unittest.TestCase):
         self.assertEqual(j1.getOr(td),0)
         self.assertEqual(j1.get_deplacement_voleur(td),False)
         self.assertEqual(j1.get_chevalliers(td),0)
+        self.assertEqual(j1.get_route_la_plus_longue(td),0)
         self.assertEqual(b1.cargaison,carg2 - transf2 - Tarifs.COLONIE )
         self.assertEqual(len(j1.colonies),1)
         self.assertEqual(len(j1.routes),0)
@@ -1568,7 +1571,9 @@ class TestCartesRessources(unittest.TestCase):
         td = self.td
 
         j1.terres = [tg,td]
+        j1.routes_les_plus_longues = [0,0]
         j2.terres = [tg,td]
+        j2.routes_les_plus_longues = [0,0]
 
         Route(j1,self.it[43].lien(self.it[54]))
         Route(j1,self.it[54].lien(self.it[65]))
@@ -1597,11 +1602,43 @@ class TestCartesRessources(unittest.TestCase):
         Route(j1,self.it[110].lien(self.it[120]))
         Route(j1,self.it[120].lien(self.it[111]))
         
-        self.assertEqual(j1.route_la_plus_longue(tg),9)
-        self.assertEqual(j1.route_la_plus_longue(td),10)
+        self.assertEqual(j1.route_la_plus_longue(tg,True),9)
+        self.assertEqual(j1.route_la_plus_longue(td,True),10)
+
+        j1.setCartes(tg,Tarifs.ROUTE)
+        Jeu.construire_route(j1,self.it[55].lien(self.it[66]))
+        self.assertEqual(j1.route_la_plus_longue(td,False),10)
+
 
         Colonie(j2,self.it[65])
-        self.assertEqual(j1.route_la_plus_longue(tg),6)
+        self.assertEqual(j1.route_la_plus_longue(tg,False),10)
+        self.assertEqual(j1.route_la_plus_longue(tg,True),6)
+
+
+
+    def test_compter_points(self):
+    # Les colonies rapportent un points
+    # Les villes rapportent deux points
+    # Les cartes point de victoire, pas dans un bateau, rapportnt un point
+    # Les cargos rapportent un point
+    # Les voiliers rapportent deux point
+    # Les routes les plus longue rapportent deux points
+    # Les armees les plus grandes rapportent deux points
+    # Chaque total de points est calculé sur une terre en particulier
+    # Pour le cas des bateaux, les points sont attribués [a la terre où le bateau est construit, a la terre où le bateau est actuellement]
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
