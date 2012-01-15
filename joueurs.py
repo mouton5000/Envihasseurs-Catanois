@@ -43,6 +43,7 @@ class Joueur:
         self.chevalliers = []
         self.routes_les_plus_longues = []
         self.points = []
+        self.enRuine = False
 
     def getTerreIndex(self,terre):
         if terre in self.terres:
@@ -167,6 +168,8 @@ class Joueur:
             self.routes_les_plus_longues[i] = l
 
     def route_la_plus_longue(self,terre, recalculer=False):
+        if self.enRuine:
+            return 0
         if terre in self.terres:
             if recalculer:
                 i = 0
@@ -190,6 +193,8 @@ class Joueur:
             self.points[i] += nb
 
     def getPoints(self,terre):
+        if self.enRuine:
+            return 0
         i = self.getTerreIndex(terre)
         p = 0
         if (self.get_carte_route_la_plus_longue(terre)):
@@ -291,7 +296,7 @@ class Jeu:
 
     @staticmethod
     def peut_construire_colonie(j,intersection):
-        if intersection.colonie == 0 and not (intersection.isMaritime()) and j.peut_payer(intersection.getTerre(), Tarifs.COLONIE)  :
+        if not j.enRuine and intersection.colonie == 0 and not (intersection.isMaritime()) and j.peut_payer(intersection.getTerre(), Tarifs.COLONIE)  :
             
             for int in intersection.neigh:
                 if int.colonie != 0:
@@ -315,7 +320,7 @@ class Jeu:
 
     @staticmethod
     def peut_construire_route(j, arrete, construction_route = False):
-        if arrete.route == 0 and not(arrete.isMaritime()) and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.ROUTE)):
+        if not j.enRuine and arrete.route == 0 and not(arrete.isMaritime()) and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.ROUTE)):
             if (arrete.int1.colonie != 0 and arrete.int1.colonie.joueur == j) or (arrete.int2.colonie != 0 and arrete.int2.colonie.joueur == j):
                 return True
             for a in arrete.neighb():
@@ -339,7 +344,7 @@ class Jeu:
 # On suppose que chaque ile est separee d'au moins 2 arrete. Ca evite des ambiguites au niveau de la terre de construction.
     @staticmethod
     def peut_construire_bateau(j,arrete,construction_route = False):
-        if arrete.bateau == 0 and arrete.isMaritimeOuCotier() and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.BATEAU_TRANSPORT)):
+        if not j.enRuine and arrete.bateau == 0 and arrete.isMaritimeOuCotier() and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.BATEAU_TRANSPORT)):
             if (arrete.int1.colonie != 0 and arrete.int1.colonie.joueur == j) or (arrete.int2.colonie != 0 and arrete.int2.colonie.joueur == j):
                 return True
         return False
@@ -357,7 +362,7 @@ class Jeu:
 
     @staticmethod
     def peut_evoluer_colonie(j, colonie):
-        return colonie.joueur == j and j.peut_payer(colonie.position.getTerre(), Tarifs.VILLE)
+        return not j.enRuine and colonie.joueur == j and j.peut_payer(colonie.position.getTerre(), Tarifs.VILLE)
 
     @staticmethod
     @protection
@@ -369,7 +374,7 @@ class Jeu:
 
     @staticmethod
     def peut_acheter_carte_developpement(j,terre):
-        return j.peut_payer(terre,Tarifs.DEVELOPPEMENT)
+        return not j.enRuine and j.peut_payer(terre,Tarifs.DEVELOPPEMENT)
     
     def acheter_carte_developpement(j,terre):
             j.payer(terre,Tarifs.DEVELOPPEMENT)
@@ -377,7 +382,7 @@ class Jeu:
 
     @staticmethod
     def peut_deplacer_bateau(j,bateau,arrete):
-        return bateau.joueur == j and not bateau.position.est_pirate() and arrete.isMaritimeOuCotier() and (arrete in bateau.position.neighb() or (bateau.etat == Bateau.BateauType.VOILIER and arrete in bateau.position.double_neighb() )) and (arrete.bateau == 0 or arrete.bateau.joueur != j) and not bateau.aBouge
+        return not j.enRuine and bateau.joueur == j and not bateau.position.est_pirate() and arrete.isMaritimeOuCotier() and (arrete in bateau.position.neighb() or (bateau.etat == Bateau.BateauType.VOILIER and arrete in bateau.position.double_neighb() )) and (arrete.bateau == 0 or arrete.bateau.joueur != j) and not bateau.aBouge
     
     @staticmethod
     @protection
@@ -388,7 +393,7 @@ class Jeu:
 
     @staticmethod
     def peut_echanger_bateau(j,bateau,ct,cb):
-        return j == bateau.joueur and bateau.en_position_echange() and j.peut_payer(bateau.position.getTerre(), ct) and bateau.peut_recevoir_et_payer(ct,cb) and ct.est_physiquement_possible() and cb.est_physiquement_possible()
+        return not j.enRuine and j == bateau.joueur and bateau.en_position_echange() and j.peut_payer(bateau.position.getTerre(), ct) and bateau.peut_recevoir_et_payer(ct,cb) and ct.est_physiquement_possible() and cb.est_physiquement_possible()
 
     @staticmethod
     @protection
@@ -401,7 +406,7 @@ class Jeu:
     
     @staticmethod
     def peut_evoluer_bateau(j,bateau):
-        return bateau.en_position_echange() and ((bateau.etat == Bateau.BateauType.TRANSPORT and j.peut_payer(bateau.position.getTerre(), Tarifs.CARGO)) or (bateau.etat == Bateau.BateauType.CARGO and j.peut_payer(bateau.position.getTerre(), Tarifs.VOILIER)))
+        return not j.enRuine and bateau.en_position_echange() and ((bateau.etat == Bateau.BateauType.TRANSPORT and j.peut_payer(bateau.position.getTerre(), Tarifs.CARGO)) or (bateau.etat == Bateau.BateauType.CARGO and j.peut_payer(bateau.position.getTerre(), Tarifs.VOILIER)))
 
     
     @staticmethod
@@ -419,7 +424,7 @@ class Jeu:
     
     @staticmethod
     def peut_echanger(j1,j2,terre,c1,c2):
-        return j1.peut_payer(terre,c1) and j2.peut_payer(terre,c2) and c1.est_ressource() and c2.est_ressource() and c1.est_physiquement_possible() and c2.est_physiquement_possible()
+        return not j1.enRuine and not j2.enRuine and j1.peut_payer(terre,c1) and j2.peut_payer(terre,c2) and c1.est_ressource() and c2.est_ressource() and c1.est_physiquement_possible() and c2.est_physiquement_possible()
 
     @staticmethod
     @protection
@@ -431,7 +436,7 @@ class Jeu:
     
     @staticmethod
     def peut_echanger_classique(j,terre,t1,t2):
-        return t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible() and terre in j.terres and j.peut_payer(terre,t1*4)
+        return not j.enRuine and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible() and terre in j.terres and j.peut_payer(terre,t1*4)
 
     @staticmethod
     @protection
@@ -441,7 +446,7 @@ class Jeu:
     
     @staticmethod
     def peut_echanger_commerce_tous(j,terre,t1,t2):
-        return t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and terre in j.terres and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*3) and j.contient_commerce_utilisable(terre,CommerceType.TOUS)
+        return not j.enRuine and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and terre in j.terres and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*3) and j.contient_commerce_utilisable(terre,CommerceType.TOUS)
     
     @staticmethod
     @protection
@@ -451,7 +456,7 @@ class Jeu:
     
     @staticmethod
     def peut_echanger_commerce(j,terre,t1,t2):
-        if t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and terre in j.terres and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*2):
+        if not j.enRuine and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and terre in j.terres and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*2):
             if t1 == Cartes.ARGILE:
                 comType = CommerceType.ARGILE
             elif t1 == Cartes.BOIS:
@@ -485,12 +490,13 @@ class Jeu:
     @protection
     def recolter_ressources(des):
             for j in Jeu.get_all_joueurs():
-                j.recolter_ressources(des)
+                if not j.enRuine: 
+                    j.recolter_ressources(des)
 
 
     @staticmethod
     def peut_acheter_ressource(j,terre,carte):
-        return j.getOr(terre) > 0 and carte.est_ressource() and carte.size() == 1 and carte.est_physiquement_possible()
+        return not j.enRuine and j.getOr(terre) > 0 and carte.est_ressource() and carte.size() == 1 and carte.est_physiquement_possible()
 
     @staticmethod
     @protection
@@ -500,7 +506,7 @@ class Jeu:
 
     @staticmethod
     def peut_coloniser(j,bateau,position,transfert):
-        if j == bateau.joueur and transfert.est_physiquement_possible() and transfert <= (bateau.cargaison-Tarifs.COLONIE) and Tarifs.COLONIE <= bateau.cargaison and j.getTerreIndex(position.getTerre()) == -1 and position.colonie == 0:
+        if not j.enRuine and j == bateau.joueur and transfert.est_physiquement_possible() and transfert <= (bateau.cargaison-Tarifs.COLONIE) and Tarifs.COLONIE <= bateau.cargaison and j.getTerreIndex(position.getTerre()) == -1 and position.colonie == 0:
             for i in position.neighb():
                 if i.colonie != 0:
                     return False
@@ -563,7 +569,7 @@ class Jeu:
 
     @staticmethod
     def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,chevallier = False):
-        if joueur.deplacement_voleur or chevallier:
+        if not joueur.enRuine and joueur.deplacement_voleur or chevallier:
             if voleurType == Voleur.VoleurType.BRIGAND:
                 voleur = terre.brigand
             else:
@@ -601,7 +607,7 @@ class Jeu:
 
     @staticmethod
     def deplacer_voleur(joueur,terre,voleurType,hex,jvol, chevallier = False):
-        if chevallier or Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol):
+        if not joueur.enRuine and chevallier or Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol):
             terre.deplacer_voleur(voleurType,hex)
             Jeu.voler(joueur,terre,jvol)
             if not chevallier:
@@ -613,7 +619,7 @@ class Jeu:
 
     @staticmethod
     def peut_defausser(joueur,terre,cartes):
-        if 7 in Jeu.des and terre in joueur.terres:
+        if not joueur.enRuine and 7 in Jeu.des and terre in joueur.terres:
             c = joueur.getCartes(terre)
             res = cartes[0]
             cargs = cartes[1]
@@ -652,7 +658,7 @@ class Jeu:
 
     @staticmethod
     def peut_jouer_chevallier(joueur,terre,voleurType, hex,jvol):
-        return Cartes.CHEVALLIER <= joueur.getCartes(terre) and terre in joueur.terres and Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
+        return not joueur.enRuine and Cartes.CHEVALLIER <= joueur.getCartes(terre) and terre in joueur.terres and Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
 
     @staticmethod
     @protection
@@ -666,7 +672,7 @@ class Jeu:
 
     @staticmethod
     def peut_jouer_decouverte(joueur,terre,cartes):
-        return Cartes.DECOUVERTE <= joueur.getCartes(terre) and terre in joueur.terres and cartes.size() == 2 and cartes.est_ressource() and cartes.est_physiquement_possible()
+        return not joueur.enRuine and Cartes.DECOUVERTE <= joueur.getCartes(terre) and terre in joueur.terres and cartes.size() == 2 and cartes.est_ressource() and cartes.est_physiquement_possible()
 
     @staticmethod
     @protection
@@ -678,7 +684,7 @@ class Jeu:
     @staticmethod
     def peut_jouer_construction_routes(joueur,terre,isFirstRoute,a1,isSecondRoute,a2):
 
-        return a1 != a2 and Cartes.CONSTRUCTION_ROUTES <= joueur.getCartes(terre) and terre in joueur.terres and (a1.getTerre() == terre or a1.int1.getTerre() == terre or a1.int2.getTerre() == terre) and (a2.getTerre() == terre or a2.int1.getTerre() == terre or a2.int2.getTerre() == terre) and ((isFirstRoute and a1.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a1,True)) or (not(isFirstRoute) and a1.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a1,True))) and ((isSecondRoute and a2.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a2,True)) or (not(isSecondRoute) and a2.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a2,True))) and ((isFirstRoute and a1.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a1,True)) or (not(isFirstRoute) and a1.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a1,True))) and ((isSecondRoute and a2.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a2,True)) or (not(isSecondRoute) and a2.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a2,True)))
+        return not joueur.enRuine and a1 != a2 and Cartes.CONSTRUCTION_ROUTES <= joueur.getCartes(terre) and terre in joueur.terres and (a1.getTerre() == terre or a1.int1.getTerre() == terre or a1.int2.getTerre() == terre) and (a2.getTerre() == terre or a2.int1.getTerre() == terre or a2.int2.getTerre() == terre) and ((isFirstRoute and a1.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a1,True)) or (not(isFirstRoute) and a1.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a1,True))) and ((isSecondRoute and a2.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a2,True)) or (not(isSecondRoute) and a2.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a2,True))) and ((isFirstRoute and a1.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a1,True)) or (not(isFirstRoute) and a1.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a1,True))) and ((isSecondRoute and a2.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a2,True)) or (not(isSecondRoute) and a2.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a2,True)))
 
     @staticmethod
     @protection
@@ -696,6 +702,8 @@ class Jeu:
 
     @staticmethod
     def peut_jouer_monopole(joueur,terre,t1, jvols):
+        if joueur.enRuine:
+            return False
         b = Cartes.MONOPOLE <= joueur.getCartes(terre) and terre in joueur.terres and t1.est_ressource() and t1.size() == 1 and t1.est_physiquement_possible() and len(jvols) <= 3 and not joueur in jvols
 
         for j in jvols:

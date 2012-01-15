@@ -317,7 +317,12 @@ class TestCartesRessources(unittest.TestCase):
         r5 = Route(j2,a65)
         r6 = Route(j2,a54)
         self.assertFalse(Jeu.peut_construire_colonie(j1,i65)) # Relie a une route mais colonie adverse a une case
-        
+       
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_construire_colonie(j1,i66)) # Joueur en ruine
+ 
+        j1.enRuine = False
+
         i = len(j1.colonies)
         Jeu.construire_colonie(j1,i66)
         self.assertEqual(len(j1.colonies),i+1)
@@ -355,6 +360,14 @@ class TestCartesRessources(unittest.TestCase):
         self.assertFalse(Jeu.peut_construire_route(j1,a56)) # manque de ressource
         j1.setCartes(self.tg,Tarifs.ROUTE)
         self.assertTrue(Jeu.peut_construire_route(j1,a56))
+
+
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_construire_route(j1,a56)) # Joueur en ruine 
+        j1.enRuine = False
+
+
         i = len(j1.routes)
         Jeu.construire_route(j1,a56)
         self.assertEqual(len(j1.routes),i+1)
@@ -384,6 +397,12 @@ class TestCartesRessources(unittest.TestCase):
         j1.setCartes(self.tg,Cartes.RIEN)
         self.assertFalse(Jeu.peut_construire_bateau(j1,a67))
         j1.setCartes(self.tg,Tarifs.BATEAU_TRANSPORT)
+
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_construire_bateau(j1,a67)) # Joueur en ruine 
+        j1.enRuine = False
+
         i = len(j1.bateaux_transport)
         Jeu.construire_bateau(j1,a67)
         self.assertEqual(len(j1.bateaux_transport),i+1)
@@ -406,6 +425,14 @@ class TestCartesRessources(unittest.TestCase):
         self.assertFalse(Jeu.peut_evoluer_colonie(j1,c1)) # Pas assez ressource
         j1.setCartes(self.tg,Tarifs.VILLE)
         self.assertTrue(Jeu.peut_evoluer_colonie(j1,c1))
+
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_evoluer_colonie(j1,c1))
+        # Joueur en ruine
+        j1.enRuine = False
+
+
         i = len(j1.villes)
         j = len(j1.colonies)
         Jeu.evoluer_colonie(j1,c1)
@@ -454,12 +481,18 @@ class TestCartesRessources(unittest.TestCase):
         self.tg.deplacer_pirate(self.h24)
         self.assertFalse(Jeu.peut_deplacer_bateau(j1,b12,a77)) # Pirate
         self.tg.deplacer_pirate(self.h44)
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a57))
+        # Joueur en ruine
+        j1.enRuine = False
         
         Jeu.deplacer_bateau(j1,b12,a77)
         self.assertFalse(Jeu.peut_deplacer_bateau(j1,b12,a56)) # a deja bouge
                
 
  
+
     def test_acheter_developpement(self):        
         
 
@@ -470,6 +503,12 @@ class TestCartesRessources(unittest.TestCase):
         j1.setCartes(tg,Cartes.RIEN)
         self.assertFalse(Jeu.peut_acheter_carte_developpement(j1,tg))
         j1.setCartes(tg,Tarifs.DEVELOPPEMENT)
+        
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_acheter_carte_developpement(j1,tg))
+        # Joueur en ruine
+        j1.enRuine = False
 
 
 # test les echanges entre terre et bateau, et les evolutions de bateau
@@ -537,6 +576,12 @@ class TestCartesRessources(unittest.TestCase):
         cechtdouble = CartesGeneral(0,0,0,0,0,0,0,0,0,0.5) 
         cechbdouble = CartesGeneral(0,0,0,0,1,0.5,0,0,0,0) 
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb)) # OK touche une colonie
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        # Joueur en ruine
+        j1.enRuine = False
+        
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
@@ -552,6 +597,12 @@ class TestCartesRessources(unittest.TestCase):
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbdouble)) # Echange non entier
 
         j1.setCartes(tg,Tarifs.CARGO)
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
+        # Joueur en ruine
+        j1.enRuine = False
+
         Jeu.evoluer_bateau(j1,b1)
         self.assertEqual(j1.getCartes(tg),Cartes.RIEN)
         self.assertEqual(b1.etat, Bateau.BateauType.CARGO)
@@ -589,6 +640,12 @@ class TestCartesRessources(unittest.TestCase):
         cechttoomuch2 = CartesGeneral(0,0,0,0,0,0,0,1,0,0) 
         cechbtoomuch = CartesGeneral(2,0,0,0,0,0,0,0,0,0) 
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb)) # OK touche une colonie
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        # Joueur en ruine
+        j1.enRuine = False
+        
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
@@ -604,6 +661,12 @@ class TestCartesRessources(unittest.TestCase):
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbdouble)) # Echange non entier
 
         j1.setCartes(tg,Tarifs.VOILIER)
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
+        # Joueur en ruine
+        j1.enRuine = False
+
         Jeu.evoluer_bateau(j1,b1)
         self.assertEqual(j1.getCartes(tg),Cartes.RIEN)
         self.assertEqual(b1.etat, Bateau.BateauType.VOILIER)
@@ -631,6 +694,12 @@ class TestCartesRessources(unittest.TestCase):
         cechttoomuch2 = CartesGeneral(0,0,0,0,0,0,0,1,0,0) 
         cechbtoomuch = CartesGeneral(2,0,0,0,0,0,0,0,0,0) 
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb)) # OK touche une colonie
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        # Joueur en ruine
+        j1.enRuine = False
+        
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
@@ -681,6 +750,12 @@ class TestCartesRessources(unittest.TestCase):
         self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2echneg)) # Echange negatif
         self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2echdouble)) # Echante non entier
 
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2ech))
+        # Joueur en ruine
+        j1.enRuine = False
+       
         Jeu.echanger(j1,j2,tg,c1ech1,c2ech)
         self.assertEqual(j1.getCartes(tg),c1 - c1ech1 + c2ech)        
         self.assertEqual(j2.getCartes(tg),c2g + c1ech1 - c2ech)        
@@ -713,6 +788,12 @@ class TestCartesRessources(unittest.TestCase):
         self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,cneg)) # Echange negatif
         self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,cdouble)) # Echange non entier
         
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        # Joueur en ruine
+        j1.enRuine = False
+       
         Jeu.echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE)
         self.assertEqual(j1.getCartes(tg), CartesRessources(4,8,0,4,4))
 
@@ -734,6 +815,12 @@ class TestCartesRessources(unittest.TestCase):
         self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Piate
 
         self.tg.deplacer_pirate(self.h44)
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        # Joueur en ruine
+        j1.enRuine = False
+       
         Jeu.echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)
         self.assertEqual(j1.getCartes(tg), CartesRessources(3,6,0,3,3))
 
@@ -751,6 +838,12 @@ class TestCartesRessources(unittest.TestCase):
         self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Pirate
 
         self.tg.deplacer_pirate(self.h44)
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        # Joueur en ruine
+        j1.enRuine = False
+        
         Jeu.echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)
         self.assertEqual(j1.getCartes(tg), CartesRessources(2,4,0,2,2))
         
@@ -782,6 +875,12 @@ class TestCartesRessources(unittest.TestCase):
         self.assertFalse(Jeu.peut_echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE)) # Brigand
         
         self.tg.deplacer_brigand(self.h23)
+        
+        j2.enRuine = True
+        self.assertFalse(Jeu.peut_echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE))
+        # Joueur en ruine
+        j2.enRuine = False
+       
         Jeu.echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE)
         self.assertEqual(j2.getCartes(tg), CartesRessources(2,2,0,2,2))
 
@@ -825,10 +924,22 @@ class TestCartesRessources(unittest.TestCase):
         Jeu.recolter_ressources(10)
         self.assertEqual(j1.getCartes(tg),CartesRessources(3,0,0,0,0))
         self.j1.mains = [c]
+        self.j1.aur = [0]
         Jeu.recolter_ressources(9)
         self.assertEqual(j1.getCartes(tg),c)
         self.assertEqual(j1.getOr(tg),1)
 
+        self.j1.mains = [c]
+        self.j1.aur = [0]
+        self.j1.enRuine = True
+        Jeu.recolter_ressources(4)
+        self.assertEqual(j1.getCartes(tg),c)
+        self.assertEqual(j1.getOr(tg),0)
+        Jeu.recolter_ressources(9)
+        self.assertEqual(j1.getCartes(tg),c)
+        self.assertEqual(j1.getOr(tg),0)
+        self.j1.enRuine = False
+        
         j1.aur = [0]
         
         self.j1.mains = [c]
@@ -949,7 +1060,12 @@ class TestCartesRessources(unittest.TestCase):
         c = Colonie(j2,i47)    
         self.assertFalse(Jeu.peut_coloniser(j1,b1,i47,transf2)) # Il y a une colonie a cet emplacement
         self.assertFalse(Jeu.peut_coloniser(j1,b1,i58,transf2)) # Il y a une colonie voisine
-        self.assertTrue(Jeu.peut_coloniser(j1,b1,i48,transf2)) # Il y a une colonie voisine
+        self.assertTrue(Jeu.peut_coloniser(j1,b1,i48,transf2))
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i48,transf2))
+        # Joueur en ruine
+        j1.enRuine = False
 
         b1.deplacer(a12)
         self.assertFalse(Jeu.peut_coloniser(j1,b1,i48,transf2)) # Le bateau n'est pas cotier
@@ -996,6 +1112,12 @@ class TestCartesRessources(unittest.TestCase):
 
         # Aucun joueur sur l'ile
         self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,self.h23,0))
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h23,0))
+        # Joueur en ruine
+        j1.enRuine = False
+
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h1,0)) # Non desert
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h12,0)) # Desert mais Marche
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h39,0)) # Autre terre
@@ -1012,6 +1134,12 @@ class TestCartesRessources(unittest.TestCase):
         Bateau(j1,self.it[15].lien(self.it[26]))
 
         self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,self.h23,0))
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h23,0))
+        # Joueur en ruine
+        j1.enRuine = False
+
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h1,0)) # Non desert
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h12,0)) # Desert mais Marche
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h39,0)) # Autre terre        
@@ -1032,6 +1160,12 @@ class TestCartesRessources(unittest.TestCase):
 
 
         self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,self.h23,0))
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h23,0))
+        # Joueur en ruine
+        j1.enRuine = False
+
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h43,0)) # Aucun deplacement
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h1,0)) # Non desert
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h12,0)) # Desert mais Marche
@@ -1100,6 +1234,12 @@ class TestCartesRessources(unittest.TestCase):
         self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,self.h52,j2))
         self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,self.h4,j2))
         
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,self.h52,0))
+        # Joueur en ruine
+        j1.enRuine = False
+
         Jeu.des = [7,6,4,3]
         Jeu.joueurs_origine = [1,0]
         j1.deplacement_voleur = False
@@ -1234,6 +1374,12 @@ class TestCartesRessources(unittest.TestCase):
         self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[])))
         Jeu.des = [3,7,5,1]
         self.assertTrue(Jeu.peut_defausser(j1,tg,(d1,[])))
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[])))
+        # Joueur en ruine
+        j1.enRuine = False
+
         self.assertFalse(Jeu.peut_defausser(j1,tg,(dneg,[])))
         self.assertFalse(Jeu.peut_defausser(j1,tg,(ddouble,[])))
         self.assertFalse(Jeu.peut_defausser(j1,tg,(d2,[])))
@@ -1267,6 +1413,11 @@ class TestCartesRessources(unittest.TestCase):
         
         self.assertFalse(Jeu.peut_defausser(j1,tg,(d9,[])))
         self.assertTrue(Jeu.peut_defausser(j1,tg,(d1,[(b1,d10)])))
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[(b1,d10)])))
+        # Joueur en ruine
+        j1.enRuine = False
         self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[(b1,dgen)])))
         self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[(b1,dgen2)])))
         self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[(b1,dneg)])))
@@ -1308,6 +1459,12 @@ class TestCartesRessources(unittest.TestCase):
 
         j1.setCartes(tg,c1)
         self.assertTrue(Jeu.peut_jouer_chevallier(j1,tg,br,self.h32,j2))
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,self.h32,j2))
+        # Joueur en ruine
+        j1.enRuine = False
+        
         self.assertFalse(Jeu.peut_jouer_chevallier(j1,td,br,self.h37,j2))
         j1.setCartes(tg,c2)
         self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,self.h32,j2))
@@ -1340,6 +1497,11 @@ class TestCartesRessources(unittest.TestCase):
 
         j1.setCartes(tg,c1)
         self.assertTrue(Jeu.peut_jouer_decouverte(j1,tg,d1))
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
+        # Joueur en ruine
+        j1.enRuine = False
         self.assertFalse(Jeu.peut_jouer_decouverte(j1,td,d1))
         self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,dneg))
         self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,ddouble))
@@ -1382,6 +1544,11 @@ class TestCartesRessources(unittest.TestCase):
 
         j1.setCartes(tg,c1)
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+        # Joueur en ruine
+        j1.enRuine = False
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a3))
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,False,a3))
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a3,False,a4))
@@ -1464,6 +1631,11 @@ class TestCartesRessources(unittest.TestCase):
         j5.setCartes(tg,c4)
         j6.setCartes(td,c4)
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[j2,j3,j4]))
+        
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[j2,j3,j4]))
+        # Joueur en ruine
+        j1.enRuine = False
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[j2,j3]))
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[j2]))
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[]))
@@ -1646,6 +1818,11 @@ class TestCartesRessources(unittest.TestCase):
         self.assertEqual(j1.route_la_plus_longue(tg,False),10)
         self.assertEqual(j1.route_la_plus_longue(tg,True),6)
 
+        
+        j1.enRuine = True
+        self.assertEqual(j1.route_la_plus_longue(tg,True),0)
+        # Joueur en ruine
+        j1.enRuine = False
 
 
     def test_compter_points(self):
@@ -1757,7 +1934,15 @@ class TestCartesRessources(unittest.TestCase):
         self.assertEqual(j1.getPoints(tg),4)
         self.assertEqual(j1.getPoints(td),0) 
 
+        
+        j1.enRuine = True
+        self.assertEqual(j1.getPoints(tg),0)
+        # Joueur en ruine
+        j1.enRuine = False
 
+# Test sur l'intéraction entre un joueur en ruine et un autre joueur. Les tests sur les actions annulées d'un joueur en ruine sont effectuées ailleurs.
+    def test_ruines(self):
+        pass
 
 
 if __name__ == '__main__':

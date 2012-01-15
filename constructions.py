@@ -11,7 +11,6 @@ class Colonie:
        self.position = int
        int.colonie = self
        self.isVille = False
-       self.enRuine = False
        j.colonies.append(self)
     
 	# Transforme la colonie en ville
@@ -77,7 +76,6 @@ class Route:
         a.route = self
         self.prixLocation = Cartes.RIEN
         self.locataires = []
-        self.enRuine = False
         j.routes.append(self)
 
 
