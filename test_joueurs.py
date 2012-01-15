@@ -366,6 +366,7 @@ class TestCartesRessources(unittest.TestCase):
 
         c3 = Colonie(j1,i67)
         self.assertTrue(Jeu.peut_construire_bateau(j1,a67)) # ok
+        self.assertTrue(Jeu.peut_construire_bateau(j1,self.it[67].lien(self.it[56]))) # ok
 
         i52 = self.it[52]
         a53 = i53.lien(i52)
@@ -1360,13 +1361,14 @@ class TestCartesRessources(unittest.TestCase):
     def test_peut_jouer_construction_routes(self):
 
 
-        # le test sur la construction de route n est pas fait ici
+        # le test sur la construction de route ou des bateaux n est pas fait ici
         j1 = self.j1
         tg = self.tg
         td = self.td
         j1.terres = [tg]
 
         Colonie(j1,self.it[23])
+        Colonie(j1,self.it[3])
         Route(j1,self.it[23].lien(self.it[34])) 
 
         c1 = CartesDeveloppement(0,0,0,0,3)
@@ -1375,30 +1377,47 @@ class TestCartesRessources(unittest.TestCase):
         
         a1 = self.it[23].lien(self.it[12])
         a2 = self.it[34].lien(self.it[44])
+        a3 = self.it[3].lien(self.it[14])
+        a4 = self.it[3].lien(self.it[117])
 
         j1.setCartes(tg,c1)
-        self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,a1,a2))
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,td,a1,a2))
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,a1,a1))
+        self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+        self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a3))
+        self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,False,a3))
+        self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a3,False,a4))
+        self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,False,a3,False,a4))
+        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,td,True,a1,True,a2))
+        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a1))
+        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,False,a4,False,a4))
         j1.setCartes(tg,c2)
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,a1,a2))
+        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
         j1.setCartes(tg,c3)
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,a1,a2))
+        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
 
         j1.terres = [tg,td]
         Colonie(j1,self.it[49])
-        a3 = self.it[49].lien(self.it[59])
+        a5 = self.it[49].lien(self.it[59])
         j1.setCartes(tg,c1)
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,a1,a3))
+        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a5))
 
         j1.setCartes(tg,c1)
-        Jeu.jouer_construction_routes(j1,tg,a1,a2)
+        Jeu.jouer_construction_routes(j1,tg,True,a1,True,a2)
         self.assertEqual(j1.getCartes(tg),Cartes.CONSTRUCTION_ROUTES * 2)
         self.assertTrue(a1.route != 0)
         self.assertTrue(a2.route != 0)
         self.assertTrue(a1.route.joueur == j1)
         self.assertTrue(a2.route.joueur == j1)
 
+        j1.setCartes(tg,c1)
+        Jeu.jouer_construction_routes(j1,tg,False,a3,False,a4)
+        self.assertEqual(j1.getCartes(tg),Cartes.CONSTRUCTION_ROUTES * 2)
+        self.assertTrue(a3.bateau != 0)
+        self.assertTrue(a4.bateau != 0)
+        self.assertTrue(a3.bateau.joueur == j1)
+        self.assertTrue(a4.bateau.joueur == j1)
+        self.assertEqual(len(j1.bateaux_transport),2)
+        self.assertEqual(len(j1.cargo),0)
+        self.assertEqual(len(j1.voilier),0)
 
 
 

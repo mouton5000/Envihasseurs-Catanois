@@ -264,6 +264,7 @@ class Arrete:
             return t2
         return 0
 
+
 	#Renvoie vrai si l'arrete est occupée par le pirate
     def est_pirate(self):
         for h in self.hexagones:

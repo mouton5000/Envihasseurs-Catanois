@@ -338,17 +338,21 @@ class Jeu:
 
 # On suppose que chaque ile est separee d'au moins 2 arrete. Ca evite des ambiguites au niveau de la terre de construction.
     @staticmethod
-    def peut_construire_bateau(j,arrete):
-        if arrete.bateau == 0 and arrete.isMaritime() and j.peut_payer(arrete.getTerre(), Tarifs.BATEAU_TRANSPORT):
+    def peut_construire_bateau(j,arrete,construction_route = False):
+        if arrete.bateau == 0 and arrete.isMaritimeOuCotier() and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.BATEAU_TRANSPORT)):
             if (arrete.int1.colonie != 0 and arrete.int1.colonie.joueur == j) or (arrete.int2.colonie != 0 and arrete.int2.colonie.joueur == j):
                 return True
         return False
     
     @staticmethod
-    @protection
-    def construire_bateau(j,arrete):
-        Bateau(j,arrete)
-        j.payer(arrete.getTerre(),Tarifs.BATEAU_TRANSPORT)
+    def construire_bateau(j,arrete, construction_route = False):
+        if construction_route or Jeu.peut_construire_bateau(j,arrete):
+            Bateau(j,arrete)
+            if not construction_route:
+                j.payer(arrete.getTerre(),Tarifs.BATEAU_TRANSPORT)
+            return True
+        else:
+            return False
 
 
     @staticmethod
@@ -672,15 +676,23 @@ class Jeu:
     
 
     @staticmethod
-    def peut_jouer_construction_routes(joueur,terre,a1,a2):
-        return a1 != a2 and Cartes.CONSTRUCTION_ROUTES <= joueur.getCartes(terre) and terre in joueur.terres and a1.getTerre() == terre and a2.getTerre() == terre and Jeu.peut_construire_route(joueur,a1,True) and Jeu.peut_construire_route(joueur,a2,True)
+    def peut_jouer_construction_routes(joueur,terre,isFirstRoute,a1,isSecondRoute,a2):
+
+        return a1 != a2 and Cartes.CONSTRUCTION_ROUTES <= joueur.getCartes(terre) and terre in joueur.terres and (a1.getTerre() == terre or a1.int1.getTerre() == terre or a1.int2.getTerre() == terre) and (a2.getTerre() == terre or a2.int1.getTerre() == terre or a2.int2.getTerre() == terre) and ((isFirstRoute and a1.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a1,True)) or (not(isFirstRoute) and a1.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a1,True))) and ((isSecondRoute and a2.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a2,True)) or (not(isSecondRoute) and a2.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a2,True))) and ((isFirstRoute and a1.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a1,True)) or (not(isFirstRoute) and a1.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a1,True))) and ((isSecondRoute and a2.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a2,True)) or (not(isSecondRoute) and a2.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a2,True)))
 
     @staticmethod
     @protection
-    def jouer_construction_routes(joueur,terre,a1,a2):
+    def jouer_construction_routes(joueur,terre,isFirstRoute,a1,isSecondRoute,a2):
             joueur.payer(terre,Cartes.CONSTRUCTION_ROUTES)
-            Jeu.construire_route(joueur,a1,True)
-            Jeu.construire_route(joueur,a2,True)
+            if isFirstRoute:
+                Jeu.construire_route(joueur,a1,True)
+            else:
+                Jeu.construire_bateau(joueur,a1,True)
+            if isSecondRoute:
+                Jeu.construire_route(joueur,a2,True)
+            else:
+                Jeu.construire_bateau(joueur,a2,True)
+                
 
     @staticmethod
     def peut_jouer_monopole(joueur,terre,t1, jvols):
