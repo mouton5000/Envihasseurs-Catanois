@@ -74,6 +74,21 @@ class Joueur:
     def peut_payer(self,terre,cartes):
         return cartes <= self.getCartes(terre)
 
+    def ressource_aleatoire(self,terre):
+        i = random.Random().randint(1,5)
+        if (i == 1):
+            carte = Cartes.ARGILE
+        elif i == 2:
+            carte = Cartes.BLE
+        elif i == 3:
+            carte = Cartes.BOIS
+        elif i == 4:
+            carte = Cartes.CAILLOU
+        elif i == 5:
+            carte = Cartes.MOUTON
+        self.setCartes(terre,self.getCartes(terre) + carte)
+        return carte
+
     def piocher_developpement(self):
         i = random.Random().randint(1,5)
         if (i == 1):
@@ -296,8 +311,8 @@ class Jeu:
 
     @staticmethod
     def peut_construire_colonie(j,intersection):
-        if not j.enRuine and intersection.colonie == 0 and not (intersection.isMaritime()) and j.peut_payer(intersection.getTerre(), Tarifs.COLONIE)  :
-            
+        if not j.enRuine and (intersection.colonie == 0 or (intersection.colonie.joueur.enRuine and j in intersection.colonie.deblayeurs24)) and not (intersection.isMaritime()) and j.peut_payer(intersection.getTerre(), Tarifs.COLONIE)  :
+    
             for int in intersection.neigh:
                 if int.colonie != 0:
                     return False
@@ -310,7 +325,10 @@ class Jeu:
     @staticmethod
     @protection
     def construire_colonie(j, intersection):
-        Colonie(j, intersection)
+        if(intersection.colonie == 0):
+            Colonie(j, intersection)
+        else:
+            intersection.colonie.changer_proprietaire(j)
         terre = intersection.getTerre()
         j.payer(terre, Tarifs.COLONIE)
         j.addStaticPoint(terre,1)
@@ -320,7 +338,7 @@ class Jeu:
 
     @staticmethod
     def peut_construire_route(j, arrete, construction_route = False):
-        if not j.enRuine and arrete.route == 0 and not(arrete.isMaritime()) and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.ROUTE)):
+        if not j.enRuine and (arrete.route == 0 or arrete.route.joueur.enRuine) and not(arrete.isMaritime()) and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.ROUTE)):
             if (arrete.int1.colonie != 0 and arrete.int1.colonie.joueur == j) or (arrete.int2.colonie != 0 and arrete.int2.colonie.joueur == j):
                 return True
             for a in arrete.neighb():
@@ -331,7 +349,10 @@ class Jeu:
     @staticmethod
     def construire_route(j,arrete, construction_route = False):
         if construction_route or Jeu.peut_construire_route(j,arrete):
-            Route(j,arrete)
+            if arrete.route == 0:
+                Route(j,arrete)
+            else:
+                arrete.route.changer_proprietaire(j)
             terre = arrete.getTerre()
             if not construction_route:
                 j.payer(terre,Tarifs.ROUTE)
@@ -721,3 +742,23 @@ class Jeu:
             j.payer(terre,t1*r)
         joueur.recevoir(terre,t1*i)
 
+    @staticmethod
+    def peut_fouiller(joueur,intersection):
+        b = not joueur.enRuine and intersection.getTerre() in joueur.terres and intersection.colonie != 0 and intersection.colonie.joueur.enRuine and not joueur in intersection.colonie.deblayeurs
+        if not b:
+            return False
+        else:
+            for int in intersection.neigh:
+                a = int.lien(intersection)
+                if a.route != 0 and a.route.joueur == joueur:
+                    return True
+            return False
+
+    @staticmethod
+    @protection
+    def fouiller(joueur,intersection):
+        colonie = intersection.colonie
+        colonie.deblayeurs.append(joueur)
+        if colonie.isVille:
+            joueur.ressource_aleatoire(intersection.getTerre())
+        joueur.ressource_aleatoire(intersection.getTerre())

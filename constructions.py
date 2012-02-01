@@ -12,7 +12,20 @@ class Colonie:
        int.colonie = self
        self.isVille = False
        j.colonies.append(self)
-    
+       self.deblayeurs = []
+       self.deblayeurs24 = []
+   
+    def changer_proprietaire(self,j):
+        if self.isVille:
+            self.joueur.villes.remove(self)
+        else:
+            self.joueur.colonies.remove(self)
+        self.joueur = j
+        j.colonies.append(self)
+        self.deblayeurs = []
+        self.deblayeurs24 = []
+        self.isVille = False
+ 
 	# Transforme la colonie en ville
     def evolue(self):
         self.isVille = True
@@ -74,10 +87,12 @@ class Route:
         self.joueur = j
         self.position = a
         a.route = self
-        self.prixLocation = Cartes.RIEN
-        self.locataires = []
         j.routes.append(self)
 
+    def changer_proprietaire(self,j):
+        self.joueur.routes.remove(self)
+        self.joueur = j
+        j.routes.append(self)
 
     def voisins_routables(self,l):
         a = self.position
@@ -221,6 +236,3 @@ class Bateau:
                 return True
         return False
 
-
-
-     

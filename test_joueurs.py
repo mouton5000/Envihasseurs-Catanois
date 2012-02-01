@@ -1941,9 +1941,98 @@ class TestCartesRessources(unittest.TestCase):
         j1.enRuine = False
 
 # Test sur l'intéraction entre un joueur en ruine et un autre joueur. Les tests sur les actions annulées d'un joueur en ruine sont effectuées ailleurs.
-    def test_ruines(self):
-        pass
+    def test_ruines_batiments(self):
+        j1 = self.j1 
+        j2 = self.j2
+        j3 = self.j3
 
+        
+        tg = self.tg
+        td = self.td
+        
+        # Si un joueur est en ruine, un autre peut construire une route partout où il avait des routes.
+        # Deblayage des villages et villes ruines, seulement si le joueur est en position de construire une colonie à cet endroit.
+
+        j3.enRuine = True
+        Colonie(j3,self.it[65])
+        col2 = Colonie(j3,self.it[43])
+        col2.evolue()
+        Colonie(j1,self.it[64])
+        Colonie(j2,self.it[44])
+        
+        self.assertFalse(Jeu.peut_fouiller(j1,self.it[75])) # Pas en ruine
+
+        a1 = self.it[54].lien(self.it[65])
+        a2 = self.it[54].lien(self.it[44])
+        a3 = self.it[54].lien(self.it[43])
+        a4 = self.it[75].lien(self.it[65])
+        a5 = self.it[64].lien(self.it[75])
+
+        Route(j3,a1)
+        Route(j3,a2)
+        Route(j3,a3)
+        Route(j1,a4)
+        Route(j1,a5)
+
+        c = CartesRessources(10,10,10,10,10)
+
+        j1.setCartes(tg,c)
+        j2.setCartes(tg,c)
+
+        self.assertTrue(Jeu.peut_construire_route(j1,a1))
+        self.assertTrue(Jeu.peut_construire_route(j2,a2))
+        self.assertFalse(Jeu.peut_construire_route(j2,a1)) # Pas de lien avec cette route
+
+        Jeu.construire_route(j2,a2)
+        self.assertEqual(a2.route.joueur,j2)
+        self.assertTrue(Jeu.peut_construire_route(j2,a1))
+
+        self.assertTrue(Jeu.peut_fouiller(j1,self.it[65]))
+        self.assertFalse(Jeu.peut_fouiller(j2,self.it[65])) # Pas de lien avec cette ruine
+        self.assertFalse(Jeu.peut_fouiller(j1,self.it[54])) # Pas de colonie ni de lien
+        self.assertFalse(Jeu.peut_fouiller(j2,self.it[54])) # Pas de colonie
+
+        self.assertFalse(Jeu.peut_construire_colonie(j1,self.it[65])) # Pas encore déblayée
+
+        Jeu.construire_route(j2,a1)
+        self.assertFalse(Jeu.peut_construire_colonie(j2,self.it[65])) # Pas encore déblayée
+        self.assertTrue(Jeu.peut_fouiller(j2,self.it[65]))
+
+        s = j1.getCartes(tg).size()
+        Jeu.fouiller(j1,self.it[65])
+        self.assertEqual(j1.getCartes(tg).size(),s+1)
+        self.assertFalse(Jeu.peut_fouiller(j1,self.it[65])) # Déjà fouillée
+        self.assertFalse(Jeu.peut_construire_colonie(j1,self.it[65])) # Il faut attendre 24h
+        self.it[65].colonie.deblayeurs24.append(j1)
+        self.assertTrue(Jeu.peut_construire_colonie(j1,self.it[65]))
+        self.assertTrue(Jeu.peut_fouiller(j2,self.it[65]))
+
+        Jeu.construire_colonie(j1,self.it[65])
+        self.assertEqual(self.it[65].colonie.joueur,j1)
+        self.assertFalse(Jeu.peut_fouiller(j2,self.it[65])) # Pas en ruine
+
+        Route(j1,self.it[53].lien(self.it[64]))
+        Route(j1,self.it[53].lien(self.it[43]))
+
+
+        self.assertTrue(Jeu.peut_fouiller(j1,self.it[43]))
+        s = j1.getCartes(tg).size()
+        Jeu.fouiller(j1,self.it[43])
+        self.assertEqual(j1.getCartes(tg).size(),s+2)
+        self.assertFalse(Jeu.peut_fouiller(j1,self.it[43])) # Déjà fouillée
+        self.assertFalse(Jeu.peut_construire_colonie(j1,self.it[43])) # Il faut attendre 24h
+        self.it[43].colonie.deblayeurs24.append(j1)
+        self.assertTrue(Jeu.peut_construire_colonie(j1,self.it[43]))
+        Jeu.construire_colonie(j1,self.it[43])
+        self.assertEqual(self.it[43].colonie.joueur,j1)
+        self.assertFalse(self.it[43].colonie.isVille)
+        
+        j3.enRuine = False
+
+
+    def test_ruines_bateaux(self):
+        pass
+        # Fouille des épaves et disparition des épaves au bout de 7 fouilles. Un bateau ne peut se déplacer sur une épave. Un bateau ne peut avoir de stock qui dépasse sa capacité suite à une fouille.
 
 if __name__ == '__main__':
     unittest.main()
