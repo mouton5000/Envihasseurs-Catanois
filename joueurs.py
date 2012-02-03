@@ -75,19 +75,8 @@ class Joueur:
         return cartes <= self.getCartes(terre)
 
     def ressource_aleatoire(self,terre):
-        i = random.Random().randint(1,5)
-        if (i == 1):
-            carte = Cartes.ARGILE
-        elif i == 2:
-            carte = Cartes.BLE
-        elif i == 3:
-            carte = Cartes.BOIS
-        elif i == 4:
-            carte = Cartes.CAILLOU
-        elif i == 5:
-            carte = Cartes.MOUTON
+        carte = CartesRessources.get_random_ressource()
         self.setCartes(terre,self.getCartes(terre) + carte)
-        return carte
 
     def piocher_developpement(self):
         i = random.Random().randint(1,5)
@@ -762,3 +751,25 @@ class Jeu:
         if colonie.isVille:
             joueur.ressource_aleatoire(intersection.getTerre())
         joueur.ressource_aleatoire(intersection.getTerre())
+
+
+    @staticmethod
+    def peut_fouiller_epave(b1,b2):
+        j1 = b1.joueur
+        j2 = b2.joueur
+        return j2.enRuine and not j1.enRuine and not j1 in b2.fouilleurs and len(b2.fouilleurs)<7 and (b1.position == b2.position or b1.position in b2.position.neighb())
+
+    @staticmethod
+    @protection
+    def fouiller_epave(b1,b2):
+        b2.fouilleurs.append(b1.joueur)
+        if b2.etat == Bateau.BateauType.TRANSPORT:
+            i = 1
+        elif b2.etat == Bateau.BateauType.CARGO:
+            i = 2
+        elif b2.etat == Bateau.BateauType.VOILIER:
+            i = 3
+        for j in range(i):
+            b1.append(CartesRessources.get_random_ressource())        
+
+

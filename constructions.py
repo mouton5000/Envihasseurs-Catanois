@@ -161,6 +161,7 @@ class Bateau:
         self.enEpave = False
         j.bateaux_transport.append(self)
         self.aBouge = False
+        self.fouilleurs = []
     
 	# Transforme ce bateau en Cargo si c'est un bateau de transport, ou en voillier si c'est un cargo.
     def evolue(self):

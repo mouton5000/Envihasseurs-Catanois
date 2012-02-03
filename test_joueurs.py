@@ -156,6 +156,7 @@ class TestCartesRessources(unittest.TestCase):
             j.bateaux_transport = []
             j.cargo = []
             j.voilier = []
+            j.enRuine = False
         self.tg.deplacer_brigand(self.h23)
         self.tg.deplacer_pirate(self.h44)
         if self.td.brigand != 0:
@@ -164,7 +165,7 @@ class TestCartesRessources(unittest.TestCase):
         if self.td.pirate != 0:
             self.td.pirate.position.voleur = 0
             self.td.pirate = 0
-                            
+                             
 # 2 niveaux de tests : le niveau joueur et le niveau conflits. Quand un joueur joue il a deja des restrictions de son jeu (par exemple, pas question de lui proposer de construire une colonie n'importe ou). A ce niveau, toute verite autre que celle de la racine de l'arbre d'action est virtuelle. Le niveau des conflits s'occupe de realiser les actions des arbres d'action et va donc devoir faire plus de verification. Par exemple, on ne peut pas empecher un joueur de deaplcer un bateau sur l'emplacement d'un autre bateau car il est possible que ce dernier soit deplace avant et laisse son emplacement disponible. Donc cette verification ne peut se faire que pendant la phase de resolution.
 #
 # Donc pour chaque test : on separe bien les verifications de type "pendant que le joueur joue" et creation des actions virtuelles de l'arbre d'un cote, et "pendant que le joueur dort" et actions irreversibles de l'autre.
@@ -1941,7 +1942,7 @@ class TestCartesRessources(unittest.TestCase):
         j1.enRuine = False
 
 # Test sur l'intéraction entre un joueur en ruine et un autre joueur. Les tests sur les actions annulées d'un joueur en ruine sont effectuées ailleurs.
-    def test_ruines_batiments(self):
+    def test_fouiller_ruines_batiments(self):
         j1 = self.j1 
         j2 = self.j2
         j3 = self.j3
@@ -2030,9 +2031,104 @@ class TestCartesRessources(unittest.TestCase):
         j3.enRuine = False
 
 
-    def test_ruines_bateaux(self):
-        pass
+    def test_fouiller_epaves(self):
         # Fouille des épaves et disparition des épaves au bout de 7 fouilles. Un bateau ne peut se déplacer sur une épave. Un bateau ne peut avoir de stock qui dépasse sa capacité suite à une fouille.
 
+        j1 = self.j1
+        j2 = self.j2
+        j3 = self.j3
+        j4 = Joueur(4)
+        j5 = Joueur(5)
+        j6 = Joueur(6)
+        j7 = Joueur(7)
+        j8 = Joueur(8)
+        j9 = Joueur(9)
+
+        b1 = Bateau(j1,self.it[46].lien(self.it[57]))
+        b2 = Bateau(j2,self.it[46].lien(self.it[56]))
+        b22 = Bateau(j2,self.it[46].lien(self.it[36]))
+        b3 = Bateau(j3,self.it[25].lien(self.it[36]))
+        b4 = Bateau(j4,self.it[46].lien(self.it[57]))
+        b5 = Bateau(j5,self.it[46].lien(self.it[57]))
+        b6 = Bateau(j6,self.it[46].lien(self.it[57]))
+        b7 = Bateau(j7,self.it[46].lien(self.it[57]))
+        b8 = Bateau(j8,self.it[46].lien(self.it[57]))
+        b9 = Bateau(j9,self.it[46].lien(self.it[57]))
+
+        b7.evolue()
+        b7.evolue()
+        b8.evolue()
+        
+        j4.terres = [self.tg,self.td]
+        j5.terres = [self.tg,self.td]
+        j6.terres = [self.tg,self.td]
+        j4.mains = [0,0]
+        j5.mains = [0,0]
+        j6.mains = [0,0]
+
+        j7.terres = [self.tg,self.td]
+        j8.terres = [self.tg,self.td]
+        j9.terres = [self.tg,self.td]
+        j7.mains = [0,0]
+        j8.mains = [0,0]
+        j9.mains = [0,0]
+
+        self.assertFalse(Jeu.peut_fouiller_epave(b2,b1)) # Pas encore en ruine
+
+        j1.enRuine = True
+        self.assertFalse(Jeu.peut_fouiller_epave(b1,b1)) # Joueur en ruine
+        self.assertFalse(Jeu.peut_fouiller_epave(b3,b1)) # Trop loin
+        self.assertTrue(Jeu.peut_fouiller_epave(b2,b1))
+        self.assertTrue(Jeu.peut_fouiller_epave(b22,b1))
+        self.assertTrue(Jeu.peut_fouiller_epave(b7,b1))
+        self.assertTrue(Jeu.peut_fouiller_epave(b8,b1))
+        
+        b2.cargaison = Cartes.RIEN 
+        Jeu.fouiller_epave(b2,b1)
+        self.assertEqual(b2.cargaison.size(),1)
+        self.assertFalse(Jeu.peut_fouiller_epave(b22,b1)) # A déjà fouillé ce bateau
+        self.assertFalse(Jeu.peut_fouiller_epave(b2,b1)) # A déjà fouillé ce bateau
+
+        b3.deplacer(b2.position)
+        b1.evolue()
+        b3.cargaison = Cartes.RIEN 
+        Jeu.fouiller_epave(b3,b1)
+        self.assertEqual(b3.cargaison.size(),2)
+        self.assertFalse(Jeu.peut_fouiller_epave(b3,b1)) # A déjà fouillé ce bateau
+
+        b1.evolue()
+        b4.cargaison = Cartes.RIEN 
+        Jeu.fouiller_epave(b4,b1)
+        self.assertEqual(b4.cargaison.size(),3)
+        self.assertFalse(Jeu.peut_fouiller_epave(b4,b1)) # A déjà fouillé ce bateau
+         
+        b5.cargaison = CartesRessources(6,0,0,0,0)
+        self.assertTrue(Jeu.peut_fouiller_epave(b5,b1))
+        Jeu.fouiller_epave(b5,b1)
+        self.assertEqual(b5.cargaison.size(),6)
+        self.assertFalse(Jeu.peut_fouiller_epave(b5,b1)) # A déjà fouillé ce bateau
+
+        b6.cargaison = CartesRessources(4,0,0,0,0)
+        self.assertTrue(Jeu.peut_fouiller_epave(b6,b1))
+        Jeu.fouiller_epave(b6,b1)
+        self.assertEqual(b6.cargaison.size(),6)
+        self.assertFalse(Jeu.peut_fouiller_epave(b6,b1)) # A déjà fouillé ce bateau
+
+        b7.cargaison = Cartes.RIEN 
+        Jeu.fouiller_epave(b7,b1)
+        self.assertEqual(b7.cargaison.size(),3)
+        self.assertFalse(Jeu.peut_fouiller_epave(b7,b1)) # A déjà fouillé ce bateau
+       
+        self.assertTrue(Jeu.peut_fouiller_epave(b9,b1))
+ 
+        b8.cargaison = Cartes.RIEN 
+        Jeu.fouiller_epave(b8,b1)
+        self.assertEqual(b8.cargaison.size(),3)
+        self.assertFalse(Jeu.peut_fouiller_epave(b8,b1)) # A déjà fouillé ce bateau
+
+        self.assertFalse(Jeu.peut_fouiller_epave(b9,b1)) # Le bateau a coule
+
+        j1.enRuine = False
+
 if __name__ == '__main__':
-    unittest.main()
+   unittest.main()

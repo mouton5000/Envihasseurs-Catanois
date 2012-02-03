@@ -1,6 +1,7 @@
 # *-* coding: iso-8859-1 *-*
 
 import operator
+import random
 
 # Cette classe représente les cartes que les joueurs ont en main. 
 # Aussi bien les cartes de ressources que les cartes de développement. 
@@ -161,6 +162,22 @@ class CartesRessources(CartesGeneral):
 
     def __str__(self):
         return '(' + str(self.argile) +','+ str(self.ble) + ',' + str(self.bois) + ',' + str(self.caillou) + ',' + str(self.mouton) + ')'
+
+    @staticmethod
+    def get_random_ressource():
+        i = random.Random().randint(1,5)
+        if (i == 1):
+            carte = Cartes.ARGILE
+        elif i == 2:
+            carte = Cartes.BLE
+        elif i == 3:
+            carte = Cartes.BOIS
+        elif i == 4:
+            carte = Cartes.CAILLOU
+        elif i == 5:
+            carte = Cartes.MOUTON
+        return carte
+        
 
 # Permet une petite facilité quand on ne travaille qu'avec des certes de développement
 class CartesDeveloppement(CartesGeneral):
