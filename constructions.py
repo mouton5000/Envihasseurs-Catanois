@@ -2,20 +2,22 @@
 from plateau import *
 from cartes import *
 
-# Suprise totale, cette classe représente les pions de type colonies et ville. Cette classe ne se préoccupe pas des règles du jeu (pas de vérifications avant de faire les actions).
 class Colonie:
+    '''Suprise totale, cette classe représente les pions de type colonies et ville. Cette classe ne se préoccupe pas des règles du jeu (pas de vérifications avant de faire les actions).'''
 
-	# Pose sur le terrain une colonie du joueur j à l'emplacement int.
     def __init__(self,j,int):
-       self.joueur = j
-       self.position = int
-       int.colonie = self
-       self.isVille = False
-       j.colonies.append(self)
-       self.deblayeurs = []
-       self.deblayeurs24 = []
-   
+        '''Pose sur le terrain une colonie du joueur j à l'emplacement int.'''
+        self.joueur = j
+        self.position = int
+        int.colonie = self
+        self.isVille = False
+        j.colonies.append(self)
+        self.deblayeurs = []
+        self.deblayeurs24 = []
+
+
     def changer_proprietaire(self,j):
+        ''' Modifie le propriétaire d'un batiment, si c'est une ville, elle redevient une colonie. Elle perd tous ses déblayeurs.'''
         if self.isVille:
             self.joueur.villes.remove(self)
         else:
@@ -26,29 +28,29 @@ class Colonie:
         self.deblayeurs24 = []
         self.isVille = False
  
-	# Transforme la colonie en ville
     def evolue(self):
+        ''' Transforme la colonie en ville'''
         self.isVille = True
         self.joueur.colonies.remove(self)
         self.joueur.villes.append(self)
     
-	# Renvoie vrai si la colonie est au bord de la mer.
     def isCotier(self):
+        ''' Renvoie vrai si la colonie est au bord de la mer.'''
         return self.position.isCotier()
 
-	# Renvoie dans un tableau l'ensemble des ressources au format (numéro de pastille, ensemble des ressources acquises si ce numéro tombe, or acquis si ce numéro tombe).
-	# Par exemple, si la colonie est entourée par un hexagone Bois de pastille 4, un Argile de pastille 5 et un Or de pastille 5, la méthode renverra
-	# [(4,Cartes.BOIS,0), (5,Cartes.ARGILE,1)]
     def ressources(self):
-    	t = []
+        ''' Renvoie dans un tableau l'ensemble des ressources au format (numéro de pastille, ensemble des ressources acquises si ce numéro tombe, or acquis si ce numéro tombe).
+         Par exemple, si la colonie est entourée par un hexagone Bois de pastille 4, un Argile de pastille 5 et un Or de pastille 5, la méthode renverra
+         [(4,Cartes.BOIS,0), (5,Cartes.ARGILE,1)]'''
+        t = []
         for i in range(10):
            u = self.ressources_from_past(i+3)
            if u != 0:
                t.append((i+3,u[0],u[1]))
         return t
 
-	# Renvoie un 2 upplet contenant les ressources et le nombre de pépites d'or acquies si le nombre past tombe.
     def ressources_from_past(self,past):
+        ''' Renvoie un 2 upplet contenant les ressources et le nombre de pépites d'or acquies si le nombre past tombe.'''
         t = []
         bois = 0
         argile = 0
@@ -79,22 +81,24 @@ class Colonie:
         else:
             return 0
 
-# Tout autant une surprise, cette classe est identifiée au pion de type route.
 class Route:
+    ''' Tout autant une surprise, cette classe est identifiée au pion de type route.'''
 
-	# Pose une route appartenant au joueur j sur l'arrête a.
     def __init__(self,j,a):
+        ''' Pose une route appartenant au joueur j sur l'arrête a.'''
         self.joueur = j
         self.position = a
         a.route = self
         j.routes.append(self)
 
     def changer_proprietaire(self,j):
+        ''' Change le propriétaire de la route en j'''
         self.joueur.routes.remove(self)
         self.joueur = j
         j.routes.append(self)
 
     def voisins_routables(self,l):
+        ''' Renvoie l'ensemble des voisins de la route qui sont aussi des routes du meme joueur, et qui ne sont pas dans l, ou qui ne font pas faire un demi tour (par exemple sur un emplacement dhexagone, on a une étoile à 3 branches, si la dernière route de l est une de ces branche, que self en est une autre, alors la troisieme branche n'est pas un voisin routable'''
         a = self.position
         j = self.joueur
         ar = []
@@ -107,6 +111,7 @@ class Route:
 
    
     def est_extremite(self):
+        ''' Vérifie si la route est une extrémité du réseau du joueur.'''
         i1 = self.position.int1 
         i2 = self.position.int2
         if (i1.colonie != 0 and i1.colonie.joueur != self.joueur) or (i2.colonie != 0 and i2.colonie.joueur != self.joueur):
@@ -127,11 +132,12 @@ class Route:
                 b = b and (a.route == 0 or a.route.joueur != self.joueur)
         return b
 
-    # Renvoie la route la plus longue qui commence en  self.
     def rlplfr(self):
+        ''' Renvoie la route la plus longue qui commence en self.'''
         return self.rlplfrwb([])
 
     def rlplfrwb(self,beginning):
+        ''' Renvoie la route la plus longue commençant par beginning, passant par self'''
         beg2 = beginning + [self]
         vr = self.voisins_routables(beginning)
         i = 0
@@ -140,17 +146,17 @@ class Route:
         return i + 1
         
 
-# Classe identifiée au pion bateau
 class Bateau:
+    ''' Classe identifiée au pion bateau'''
 
-	# Ensemble des types de bateau qui existent
     class BateauType :
+        ''' Ensemble des types de bateau qui existent'''
         VOILIER = 'bateauType_voilier'
         CARGO = 'bateauType_cargo'
         TRANSPORT = 'bateauType_transport'
 
-	# Pose un bateau appartenant au joueur j sur l'arrête a
     def __init__(self,j,a):
+        ''' Pose un bateau appartenant au joueur j sur l'arrête a'''
         self.joueur = j
         self.position = a
         a.bateau = self
@@ -163,8 +169,8 @@ class Bateau:
         self.aBouge = False
         self.fouilleurs = []
     
-	# Transforme ce bateau en Cargo si c'est un bateau de transport, ou en voillier si c'est un cargo.
     def evolue(self):
+        ''' Transforme ce bateau en Cargo si c'est un bateau de transport, ou en voillier si c'est un cargo.'''
         if(self.etat == Bateau.BateauType.TRANSPORT):
              self.etat = Bateau.BateauType.CARGO
              self.cargaisonMax = 10
@@ -176,28 +182,28 @@ class Bateau:
              self.joueur.cargo.remove(self)
              self.joueur.voilier.append(self)
 
-	# Ajoute les cartes à la cargaison du bateau
     def append(self,cartes):
+        ''' Ajoute les cartes à la cargaison du bateau'''
         if (self.cargaison + cartes).size() <= self.cargaisonMax:
             self.cargaison += cartes
 
-	# Retire les cartes de la cargaison
     def remove(self,cartes):
+        ''' Retire les cartes de la cargaison'''
         if(cartes <= self.cargaison):
            self.cargaison -= cartes
 
-	# Pose ce bateau sur l'arrête a (sans se soucier de savoir s'il a le droit)
     def deplacer(self,a):
+        ''' Pose ce bateau sur l'arrête a (sans se soucier de savoir s'il a le droit)'''
         self.position.bateau = 0
         self.position = a
         a.bateau = self
 
-	# Vérifie si le bateau peut recevoir les cartes cr et donner (en même temps) les cartes cp.
     def peut_recevoir_et_payer(self,cr,cp):
+        ''' Vérifie si le bateau peut recevoir les cartes cr et donner (en même temps) les cartes cp.'''
         return cp <= self.cargaison and (self.cargaison + cr - cp).size() <= self.cargaisonMax
 
-	# Renvoie toutes les positions terrestres situées à deux hexagones d'un bateau sur la cote.
     def positions_colonisables(self):
+        ''' Renvoie toutes les positions terrestres situées à deux hexagones d'un bateau sur la cote.'''
         hc = []
         for i in [self.position.int1, self.position.int2]:
             for h in i.hexagones:
@@ -218,13 +224,14 @@ class Bateau:
                     intf.append(pos)
         return intf
 
-	# Vérifie que le bateau est sur un emplacement où il peut échanger avec une terre : un port ou une colonie cotière
     def en_position_echange(self):
+        ''' Vérifie que le bateau est sur un emplacement où il peut échanger avec une terre : un port ou une colonie cotière'''
         i1 = self.position.int1
         i2 = self.position.int2
         return  ((i1.colonie != 0 and i1.colonie.joueur == self.joueur) or (i2.colonie != 0 and i2.colonie.joueur == self.joueur) or i1.isPort() or i2.isPort()) and self.position.getTerre() in self.joueur.terres 
     
     def est_proche(self,terre):
+        ''' Est vrai si le bateau est à un déplacement d'un emplacement cotier'''
         ints = []
         ints += [self.position.int1,self.position.int2]
         ints += self.position.int1.neighb()
