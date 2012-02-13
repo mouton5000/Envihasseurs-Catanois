@@ -2130,5 +2130,110 @@ class TestCartesRessources(unittest.TestCase):
 
         j1.enRuine = False
 
+
+    def test_utiliser_forets_action(self):
+        j1 = self.j1
+       
+        j1.aller_en_racine()
+
+        i23 = self.it[23]
+        i24 = self.it[24]
+        i34 = self.it[34]
+        i35 = self.it[35]
+        i44 = self.it[44]
+        i45 = self.it[45]
+        i54 = self.it[54]
+        i55 = self.it[55]
+
+        a1 = i44.lien(i55)
+        a2 = i55.lien(i45)
+        a3 = i44.lien(i54)
+        a4 = i44.lien(i34)
+        a5 = i24.lien(i35)
+        a6 = i34.lien(i24)
+        a7 = i34.lien(i23)
+        a8 = i45.lien(i56)
+
+        Colonie(j1,i44)
+
+        self.assertFalse(j1.ajouter_action(Actions.CONSTRUIRE_COLONIE,i44)) # On ne peut rajouter une action sur la racine
+
+        j1.ajouter_actions() # Ajoute un fils à la racine
+        self.assertFalse(j1.ajouter_action("Yahoo")) # Ce texte n'existe pas
+        self.assertFalse(j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a1,a2)) # Trop de paramètres
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a1)#Ajoute une action au noeud courrant
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a2)
+        j1.ajouter_actions() # Ajoute au noeud courrant
+        j1.ajouter_action(Actions.CONSTRUIRE_COLONIE,i45)
+        
+        j1.ajouter_arbre() # Ajoute un arbre à la forêt, après le noeud courrant
+        j1.ajouter_actions()
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a5)
+        
+        j1.executer_actions() # Tout dois fonctionner
+        self.assertFalse(a1.route == 0)
+        self.assertFalse(a2.route == 0)
+        self.assertFalse(a5.route == 0)
+        self.assertFalse(i44.colonie == 0)
+        self.assertFalse(i45.colonie == 0)
+
+        j1.effacer_foret() # Supprime tous les noeuds
+        j1.ajouter_actions()
+
+        # Ensemble de 4 actions qui vont échouer à cause de la 3e
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a7)
+        j1.ajouter_action(Actions.CONSTRUIRE_COLONIE,i23)
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a4)
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a8)
+
+        j1.ajouter_alternative() # Ajoute un frère au noeud courrant
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a3)
+
+        j1.executer_actions() # Seul l'alternative doit fonctionner
+        self.assertFalse(a3.route == 0)
+        self.assertTrue(a4.route == 0)
+        self.assertTrue(a7.route == 0)
+        self.assertTrue(a8.route == 0)
+        self.assertTrue(i23.colonie == 0)
+
+        j1.effacer_foret()
+        j1.ajouter_actions()
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a7)
+        j1.ajouter_actions()
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a4)
+        j1.aller_en(1) # Revient au premier noeud, où la route r7 est construite
+        j1.ajouter_alternative()
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a6)
+        
+        j1.ajouter_arbre()
+        j1.ajouter_actions()
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a6)
+
+        # r7 est construite, mais par r4 car c'est impossible. L'arbre s'arrête alors car il n'y a pas d'alternative et r6 n'est pas construit, ni dans l'alternative, ni dans le même arbre.
+        j1.executer_actions()
+        self.assertFalse(a7.route == 0)
+        self.assertTrue(a4.route == 0)
+        self.assertTrue(a6.route == 0)
+
+        j1.effacer_foret()
+        j1.ajouter_actions()
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a7) # Déjà construit
+        j1.ajouter_alternative()
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a6)
+        
+        j1.ajouter_arbre()
+        j1.ajouter_actions()
+        j1.ajouter_action(Actions.CONSTRUIRE_ROUTE,a4) # Peut etre construit suite à la construiction de a6
+
+        
+        j1.executer_actions()
+        self.assertFalse(a4.route == 0)
+        self.assertFalse(a6.route == 0)
+
+    
+
+    def test_nuit(self):
+        pass
+
 if __name__ == '__main__':
    unittest.main()
