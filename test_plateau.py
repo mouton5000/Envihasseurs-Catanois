@@ -23,10 +23,10 @@ class TestIntersection(unittest.TestCase):
         self.i14 = Intersection(14)
         self.i15 = Intersection(15)
         self.i16 = Intersection(16)
-        self.h1 = Hexagone(self.i1,self.i2,self.i3,self.i4,self.i5,self.i6,HexaType.MER,0,CommerceType.BOIS,[self.i1,self.i2])
-        self.h2 = Hexagone(self.i1,self.i2,self.i7,self.i8,self.i9,self.i10,HexaType.BOIS,12)
-        self.h3 = Hexagone(self.i2,self.i3,self.i11,self.i12,self.i13,self.i7,HexaType.ARGILE,6,CommerceType.TOUS,[self.i2,self.i3,self.i11,self.i12,self.i13,self.i7])
-        self.h4 = Hexagone(self.i7,self.i13,self.i14,self.i15,self.i16,self.i8,HexaType.BOIS,12)
+        self.h1 = Hexagone(1,self.i1,self.i2,self.i3,self.i4,self.i5,self.i6,HexaType.MER,0,CommerceType.BOIS,0)
+        self.h2 = Hexagone(2,self.i1,self.i2,self.i7,self.i8,self.i9,self.i10,HexaType.BOIS,12)
+        self.h3 = Hexagone(3,self.i2,self.i3,self.i11,self.i12,self.i13,self.i7,HexaType.ARGILE,6,CommerceType.TOUS,0)
+        self.h4 = Hexagone(4,self.i7,self.i13,self.i14,self.i15,self.i16,self.i8,HexaType.BOIS,12)
         self.a1 = self.h2.liens[0]
         self.a2 = self.h2.liens[1]
         self.a3 = self.h2.liens[2]
@@ -111,10 +111,10 @@ class TestArrete(unittest.TestCase):
         self.i14 = Intersection(14)
         self.i15 = Intersection(15)
         self.i16 = Intersection(16)
-        self.h1 = Hexagone(self.i1,self.i2,self.i3,self.i4,self.i5,self.i6,HexaType.MER,0)
-        self.h2 = Hexagone(self.i1,self.i2,self.i7,self.i8,self.i9,self.i10,HexaType.BOIS,12)
-        self.h3 = Hexagone(self.i2,self.i3,self.i11,self.i12,self.i13,self.i7,HexaType.ARGILE,6)
-        self.h4 = Hexagone(self.i7,self.i13,self.i14,self.i15,self.i16,self.i8,HexaType.BOIS,12)
+        self.h1 = Hexagone(1,self.i1,self.i2,self.i3,self.i4,self.i5,self.i6,HexaType.MER,0)
+        self.h2 = Hexagone(2,self.i1,self.i2,self.i7,self.i8,self.i9,self.i10,HexaType.BOIS,12)
+        self.h3 = Hexagone(3,self.i2,self.i3,self.i11,self.i12,self.i13,self.i7,HexaType.ARGILE,6)
+        self.h4 = Hexagone(4,self.i7,self.i13,self.i14,self.i15,self.i16,self.i8,HexaType.BOIS,12)
         self.a1 = self.i1.lien(self.i2)
         self.a2 = self.i4.lien(self.i5)
         self.a3 = self.i8.lien(self.i9)
@@ -180,8 +180,8 @@ class TestHexagone(unittest.TestCase):
         self.i8 = Intersection(8)
         self.i9 = Intersection(9)
         self.i10 = Intersection(10)
-        self.h1 = Hexagone(self.i1,self.i2,self.i3,self.i4,self.i5,self.i6,HexaType.MER,0)
-        self.h2 = Hexagone(self.i1,self.i2,self.i7,self.i8,self.i9,self.i10,HexaType.BOIS,12)
+        self.h1 = Hexagone(1,self.i1,self.i2,self.i3,self.i4,self.i5,self.i6,HexaType.MER,0)
+        self.h2 = Hexagone(2,self.i1,self.i2,self.i7,self.i8,self.i9,self.i10,HexaType.BOIS,12)
 
     def test_str(self):
          self.assertEqual(str(self.h1),"mer,0,1--2--3--4--5--6")

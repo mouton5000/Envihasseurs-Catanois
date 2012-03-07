@@ -2,6 +2,9 @@
 
 import operator
 import random
+import redis
+
+REDIS = redis.StrictRedis()
 
 class CartesGeneral:
     ''' Cette classe représente les cartes que les joueurs ont en main. Aussi bien les cartes de ressources que les cartes de développement. Elles sont représentées ensembles de la même façon pour la simple raison qu'elles sont manipulées de la même façon. Il s'agit d'un upplet d'entiers, chaque coordonnée correspond à un type de carte.'''
@@ -148,6 +151,26 @@ class CartesGeneral:
             return 0
         return i
 
+
+    def setTo(self,key):
+        pipe = REDIS.pipeline()
+        for att in CartesGeneral.attributs:
+            pipe.set(key+':'+att,getattr(self,att))
+        pipe.set(key+':exists',0)
+        pipe.execute()
+
+    @staticmethod
+    def get(key):
+        pipe = REDIS.pipeline()
+        if REDIS.exists(key+':exists'):
+            for att in CartesGeneral.attributs:
+                pipe.get(key+':'+att)
+            values = pipe.execute()
+            valuesInt = []
+            for value in values:
+                valuesInt.append(int(value))
+            return CartesGeneral(*valuesInt)
+        return Cartes.RIEN
 
 
 class CartesRessources(CartesGeneral):
