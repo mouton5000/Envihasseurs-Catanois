@@ -103,7 +103,7 @@ class Joueur:
         elif i == 4:
             carte = Cartes.DECOUVERTE
         elif i == 5:
-            carte = Cartes.CONSTRUCTION_ROUTE
+            carte = Cartes.CONSTRUCTION_ROUTES
         self.recevoir(terre,carte)
         return carte
 
@@ -182,15 +182,15 @@ class Joueur:
     
     def set_chevalliers(self,terre, nb):
         ''' Ajoute un chevallier à l'armée du joueur sur cette terre'''
-        REDIS.set('J'+str(self.num)+':T'+str(terre.num)+':chevalliers', nb)
+        REDIS.set('J'+str(self.num)+':T'+str(terre.num)+':armee', nb)
                  
     def add_chevallier(self,terre):
         ''' Ajoute un chevallier à l'armée du joueur sur cette terre'''
-        REDIS.incr('J'+str(self.num)+':T'+str(terre.num)+':chevalliers')
+        return int(REDIS.incr('J'+str(self.num)+':T'+str(terre.num)+':armee'))
  
     def get_chevalliers(self,terre):
         ''' Renvoie l'armée du joueur sur cette terre'''
-        REDIS.get('J'+str(self.num)+':T'+str(terre.num)+':chevalliers')
+        return int(REDIS.get('J'+str(self.num)+':T'+str(terre.num)+':armee'))
     
     def get_carte_armee_la_plus_grande(self,terre):
         ''' Renvoie vrai si le joueur a l'armée la plus grande sur cette terre'''
@@ -204,7 +204,7 @@ class Joueur:
         else:
             return 0
 
-    def get_deplacement_voleur(self,terre,dep):
+    def get_deplacement_voleur(self,terre):
         ''' Renvoie si oui ou non, le joueur doit déplacer le voleur dans la journée sur cette terre.'''
         return (REDIS.get('J'+str(self.num)+':T'+str(terre.num)+':deplacementVoleur') == 'True')
 
@@ -258,7 +258,7 @@ class Joueur:
         if (self.get_carte_armee_la_plus_grande(terre)):
             p += 2
         if i!=-1:
-            return self.points[i] + self.getCartes(terre).get_cartes_de_type(Cartes.POINT_VICTOIRE) + p
+            return self.getStaticPoints(terre) + self.getCartes(terre).get_cartes_de_type(Cartes.POINT_VICTOIRE) + p
 
     def addRoot(self):
         return ForetAction.setNewRoot(self) 
@@ -492,6 +492,35 @@ class Jeu:
         j.payer(terre,Tarifs.DEVELOPPEMENT)
         return j.piocher_developpement(terre)
 
+    @staticmethod
+    def peut_coloniser(j,bateau,position,transfert):
+        if not j.enRuine and j.num == bateau.joueur and transfert.est_physiquement_possible() and transfert <= (bateau.cargaison-Tarifs.COLONIE) and Tarifs.COLONIE <= bateau.cargaison and position.isTerrestreOuCotier() and not j.aColoniseTerre(position.getTerre()):
+            col = Colonie.getColonie(position)
+            if col != 0:
+                return False
+            for i in position.neighb():
+                col = Colonie.getColonie(i)
+                if col != 0:
+                    return False
+            return position in bateau.positions_colonisables()
+        else:
+            return False
+
+
+    @staticmethod
+    @protection
+    def coloniser(j,bateau,position,transfert):
+            Colonie(j.num,position).save()
+            terre = position.getTerre()
+            j.addTerre(terre)
+            j.setCartes(terre,Cartes.RIEN)
+            j.setOr(terre,0)
+            j.set_chevalliers(terre,0)
+            j.set_route_la_plus_longue(terre,0)
+            j.setStaticPoints(terre,1)
+            j.set_deplacement_voleur(terre,False)
+            j.recevoir(terre,transfert)
+            bateau.remove(Tarifs.COLONIE + transfert)
 
 
 

@@ -386,26 +386,37 @@ class TestBateaux(TestJoueur):
 
 # Les joueurs colonisent d'autres terres
 
-    def teest_coloniser(self):
+    def test_coloniser(self):
         j1 = self.j1
         j2 = self.j2
         tg = self.tg
         td = self.td
-        j1.terres = [tg]
-        j2.terres = [tg,td]
+    
+        p = Plateau.getPlateau()
+
+        j1.addTerre(tg)
+        j2.addTerre(tg)
+        j2.addTerre(td)
         c = Cartes.RIEN
-        j1.mains = [c]
-        j1.aur = [0]
-        j1.chevalliers = [0]
-        j1.routes_les_plus_longues = [0]
-        j1.deplacement_voleur = [False]
-        j1.points = [0]
-        j2.mains = [c,c]
-        j2.aur = [0,0]
-        j2.chevalliers = [0,0]
-        j2.routes_les_plus_longues = [0,0]
-        j2.deplacement_voleur = [False,False]
-        j2.points = [0,0]
+        j1.setCartes(tg,c)
+        j1.setOr(tg,0)
+        j1.set_chevalliers(tg,0)
+        j1.set_route_la_plus_longue(tg,0)
+        j1.set_deplacement_voleur(tg,False)
+        j1.setStaticPoints(tg,0)
+        
+        j2.setCartes(tg,c)
+        j2.setOr(tg,0)
+        j2.set_chevalliers(tg,0)
+        j2.set_route_la_plus_longue(tg,0)
+        j2.set_deplacement_voleur(tg,False)
+        j2.setStaticPoints(tg,0)
+        j2.setCartes(td,c)
+        j2.setOr(td,0)
+        j2.set_chevalliers(td,0)
+        j2.set_route_la_plus_longue(td,0)
+        j2.set_deplacement_voleur(td,False)
+        j2.setStaticPoints(td,0)
           
         # Colonisation avec un bateau, l'emplacement de la colonie et la partie de la cargaison a transferer
         # Le bateau n'est pas sur une cote
@@ -418,21 +429,24 @@ class TestBateaux(TestJoueur):
         # Le transfert n'est physiquement pas valide
         # Une fois la colonisation faite, tester les ressources et la cargaison, la nouvelle terre, la nouvelle main et la nouvelle qtt d'or du colon
 
-        i47 = self.it[47] # Point de colonisation
-        i60 = self.it[60] # Colonisation trop lointaine
-        i57 = self.it[57] # Pour le bateau
-        i46 = self.it[46] # Pour le bateau (2)
-        ab1 = i47.lien(i57)
-        ab12 = i57.lien(i46)
-        i48 = self.it[48] # Pour aller plus loin
-        i58 = self.it[58] # Pour aller plus loin
-        i38 = self.it[38] # Pour mettre une colonie de j2
-        i93 = self.it[93] # Bteau du joueur 2
-        i104 = self.it[104] # Bateau du joueur 2
-        ab2 = i93.lien(i104)
+        i1 = p.it(48) # Point de colonisation
+        i2 = p.it(90) # Colonisation trop lointaine
+        i3 = p.it(47) # Pour le bateau
+        i4 = p.it(57) # Pour le bateau (2)
+        a1 = i1.lien(i3) # Arrete initiale du bateau
+        a2 = i3.lien(i4) # Arrete du bateau après déplacement
+        i5 = p.it(50) # Sur un hexagone voisin
+        i6 = p.it(69) # Sur un hexagone voisin, mais proche d'une colonie adverse
+        i7 = p.it(79) # Pour mettre une colonie de j2
+        i8 = p.it(108) # Bateau du joueur 2
+        i9 = p.it(98) # Bateau du joueur 2
+        a3 = i8.lien(i9) # Arrete du bateau du joueur 2
         
-        b1 = Bateau(j1,ab1)
-        b2 = Bateau(j2,ab2)
+        b1 = Bateau(1,1,a1, Cartes.RIEN,Bateau.BateauType.TRANSPORT, False)
+        b2 = Bateau(2,2,a3, Cartes.RIEN,Bateau.BateauType.TRANSPORT, False)
+
+        b1.save()
+        b2.save()
 
         carg1 = CartesRessources(1,1,1,0,1) # Juste assez pour coloniser
         carg2 = CartesGeneral(3,1,3,0,1,1,0,0,1,0) # Juste assez pour coloniser et transferer
@@ -443,57 +457,58 @@ class TestBateaux(TestJoueur):
         transf2double = Cartes.BOIS * 0.5 # Transfert non entier
 
         b1.cargaison = carg1
-        self.assertTrue(Jeu.peut_coloniser(j1,ab1,i47,Cartes.RIEN))
-        self.assertTrue(Jeu.peut_coloniser(j1,ab1,i48,Cartes.RIEN))
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i60,Cartes.RIEN)) # Trop loin
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i57,Cartes.RIEN)) # Dans l'eau
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i47,transf1toomuch)) # Transfert trop eleve
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i47,transf1neg)) # Transfert negatif
+        self.assertTrue(Jeu.peut_coloniser(j1,b1,i1,Cartes.RIEN))
+        self.assertTrue(Jeu.peut_coloniser(j1,b1,i5,Cartes.RIEN))
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i2,Cartes.RIEN)) # Trop loin
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i3,Cartes.RIEN)) # Dans l'eau
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,transf1toomuch)) # Transfert trop eleve
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,transf1neg)) # Transfert negatif
         
 
         b1.cargaison = carg3
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i47,Cartes.RIEN)) # Pas assez de cargaison
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,Cartes.RIEN)) # Pas assez de cargaison
         
         b2.cargaison = carg1
-        self.assertFalse(Jeu.peut_coloniser(j1,ab2,i93,Cartes.RIEN)) # Pas le bon bateau
+        self.assertFalse(Jeu.peut_coloniser(j1,b2,i8,Cartes.RIEN)) # Pas le bon bateau
 
         b1.cargaison = carg2
-        self.assertTrue(Jeu.peut_coloniser(j1,ab1,i47,transf2))
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i47,transf2double)) # Transfert non entier
+        self.assertTrue(Jeu.peut_coloniser(j1,b1,i1,transf2))
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,transf2double)) # Transfert non entier
 
-        j1.terres = [tg,td]
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i47,transf2)) # La terre est deja colonisee
+        b2.cargaison = carg1
+        self.assertFalse(Jeu.peut_coloniser(j2,b2,i9,Cartes.RIEN)) # La terre est deja colonisee
         
-        j1.terres = [tg]
-        c = Colonie(j2,i47)    
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i47,transf2)) # Il y a une colonie a cet emplacement
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i58,transf2)) # Il y a une colonie voisine
-        self.assertTrue(Jeu.peut_coloniser(j1,ab1,i48,transf2))
+        c = Colonie(2,i7)    
+        c.save()
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i7,transf2)) # Il y a une colonie a cet emplacement
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i6,transf2)) # Il y a une colonie voisine
+        self.assertTrue(Jeu.peut_coloniser(j1,b1,i5,transf2))
         
-        j1.enRuine = True
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i48,transf2))
-        # Joueur en ruine
-        j1.enRuine = False
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_coloniser(j1,b1,i48,transf2))
+#        # Joueur en ruine
+#        j1.enRuine = False
 
-        b1.deplacer(ab12)
-        self.assertFalse(Jeu.peut_coloniser(j1,ab12,i48,transf2)) # Le bateau n'est pas cotier
-        self.assertFalse(Jeu.peut_coloniser(j1,ab1,i48,transf2)) # Pas de bateau
-        b1.deplacer(ab1)
-        Jeu.coloniser(j1,ab1,i48,transf2)
+        b1.deplacer(a2)
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i5,transf2)) # Le bateau n'est pas cotier
+        b1.deplacer(a1)
+        b1.aBouge = True
+        self.assertTrue(Jeu.peut_coloniser(j1,b1,i5,transf2)) # Le bateau n'est pas cotier
+        Jeu.coloniser(j1,b1,i5,transf2)
         
 
-        self.assertNotEqual(j1.getTerreIndex(td),-1)
+        self.assertTrue(j1.aColoniseTerre(td))
         self.assertEqual(j1.getCartes(td),transf2)
         self.assertEqual(j1.getOr(td),0)
         self.assertEqual(j1.get_deplacement_voleur(td),False)
         self.assertEqual(j1.get_chevalliers(td),0)
         self.assertEqual(j1.get_route_la_plus_longue(td),0)
-        self.assertEqual(j1.getPoints(td),1) 
-        self.assertEqual(j1.get_carte_armee_la_plus_grande(td),False) 
-        self.assertEqual(j1.get_carte_route_la_plus_longue(td),False) 
-        j2.cartes_routes_les_plus_longues = [False,False]
-        self.assertEqual(b1.cargaison,carg2 - transf2 - Tarifs.COLONIE )
-        self.assertEqual(len(j1.colonies),1)
-        self.assertEqual(len(j1.routes),0)
+        self.assertEqual(j1.getStaticPoints(td),1) 
+#        self.assertEqual(j1.get_carte_armee_la_plus_grande(td),False) 
+#        self.assertEqual(j1.get_carte_route_la_plus_longue(td),False) 
+#        j2.cartes_routes_les_plus_longues = [False,False]
+        self.assertEqual(b1.cargaison,carg2 - transf2 - Tarifs.COLONIE)
+        self.assertEqual(len(j1.getColonies()),1)
+        self.assertEqual(len(j1.getRoutes()),0)
 
 
