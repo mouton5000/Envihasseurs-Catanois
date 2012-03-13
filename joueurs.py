@@ -111,7 +111,7 @@ class Joueur:
         ''' Vérifie si le joueur contient sur cette terre un commerce de type comType'''
         for c in self.getBatiments():
             c = int(c)
-            intersection = Plateau.getPlateau.it(c)
+            intersection = Plateau.getPlateau().it(c)
             ms = intersection.marcheNonBrigande()
             ps = intersection.portNonPirate()
             if ms != 0:
@@ -521,6 +521,73 @@ class Jeu:
             j.set_deplacement_voleur(terre,False)
             j.recevoir(terre,transfert)
             bateau.remove(Tarifs.COLONIE + transfert)
+
+    @staticmethod
+    def peut_echanger(j1,j2,terre,c1,c2):
+        ''' Le joueur j1 peut echanger avec le joueur j2 sur la terre, des cartes c1 du joueur j1 vers j2 et c2 du joueur j2 vers j1 si aucun joueur n'est en ruine, si sur cette terre ils peuvent payer cette somme, si c1 et c2 sont des entiers naturels, et uniquement des ressources (pas carte de développement), '''
+        return not j1.enRuine and not j2.enRuine and j1.aColoniseTerre(terre) and j2.aColoniseTerre(terre) and j1.peut_payer(terre,c1) and j2.peut_payer(terre,c2) and c1.est_ressource() and c2.est_ressource() and c1.est_physiquement_possible() and c2.est_physiquement_possible()
+
+    @staticmethod
+    @protection
+    def echanger(j1,j2,terre,c1,c2):
+        ''' Effectue si il est possible un échange de cartes entre j1 et j2 sur cette terre, avec j1 donnant c1 cartes et j2 donnant c2 cartes.'''
+        j1.payer(terre,c1)
+        j1.recevoir(terre,c2)
+        j2.payer(terre,c2)
+        j2.recevoir(terre,c1)
+    
+    @staticmethod
+    def peut_echanger_classique(j,terre,t1,t2):
+        ''' Un joueur j peut effectuer un echange classique (4 cartes de t1 contre une carte de t2) sur cette terre si il n'est pas en ruine, si t1 et t2 sont des  cartes de ressources, si il a colonisé la terre et si il peut payer 4 cartes de t1'''
+        return not j.enRuine and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.aColoniseTerre(terre) and j.peut_payer(terre,t1*4)
+
+    @staticmethod
+    @protection
+    def echanger_classique(j,terre,t1,t2):
+        ''' Effectue s'il est possible un échange classique de cartes (4 cartes de t1 contre 1carte de t2) sur cette terre, via le joueur j'''
+        j.payer(terre,t1*4)
+        j.recevoir(terre,t2)
+    
+    @staticmethod
+    def peut_echanger_commerce_tous(j,terre,t1,t2):
+        ''' Un joueur j peut effectuer un echange de commerce '?' (3 cartes de t1 contre une carte de t2) sur cette terre si il n'est pas en ruine, si t1 et t2 sont des  cartes de ressources, si il a un commerce de type '?' et si il peut payer 3 cartes de t1'''
+
+        return not j.enRuine and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and j.aColoniseTerre(terre) and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*3) and j.contient_commerce_utilisable(terre,CommerceType.TOUS)
+    
+    @staticmethod
+    @protection
+    def echanger_commerce_tous(j,terre,t1,t2):
+        ''' Effectue s'il est possible un échange commerce '?' de cartes (3 cartes de t1 contre 1carte de t2) sur cette terre, via le joueur j'''
+        j.payer(terre,t1*3)
+        j.recevoir(terre,t2)
+    
+    @staticmethod
+    def peut_echanger_commerce(j,terre,t1,t2):
+        ''' Un joueur j peut effectuer un echange de commerce spécialisé (2 cartes de t1 contre une carte de t2) sur cette terre si il n'est pas en ruine, si t1 et t2 sont des  cartes de ressources, si il a un commerce spécialisé en le type t1 et si il peut payer 2 cartes de t1'''
+        if not j.enRuine and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and j.aColoniseTerre(terre) and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*2):
+            if t1 == Cartes.ARGILE:
+                comType = CommerceType.ARGILE
+            elif t1 == Cartes.BOIS:
+                comType = CommerceType.BOIS
+            elif t1 == Cartes.BLE:
+                comType = CommerceType.BLE
+            elif t1 == Cartes.CAILLOU:
+                comType = CommerceType.CAILLOU
+            elif t1 == Cartes.MOUTON:
+                comType = CommerceType.MOUTON
+            else:
+                comType = 0
+            
+            return j.contient_commerce_utilisable(terre,comType)
+        return False
+    
+    @staticmethod
+    @protection
+    def echanger_commerce(j,terre,t1,t2):
+        ''' Effectue s'il est possible un échange de commerce spécialisé de cartes (2 cartes de t1 contre 1carte de t2) sur cette terre, via le joueur j'''
+        j.payer(terre,t1*2)
+        j.recevoir(terre,t2)
+
 
 
 

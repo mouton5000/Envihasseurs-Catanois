@@ -38,3 +38,207 @@ class TestTroc(TestJoueur):
         
         j1.setOr(td,1) #(en cas de bug)
         self.assertFalse(Jeu.peut_acheter_ressource(j1,td,Cartes.BLE)) # On ne peut acheter sur une terre non colonisée
+
+
+# Les joueurs echangent entre eux.
+    def test_echanger_joueur(self):
+        j1 = self.j1
+        j2 = self.j2
+        tg = self.tg
+        td = self.td
+        j1.addTerre(tg)
+        j2.addTerre(tg)
+        j2.addTerre(td)
+        c1 = CartesGeneral(3,0,3,3,3,1,0,0,0,0)
+        c2g = CartesRessources(3,3,3,1,0)
+        c2d = CartesRessources(1,0,0,1,0)
+        j1.setCartes(tg,c1)
+        j2.setCartes(tg,c2g)
+        j2.setCartes(td,c2d)
+        
+        c1ech1 = CartesRessources(1,0,0,0,0)
+        c1ech2 = CartesRessources(0,1,0,0,0)
+        c1ech3 = CartesGeneral(1,0,0,0,0,1,0,0,0,0)
+        c1ech1neg = CartesRessources(1,-1,0,0,0)
+        c1ech1double = CartesRessources(0.5,0,0,0,0)
+        c2ech = CartesRessources(0,0,0,1,0)
+        c2echneg = CartesRessources(0,0,0,1,-1)
+        c2echdouble = CartesRessources(0,0,0,0.5,0)
+
+
+        self.assertTrue(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2ech)) # Ok
+        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech2,c2ech)) # J1 n'a pas la somme requise
+        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech3,c2ech)) # J1 offre des cartes de developpement  
+        self.assertFalse(Jeu.peut_echanger(j1,j2,td,c1ech3,c2ech)) # J1 n'est pas sur td
+        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1neg,c2ech)) # Echange Negatif
+        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1double,c2ech)) # Echange non entier
+        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2echneg)) # Echange negatif
+        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2echdouble)) # Echante non entier
+
+        
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2ech))
+#        # Joueur en ruine
+#        j1.enRuine = False
+       
+        Jeu.echanger(j1,j2,tg,c1ech1,c2ech)
+        self.assertEqual(j1.getCartes(tg),c1 - c1ech1 + c2ech)        
+        self.assertEqual(j2.getCartes(tg),c2g + c1ech1 - c2ech)        
+
+
+# Les joueurs echangent avec les ports et marche.
+    def test_echanger_commerce(self):
+        
+        j1 = self.j1
+        tg = self.tg
+        td = self.td
+        j1.addTerre(tg)
+
+        p =Plateau.getPlateau()
+
+        c1 = CartesRessources(3,8,4,4,4)
+        cneg = CartesRessources(-1,2,0,0,0)
+        cdouble = CartesRessources(0.5,0.5,0,0,0)
+        ctoomuch = CartesRessources(2,0,0,0,0)
+
+        j1.setCartes(tg,c1)
+        
+        port = p.hexa(2)
+        marche = p.hexa(32)
+
+        br = tg.getBrigand()
+        pr = tg.getPirate()
+        br.deplacer(p.hexa(22))
+        pr.deplacer(p.hexa(1))
+        br.save()
+        pr.save()
+        
+        self.assertTrue(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertFalse(Jeu.peut_echanger_classique(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne Terre
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Aucun Commerce
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Aucun Commerce.
+        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.ARGILE,Cartes.BOIS)) # Pas assez de argile
+        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
+        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,cdouble,Cartes.BOIS)) # Echante non entier
+        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,ctoomuch,Cartes.BOIS)) # Trop de demande
+        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,cneg)) # Echange negatif
+        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,cdouble)) # Echange non entier
+        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,ctoomuch)) # Trop de demande
+        
+        
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+#        # Joueur en ruine
+#        j1.enRuine = False
+       
+        Jeu.echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE)
+        self.assertEqual(j1.getCartes(tg), CartesRessources(4,8,0,4,4))
+
+        c1 = CartesRessources(2,6,3,3,3)
+        j1.setCartes(tg,c1)
+        br.deplacer(p.hexa(22))
+        pr.deplacer(p.hexa(1))
+        br.save()
+        pr.save()
+        
+        Colonie(1,p.it(23)).save()
+        port.commerceType = CommerceType.TOUS
+        self.assertTrue(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne terre
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,cdouble,Cartes.BOIS)) # Echante non entier
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,ctoomuch,Cartes.BOIS)) # Trop de demande
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,cneg)) # Echange negatif
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,cdouble)) # Echange non entier
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,ctoomuch)) # Trop de demande
+        pr.deplacer(port)
+        pr.save()
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Pirate
+
+        br.deplacer(p.hexa(22))
+        pr.deplacer(p.hexa(1))
+        br.save()
+        pr.save()
+        
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+#        # Joueur en ruine
+#        j1.enRuine = False
+       
+        Jeu.echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)
+        self.assertEqual(j1.getCartes(tg), CartesRessources(3,6,0,3,3))
+
+        c1 = CartesRessources(1,4,2,2,2)
+        j1.setCartes(tg,c1)
+        port.commerceType = CommerceType.BOIS
+        self.assertTrue(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne terre
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,cdouble,Cartes.BOIS)) # Echante non entier
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,ctoomuch,Cartes.BOIS)) # Trop de demande
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,cneg)) # Echange negatif
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,cdouble)) # Echange non entier
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,ctoomuch)) # Trop de demande
+        pr.deplacer(port)
+        pr.save()
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Pirate
+
+        br.deplacer(p.hexa(22))
+        pr.deplacer(p.hexa(1))
+        br.save()
+        pr.save()
+        
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+#        # Joueur en ruine
+#        j1.enRuine = False
+        
+        Jeu.echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)
+        self.assertEqual(j1.getCartes(tg), CartesRessources(2,4,0,2,2))
+        
+        j2 = self.j2
+        j2.addTerre(tg)
+        c2 = CartesRessources(2,3,3,3,3)
+        j2.setCartes(tg,c2)
+        
+        Colonie(2,p.it(83)).save()
+        marche.commerceType = CommerceType.TOUS
+        self.assertTrue(Jeu.peut_echanger_commerce_tous(j2,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j2,tg,Cartes.ARGILE,Cartes.BLE)) ## Pas assez de ressource
+
+        br.deplacer(marche)
+        br.save()
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j2,tg,Cartes.BOIS,Cartes.ARGILE)) # Brigand
+        
+        br.deplacer(p.hexa(22))
+        pr.deplacer(p.hexa(1))
+        br.save()
+        pr.save()
+        Jeu.echanger_commerce_tous(j2,tg,Cartes.BOIS,Cartes.ARGILE)
+        self.assertEqual(j2.getCartes(tg), CartesRessources(3,3,0,3,3))
+
+        c2 = CartesRessources(1,2,2,2,2)
+        j2.setCartes(tg,c2)
+        marche.commerceType = CommerceType.BOIS
+        self.assertTrue(Jeu.peut_echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertFalse(Jeu.peut_echanger_commerce(j2,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
+
+        br.deplacer(marche)
+        br.save()
+        self.assertFalse(Jeu.peut_echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE)) # Brigand
+        
+        br.deplacer(p.hexa(22))
+        pr.deplacer(p.hexa(1))
+        br.save()
+        pr.save()
+        
+#        j2.enRuine = True
+#        self.assertFalse(Jeu.peut_echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE))
+#        # Joueur en ruine
+#        j2.enRuine = False
+       
+        Jeu.echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE)
+        self.assertEqual(j2.getCartes(tg), CartesRessources(2,2,0,2,2))
+
