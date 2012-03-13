@@ -179,7 +179,11 @@ class Joueur:
     def getBatiments(self):
         ''' Renvoie toutes les intersection où se trouvent les batiments du joueur, tout type confondu'''
         return self.getColonies().union(self.getVilles())
-                
+    
+    def set_chevalliers(self,terre, nb):
+        ''' Ajoute un chevallier à l'armée du joueur sur cette terre'''
+        REDIS.set('J'+str(self.num)+':T'+str(terre.num)+':chevalliers', nb)
+                 
     def add_chevallier(self,terre):
         ''' Ajoute un chevallier à l'armée du joueur sur cette terre'''
         REDIS.incr('J'+str(self.num)+':T'+str(terre.num)+':chevalliers')
@@ -200,10 +204,13 @@ class Joueur:
         else:
             return 0
 
+    def get_deplacement_voleur(self,terre,dep):
+        ''' Renvoie si oui ou non, le joueur doit déplacer le voleur dans la journée sur cette terre.'''
+        return (REDIS.get('J'+str(self.num)+':T'+str(terre.num)+':deplacementVoleur') == 'True')
+
     def set_deplacement_voleur(self,terre,dep):
-        i = self.getTerreIndex(terre)
-        if i!=-1:
-            self.deplacement_voleur[i] = dep
+        ''' Définie si oui ou non, le joueur doit déplacer le voleur dans la journée sur cette terre.'''
+        REDIS.set('J'+str(self.num)+':T'+str(terre.num)+':deplacementVoleur', False)
 
 
     def get_route_la_plus_longue(self,terre):
@@ -230,12 +237,15 @@ class Joueur:
         u = Jeu.get_route_la_plus_longue(terre)
         return u!=0 and u[0]== self
 
-    def addStaticPoint(self,terre,nb):
+    def addStaticPoints(self,terre,nb):
         ''' Ajoute nb points aux points statiques (ie batiments) de cette terre'''
         REDIS.incr('J'+str(self.num)+':T'+str(terre.num)+':points',nb)
 
     def getStaticPoints(self,terre):
-        REDIS.get('J'+str(self.num)+':T'+str(terre.num)+':points')
+        return int(REDIS.get('J'+str(self.num)+':T'+str(terre.num)+':points'))
+    
+    def setStaticPoints(self,terre, nb):
+        REDIS.set('J'+str(self.num)+':T'+str(terre.num)+':points', nb)
 
     def getPoints(self,terre):
         ''' Calcule le nombre de points de ce joueur sur cette terre'''
@@ -296,7 +306,7 @@ class Jeu:
         c = Colonie(j.num, intersection)
         terre = intersection.getTerre()
         j.payer(terre, Tarifs.COLONIE)
-        j.addStaticPoint(terre,1)
+        j.addStaticPoints(terre,1)
 
         c.save()
         print "yahoo"
@@ -351,7 +361,7 @@ class Jeu:
         colonie.evolue()
         terre = intersection.getTerre()
         j.payer(terre,Tarifs.VILLE)
-        j.addStaticPoint(terre,1)
+        j.addStaticPoints(terre,1)
 
         colonie.save()
     
