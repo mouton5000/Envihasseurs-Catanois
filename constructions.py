@@ -2,6 +2,7 @@
 from plateau import *
 from cartes import *
 from redis import *
+import joueurs
 
 REDIS = redis.StrictRedis()
 
@@ -58,7 +59,7 @@ class Colonie:
         else:
             i = 1
         for h in self.position.hexagones:
-            if(h.isBrigande() == 0 and h.past == past):
+            if(not h.isBrigande() and h.past == past):
                 if (h.etat == HexaType.BOIS):
                     bois += i
                 elif h.etat == HexaType.ARGILE:
@@ -143,7 +144,6 @@ class Route:
         for i in ir1:
             if i2 != i:
                 a = i.lien(i1)
-                print a
                 ar = Route.getRoute(a)
                 b = b and (ar == 0 or ar.joueur != self.joueur)
         if b:
@@ -183,7 +183,6 @@ class Route:
         i = 0
         for r in vr:
             i = max(i,r.rlplfrwb(beg2))
-        print self.position.num, str(self.position)+"   ", [str(a) for a in beginning], i
         return i + 1
         
     def save(self):
@@ -301,7 +300,8 @@ class Bateau:
         i2 = self.position.int2
         col1 = Colonie.getColonie(i1)
         col2 = Colonie.getColonie(i2)
-        return  ((col1 != 0 and col1.joueur == self.joueur) or (col2 != 0 and col2.joueur == self.joueur) or i1.isPort() or i2.isPort()) and self.joueur.aColonise(self.position.getTerre()) 
+        j = joueurs.Joueur(self.joueur)
+        return  ((col1 != 0 and col1.joueur == self.joueur) or (col2 != 0 and col2.joueur == self.joueur) or i1.isPort() or i2.isPort()) and j.aColoniseTerre(self.position.getTerre()) 
     
     def est_proche(self,terre):
         ''' Est vrai si le bateau est à un déplacement d'un emplacement cotier'''
@@ -371,9 +371,9 @@ class Bateau:
         key = 'B'+str(num)
         if REDIS.exists(key+':position') :
             a = Plateau.getPlateau().ar(int(REDIS.get(key+':position')))
-            j = int(REDIS.get(key+':joueur'))
+            jnum = int(REDIS.get(key+':joueur'))
             carg = CartesGeneral.get(key+':cargaison')
             etat = REDIS.get(key+':type')
             aBouge = (REDIS.get(key+':aBouge') == 'True')
-            return Bateau(num,j,a,carg,etat,aBouge)
+            return Bateau(num,jnum,a,carg,etat,aBouge)
         return 0

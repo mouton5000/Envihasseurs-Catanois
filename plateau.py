@@ -472,11 +472,11 @@ class Hexagone:
             return self.neigh
 
     def isBrigande(self):
-        v = Voleur.getBrigand(self.terre)
+        v = self.terre.getBrigand()
         return v != 0 and v.position.num == self.num
     
     def isPirate(self):
-        v = Voleur.getPirate(self.terre)
+        v = self.terre.getPirate()
         return v != 0 and v.position.num == self.num
     
 class Voleur:
@@ -502,21 +502,6 @@ class Voleur:
         else: 
             REDIS.set("T"+str(self.position.terre.num)+":pirate:position",self.position.num)
 
-    @staticmethod
-    def getBrigand(terre):
-        hexIdStr = REDIS.get("T"+str(terre.num)+":brigand:position")
-        if hexIdStr != None:
-            hexId = int(hexIdStr)
-            return Voleur(Plateau.getPlateau().hexa(hexId),Voleur.VoleurType.BRIGAND) 
-        return 0
-
-    @staticmethod
-    def getPirate(terre):
-        hexIdStr = REDIS.get("T"+str(terre.num)+":pirate:position")
-        if hexIdStr != None:
-            hexId = int(hexIdStr)
-            return Voleur(Plateau.getPlateau().hexa(hexId),Voleur.VoleurType.PIRATE)
-        return 0
 
  
 class Terre:
@@ -544,6 +529,19 @@ class Terre:
         self.joueurs.append(j)
         j.terre.append(self)
 
+    def getBrigand(self):
+        hexIdStr = REDIS.get("T"+str(self.num)+":brigand:position")
+        if hexIdStr != None:
+            hexId = int(hexIdStr)
+            return Voleur(Plateau.getPlateau().hexa(hexId),Voleur.VoleurType.BRIGAND) 
+        return 0
+
+    def getPirate(self):
+        hexIdStr = REDIS.get("T"+str(self.num)+":pirate:position")
+        if hexIdStr != None:
+            hexId = int(hexIdStr)
+            return Voleur(Plateau.getPlateau().hexa(hexId),Voleur.VoleurType.PIRATE)
+        return 0
 
 class Distances:
     ''' Classe qui gère le calcule des distances entre arrêtes ou intersection (l'algo est le même).'''
@@ -688,7 +686,7 @@ class Plateau:
                 hexsTerre.append(self.hexa(j))
             for j in t[2]:
                 hexsMer.append(self.hexa(j))
-            ter = Terre(k,nom,hexsTerre,hexsMer)
+            ter = Terre(k+1,nom,hexsTerre,hexsMer)
             self.terres.append(ter)
             k += 1
         

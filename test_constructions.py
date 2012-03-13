@@ -575,8 +575,8 @@ class TestVoleur(unittest.TestCase):
         self.assertEqual(REDIS.get('T1:brigand:position'),'2')       
 
  
-        v1 = Voleur.getPirate(self.t)
-        v2 = Voleur.getBrigand(self.t)
+        v1 = self.t.getPirate()
+        v2 = self.t.getBrigand()
         self.assertNotEqual(v1,0)
         self.assertNotEqual(v2,0)
         self.assertEqual(v1.position, self.h1)

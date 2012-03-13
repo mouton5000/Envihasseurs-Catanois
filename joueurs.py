@@ -40,11 +40,11 @@ class Joueur:
 
     def setCartes(self,terre,cartes):
         ''' Associe à la main du joueur sur cette terre les cartes données en paramètre'''
-        cartes.setTo('I'+str(self.num)+':T'+str(terre.num))
+        cartes.setTo('J'+str(self.num)+':T'+str(terre.num))
 
     def getCartes(self,terre):
         ''' Renvoie la main du joueur sur cette terre'''
-        return CartesGeneral.get('I'+str(self.num)+':T'+str(terre.num))
+        return CartesGeneral.get('J'+str(self.num)+':T'+str(terre.num))
     
     def payer(self,terre, cartes):
         ''' Déduis de la main du joueur sur cette terre les cartes données en paramètre'''
@@ -65,11 +65,11 @@ class Joueur:
 
     def getOr(self,terre):
         ''' Renvoie la quantité d'or du joueur présente sur cette terre'''
-        return int(REDIS.get(self.num+':'+terre+':or'))
+        return int(REDIS.get('J'+str(self.num)+':T'+str(terre.num)+':or'))
 
     def setOr(self,terre, nb):
         ''' Définit la quantité d'or du joueur présente sur cette terre'''
-        REDIS.set(self.num+':'+terre+':or', nb)
+        REDIS.set('J'+str(self.num)+':T'+str(terre.num)+':or', nb)
 
     def addOr(self,terre,nb):
         ''' Ajoute au stock d'or du joeuur sur cette terre nb lingots d'or'''
@@ -78,12 +78,16 @@ class Joueur:
     def payerOr(self,terre):
         ''' Déduis du stock d'or du joueur sur cette terre un lingot d'or'''
         self.addOr(terre,-1)
+
+    def aColoniseTerre(self,terre):
+        return REDIS.sismember('J'+str(self.num)+':terres', terre.num)
     
     def addTerre(self,terre):
         ''' Ajoute une terre aux terres colonisées du joueur'''
-        REDIS.sadd(self.num+':terres',terre)
+        REDIS.sadd('J'+str(self.num)+':terres',terre.num)
         self.setCartes(terre,Cartes.RIEN)
         self.setOr(terre,0)
+        REDIS.set('J'+str(self.num)+':T'+str(terre.num)+':chevalliers',0)
 
 
 
@@ -125,12 +129,17 @@ class Joueur:
         ''' Récolte les ressources du joueur en fonction du lancé de dés, sur toutes les terres'''
         for c in self.getBatiments():
             c = int(c)
-            terre = Plateau.getPlateau().it(c).getTerre()
-            res = Colonie.getColonie(c).ressources_from_past(des)
+            it = Plateau.getPlateau().it(c)
+            terre = it.getTerre()
+            res = Colonie.getColonie(it).ressources_from_past(des)
             if (res != 0):
                 self.addOr(terre,res[1])
                 self.recevoir(terre,res[0]) 
 
+    def getBateaux(self):
+        ''' Renvoie les identifiants des bateaux du joueur, tout type confondu'''
+        return self.getBateauxTransport() + self.getCargos() + self.getVoiliers()
+    
     def getBateauxTransport(self):
         return REDIS.smembers('J'+str(self.num)+':transports')
 
@@ -140,11 +149,9 @@ class Joueur:
     def getVoiliers(self):
         return REDIS.smembers('J'+str(self.num)+':voiliers')
     
-    def getBateaux(self):
-        ''' Renvoie les bateaux du joueur, tout type confondu'''
-        return self.getBateauxTransport() + self.getCargos() + self.getVoiliers()
     
     def getBateauxTransportPositions(self):
+        ''' Renvoie les arretes où se trouvent les bateaux du joueur, tout type confondu'''
         return REDIS.smembers('J'+str(self.num)+':transports:positions')
 
     def getCargosPositions(self):
@@ -201,32 +208,22 @@ class Joueur:
 
     def get_route_la_plus_longue(self,terre):
         ''' Renvoie la taille de la route la plus longue du joueur sur cette terre'''
-        i = self.getTerreIndex(terre)
-        if i!=-1:
-            return self.routes_les_plus_longues[i]
-        
+        return int(REDIS.get('J'+str(self.num)+':T'+str(terre.num)+':rlpl'))
+ 
     def set_route_la_plus_longue(self,terre, l):
         ''' Définie la route la plus longue sur cette terre comme étant de taille l'''
-        i = self.getTerreIndex(terre)
-        if i!=-1:
-            self.routes_les_plus_longues[i] = l
+        REDIS.set('J'+str(self.num)+':T'+str(terre.num)+':rlpl',l)
 
-    def route_la_plus_longue(self,terre, recalculer=False):
-        ''' Calcule si elle est non calculée ou si recalculer est vrai, la route la plus longue de ce joueur sur cette terre. Si elle est déjà calculée alors renvoie juste la valeur déjà calculée '''
-        if self.enRuine:
-            return 0
-        if terre in self.terres:
-            if recalculer:
+    def recalcul_route_la_plus_longue(self,terre):
+        ''' Calcule la route la plus longue de ce joueur sur cette terre. Si elle est déjà calculée alors renvoie juste la valeur déjà calculée '''
+        if self.aColoniseTerre(terre):
                 i = 0
-                for r in self.routes:
-                    if r.position.getTerre() == terre and r.est_extremite():
+                for ar in self.getRoutes():
+                    ar = Plateau.getPlateau().ar(int(ar))
+                    r = Route.getRoute(ar)
+                    if ar.getTerre() == terre and r.est_extremite():
                         i = max(i, r.rlplfr())
                 self.set_route_la_plus_longue(terre,i)
-                return i
-            else:
-                return self.get_route_la_plus_longue(terre)
-        else:
-            return 0
                        
     def get_carte_route_la_plus_longue(self,terre):
         ''' Vérifie si ce joueur a la carte de la route al plus longue sur cette terre'''
@@ -269,6 +266,14 @@ class Jeu:
 # -----------------------------------------------------
 
     @staticmethod
+    def get_all_joueurs():
+        i = int(REDIS.get('NombreJoueurs'))
+        joueurs = []
+        for j in xrange(i):
+            joueurs.append(Joueur(j+1))
+        return joueurs
+
+    @staticmethod
     def peut_construire_colonie(j,intersection):
         ''' Un joueur peut construire une colonie si il n'est aps en ruine, si il ne la construit pas a un emplacement voisin d'une autre colonie, si il la construit sur un emplacement voisin d'une de ses routes, si cet emplacement est sur terre et si il peut payer la construiction.'''
         col = intersection.hasColonie()
@@ -294,12 +299,17 @@ class Jeu:
         j.addStaticPoint(terre,1)
 
         c.save()
+        print "yahoo"
+        for jj in Jeu.get_all_joueurs():
+            print "--->", jj.num, str(jj.get_route_la_plus_longue(terre))
+            jj.recalcul_route_la_plus_longue(terre)
+            print jj.get_route_la_plus_longue(terre), "<---"
+
 
     @staticmethod
     def peut_construire_route(j, arrete, construction_route = False):
         ''' Un joueur j peut construire une route sur l'arrete si il n'est pas en ruine, si il n'existe pas déjà de route non en ruine sur cet emplacement, si cette arrete est terrestre, si il peut payer ou s'il a jouer une carte développement de construction de route, et s'il existe une colonie ou une route voiine à cette arrete.'''
         rout = arrete.hasRoute()
-        print arrete,'<----'
         if not j.enRuine and not rout and not arrete.isMaritime() and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.ROUTE)):
             jcol1 = arrete.int1.getColonieJoueur()
             jcol2 = arrete.int2.getColonieJoueur()
@@ -320,9 +330,161 @@ class Jeu:
             if not construction_route:
                 j.payer(terre,Tarifs.ROUTE)
             r.save()
+            j.recalcul_route_la_plus_longue(terre)
             return True
         else:
             return False
+
+    @staticmethod
+    def peut_evoluer_colonie(j, intersection):
+        ''' Un joueur j peut faire evoluer une colonie si il n'est pas en ruine, si elle est a lui et si il peyt payer le cout de l'évolution'''
+        colonie = Colonie.getColonie(intersection)
+        if colonie == 0:
+            return False
+        return not j.enRuine and not colonie.isVille and colonie.joueur == j.num and j.peut_payer(intersection.getTerre(), Tarifs.VILLE)
+
+    @staticmethod
+    @protection
+    def evoluer_colonie(j,intersection):
+        ''' Evolue si c'est possible la colonie, via le joueur j et effectue le paiement'''
+        colonie = Colonie.getColonie(intersection)
+        colonie.evolue()
+        terre = intersection.getTerre()
+        j.payer(terre,Tarifs.VILLE)
+        j.addStaticPoint(terre,1)
+
+        colonie.save()
+    
+    @staticmethod
+    def peut_recolter_ressources(des):
+        ''' On peut lancer la récolte des réssources si les dés sont entre 2 et 12'''
+        if des < 2 or des == 7 or des > 12:
+            return False
+        else:
+            return True
+
+    @staticmethod
+    @protection
+    def recolter_ressources(des):
+        ''' Effectue pour tous les joueurs sur toutes les terres la récolte des ressources sauf s'ils sont en ruine'''
+        for j in Jeu.get_all_joueurs():
+            if not j.enRuine: 
+                j.recolter_ressources(des)
+    
+    @staticmethod
+    def peut_acheter_ressource(j,terre,carte):
+        ''' Un joueur j sur cette terre peut acheter contre un lingot d'or une carte de type carte, si il n'est pas en ruien, si il possède au moins un lingot et si carte est une carte de ressource'''
+        return not j.enRuine and j.aColoniseTerre(terre) and j.getOr(terre) > 0 and carte.est_ressource() and carte.size() == 1 and carte.est_physiquement_possible()
+
+    @staticmethod
+    @protection
+    def acheter_ressource(j,terre, carte):
+        ''' Effectue via le joueur j sur cette terre l'achat de cette carte si il est possible'''
+        j.payerOr(terre)
+        j.recevoir(terre,carte)
+
+# On suppose que chaque ile est separee d'au moins 2 arrete. Ca evite des ambiguites au niveau de la terre de construction.
+    @staticmethod
+    def peut_construire_bateau(j,arrete,construction_route = False):
+        ''' Le joueur j peut poser un bateau sur l'arrete si il n'est pas en ruine, et s'il l'arrete est maritime et s'il peyt payer ou s'il a joué une carte de développement construction de route, et si il existe une colonie cotiere voisine de l'arrete.'''
+        terre = arrete.getTerre()
+        # Si l'arrete n'a pas de terre, elle n'est surement pas reliée à la terre
+        if terre == 0:
+            return False
+        if not j.enRuine and arrete.isMaritimeOuCotier() and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.BATEAU_TRANSPORT)):
+            col1 = Colonie.getColonie(arrete.int1)
+            col2 = Colonie.getColonie(arrete.int2)
+            if (col1 != 0 and col1.joueur == j.num) or (col2 != 0 and col2.joueur == j.num):
+                return True
+        return False
+    
+    @staticmethod
+    def construire_bateau(j,arrete, construction_route = False):
+        ''' Pose, si c'est possible un bateau du joueur j sur l'arrete et effectue le paiement.'''
+        if construction_route or Jeu.peut_construire_bateau(j,arrete):
+            i = REDIS.get('lastBateauId')
+            if i == None:
+                i = 1
+                REDIS.set('lastBateauId',1)
+            b = Bateau(i,j.num,arrete,Cartes.RIEN,Bateau.BateauType.TRANSPORT,False)
+            if not construction_route:
+                j.payer(arrete.getTerre(),Tarifs.BATEAU_TRANSPORT)
+
+            b.save()
+            REDIS.incr('lastBateauId')
+            return True
+        else:
+            return False
+    
+
+    @staticmethod
+    def peut_deplacer_bateau(j,bateau,arrete):
+        ''' Le joueur j peut déplacer un bateau sur une arrete, si il n'est pas en ruine, si le bateau appartient à ce joueur, si le bateau n'est pas abordé par un bateau pirate, si il souhaite se déplacer sur une arrete maritime, si cette arrete est voisine de la position actuelle du bateau ou a 2 déplacements pour un voillier, et si ce bateau n'a pas déjà bougé'''
+        if bateau == 0:
+            return False
+        return not j.enRuine and bateau.joueur == j.num and not bateau.position.est_pirate() and arrete.isMaritimeOuCotier() and (arrete in bateau.position.neighb() or (bateau.etat == Bateau.BateauType.VOILIER and arrete in bateau.position.doubleNeighb() )) and not bateau.aBouge
+    
+    @staticmethod
+    @protection
+    def deplacer_bateau(j,bateau,arrete):
+        ''' Déplace si c'est possible le bateau via le joueur j sur l'arrete'''
+        bateau.deplacer(arrete)
+        bateau.aBouge = True
+        bateau.save()
+
+    @staticmethod
+    def peut_echanger_bateau(j,bateau,ct,cb):
+        ''' Le joueur j peut échanger avec ce bateau ct cartes de la terre où se trouve le bataeu vers le bateau et cb cartes du bateau vers la terre si il n'est pas en ruine, si le bateau appartient au joueur, si le bateau est sur une zone d'échange (colonie cotiere ou port), si il a assez de ressource sur la terre et dans le bateau et si les échanges sont des nombres entiers naturels.'''
+        return not j.enRuine and j.num == bateau.joueur and bateau.en_position_echange() and j.peut_payer(bateau.position.getTerre(), ct) and bateau.peut_recevoir_et_payer(ct,cb) and ct.est_physiquement_possible() and cb.est_physiquement_possible()
+
+    @staticmethod
+    @protection
+    def echanger_bateau(j,bateau,ct,cb):
+        ''' Echange si c'est possible des cartes entre la cargaison du bateau et la main de j sur la terre où se trouve le bateau, ct cartes depuis la terre vers le bateau et cb depuis le bateau'''
+        terre = bateau.position.getTerre()
+        j.payer(terre,ct)
+        j.recevoir(terre,cb)
+        bateau.remove(cb)
+        bateau.append(ct)
+        bateau.save()
+    
+    @staticmethod
+    def peut_evoluer_bateau(j,bateau):
+        ''' Le joueur j peut faire evoluer le bateau si il n'est pas en ruine, si le bateau est a lui, si le bateau est en zone d'échange, si le bateau n'est pas un voilier et si il peut payer l'évolution.'''
+        return not j.enRuine and j.num == bateau.joueur and bateau.en_position_echange() and ((bateau.etat == Bateau.BateauType.TRANSPORT and j.peut_payer(bateau.position.getTerre(), Tarifs.CARGO)) or (bateau.etat == Bateau.BateauType.CARGO and j.peut_payer(bateau.position.getTerre(), Tarifs.VOILIER)))
+
+    
+    @staticmethod
+    @protection
+    def evoluer_bateau(j,bateau):
+        ''' Evolue, si c'est possible le bateau via le joueur j et effectue le paiement'''
+        terre = bateau.position.getTerre()
+        if(bateau.etat == Bateau.BateauType.TRANSPORT):
+            bateau.evolue()
+            j.payer(terre,Tarifs.CARGO)
+            bateau.save()
+        elif bateau.etat == Bateau.BateauType.CARGO :
+            bateau.evolue()
+            j.payer(terre,Tarifs.VOILIER)
+            bateau.save()
+        else:
+            return False
+
+    @staticmethod
+    def peut_acheter_carte_developpement(j,terre):
+        ''' Un joueur j peut acheter une carte de développement sur la terre si il peut la payer'''
+        return not j.enRuine and j.aColoniseTerre(terre) and j.peut_payer(terre,Tarifs.DEVELOPPEMENT)
+   
+    @staticmethod
+    @protection 
+    def acheter_carte_developpement(j,terre):
+        ''' Pioche pour le joueur j sur cette terre, une carte de développement si c'est possible, et effectue le paiement.'''
+        j.payer(terre,Tarifs.DEVELOPPEMENT)
+        return j.piocher_developpement(terre)
+
+
+
+
 
 if __name__ == '__main__':
     j = Joueur("1")
