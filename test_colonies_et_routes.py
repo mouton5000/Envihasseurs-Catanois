@@ -16,7 +16,7 @@ class TestColonieEtRoute(TestJoueur):
         self.td = Plateau.getPlateau().ter(2)
         self.j1.set_route_la_plus_longue(self.tg,0)
         self.j2.set_route_la_plus_longue(self.tg,0)
-        REDIS.set('NombreJoueurs',2)
+        Joueur.setNbJoueurs(2)
 
     def test_construire_colonie(self):
         p = Plateau.getPlateau()

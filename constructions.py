@@ -118,6 +118,18 @@ class Colonie:
         else:
             return 0
 
+    @staticmethod
+    def hasColonie(it):
+        return REDIS.exists('I'+str(it.num)+':colonie')
+
+    @staticmethod
+    def getColonieJoueur(it):
+        num = REDIS.get('I'+str(it.num)+':colonie')
+        if num == None:
+            return -1
+        else:
+            return int(num)
+
 class Route:
     ''' Tout autant une surprise, cette classe est identifiée au pion de type route.'''
 
@@ -213,6 +225,20 @@ class Route:
             return Route(j,ar)
         else:
             return 0
+
+    @staticmethod
+    def hasRoute(ar):
+        return REDIS.exists('A'+str(ar.num)+':route')
+
+    @staticmethod
+    def getRouteJoueur(ar):
+        num = REDIS.get('A'+str(ar.num)+':route')
+        if num == None:
+            return -1
+        else:
+            return int(num)
+
+
 
 class Bateau:
     ''' Classe identifiée au pion bateau'''
@@ -377,3 +403,15 @@ class Bateau:
             aBouge = (REDIS.get(key+':aBouge') == 'True')
             return Bateau(num,jnum,a,carg,etat,aBouge)
         return 0
+
+    @staticmethod
+    def getBateaux(ar):
+        b = []
+        bn = REDIS.smembers('A'+str(ar.num)+':bateaux')
+        for n in bn:
+            b.append(Bateau.getBateau(int(n)))
+        return b
+
+    @staticmethod
+    def getBateauxNum(ar):
+        return REDIS.smembers('A'+str(ar.num)+':bateaux')

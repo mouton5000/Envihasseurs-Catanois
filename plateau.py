@@ -180,19 +180,6 @@ class Intersection:
                 if (h.etat != HexaType.MER) : self._terre = h.terre
         return self._terre
 
-    def getColonie(self):
-        return Colonie.getColonie(self)
-
-    def hasColonie(self):
-        return REDIS.exists('I'+str(self.num)+':colonie')
-
-    def getColonieJoueur(self):
-        num = REDIS.get('I'+str(self.num)+':colonie')
-        if num == None:
-            return -1
-        else:
-            return int(num)
-
 class Arrete:
     ''' Cette classe représente les liens entre les intersections, ou un côté d'un hexagone.'''
 
@@ -346,19 +333,7 @@ class Arrete:
                 return self.int2
         return 0
     
-    def getRoute(self):
-        return Route.getRoute(self)
-
-    def hasRoute(self):
-        return REDIS.exists('A'+str(self.num)+':route')
-
-    def getRouteJoueur(self):
-        num = REDIS.get('A'+str(self.num)+':route')
-        if num == None:
-            return -1
-        else:
-            return int(num)
-        
+ 
 class Hexagone:
     ''' Cette classe correspond à un hexagone du terrain.'''
 
@@ -513,8 +488,6 @@ class Terre:
         self.hexagones = hexsTerre
         self.espaceMarin = hexsMer
         self.nom = nom
-        self.joueurs = []
-
 
         for h in hexsTerre:
             h.terre = self
@@ -526,8 +499,24 @@ class Terre:
 
     def addJoueur(self, j):
         ''' Ajoute le joueur j aux joueur ayant colonisé cette terre'''
-        self.joueurs.append(j)
-        j.terre.append(self)
+        REDIS.rpush('T'+str(self.num)+':joueurs',j.num)
+
+    def getJoueurIndex(self, j):
+        ''' Renvoie le rang du joueur parmi les colon de cette terre'''
+        js = self.getJoueurs()
+        return js.index(str(j.num))
+    
+    def getJoueur(self,index):
+        ''' Renvoie le joueur en position index sur cette terre '''
+        return REDIS.lindex('T'+str(self.num)+':joueurs',index)
+    
+    def getJoueurs(self):
+        ''' Renvoie tous les joueurs ayant colonisé cette terre '''
+        return REDIS.lrange('T'+str(self.num)+':joueurs',0,-1)
+
+    def getNbJoueurs(self): 
+        ''' Renvoie le nombre de joueurs ayant colonisé cette terre'''
+        return REDIS.llen('T'+str(self.num)+':joueurs')
 
     def getBrigand(self):
         hexIdStr = REDIS.get("T"+str(self.num)+":brigand:position")

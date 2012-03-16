@@ -35,5 +35,6 @@ class TestJoueur(unittest.TestCase):
         Voleur(self.p.hexa(25),Voleur.VoleurType.BRIGAND).save()
         Voleur(self.p.hexa(4),Voleur.VoleurType.PIRATE).save()
 
+
 if __name__ == '__main__':
    unittest.main()

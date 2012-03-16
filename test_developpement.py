@@ -85,31 +85,33 @@ class TestDeveloppement(TestJoueur):
         self.assertEqual(tg.brigand.position,self.h32)
         self.assertEqual(j1.chevalliers,[1])
 
-    def teest_peut_jouer_decouverte(self):
+
+
+    def test_peut_jouer_decouverte(self):
         j1 = self.j1
         tg = self.tg
         td = self.td
-        j1.terres = [tg]
+        j1.addTerre(tg)
 
         c1 = CartesDeveloppement(0,0,0,3,0)
         c2 = Cartes.RIEN
         c3 = CartesDeveloppement(1,1,1,0,1)
         
-        d1 = CartesRessources(1,1,0,0,0)
-        dneg = CartesRessources(-1,1,1,1,0)
-        ddouble = CartesRessources(0.5,1.5,0,0,0)
-        d2 = CartesRessources(1,1,0,0,1)
-        d3 = CartesRessources(1,0,0,0,0)
-        d4 = CartesGeneral(1,0,0,0,0,1,0,0,0,0)
-        d5 = CartesGeneral(1,0,1,0,0,1,0,0,0,0)
+        d1 = CartesRessources(1,1,0,0,0) #ok
+        dneg = CartesRessources(-1,1,1,1,0) # négatif
+        ddouble = CartesRessources(0.5,1.5,0,0,0) # non entier
+        d2 = CartesRessources(1,1,0,0,1) # Trop de ressources
+        d3 = CartesRessources(1,0,0,0,0) # Pas assez de ressources
+        d4 = CartesGeneral(1,0,0,0,0,1,0,0,0,0) # Demande de carte de développement
+        d5 = CartesGeneral(1,0,1,0,0,1,0,0,0,0) # Bon nombre de ressources mais demande de carte de déevloppement en plus
 
         j1.setCartes(tg,c1)
         self.assertTrue(Jeu.peut_jouer_decouverte(j1,tg,d1))
         
-        j1.enRuine = True
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
-        # Joueur en ruine
-        j1.enRuine = False
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
+#        # Joueur en ruine
+#        j1.enRuine = False
         self.assertFalse(Jeu.peut_jouer_decouverte(j1,td,d1))
         self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,dneg))
         self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,ddouble))
@@ -123,40 +125,49 @@ class TestDeveloppement(TestJoueur):
         self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
 
         j1.setCartes(tg,c1)
-        j1.aur = [0]
+        j1.setOr(tg,0)
         Jeu.jouer_decouverte(j1,tg,d1)
         self.assertEqual(j1.getCartes(tg),d1 + Cartes.DECOUVERTE * 2)
-        self.assertEqual(j1.aur,[0])
+        self.assertEqual(j1.getOr(tg),0)
         
-    def teest_peut_jouer_construction_routes(self):
+    def test_peut_jouer_construction_routes(self):
 
+        p = Plateau.getPlateau()
 
         # le test sur la construction de route ou des bateaux n est pas fait ici
         j1 = self.j1
         tg = self.tg
         td = self.td
-        j1.terres = [tg]
+        j1.addTerre(tg)
 
-        Colonie(j1,self.it[23])
-        Colonie(j1,self.it[3])
-        Route(j1,self.it[23].lien(self.it[34])) 
+        i1 = p.it(54)
+        i2 = p.it(92)
+        i3 = p.it(44)
+        i4 = p.it(43)
+        i5 = p.it(64)
+        i6 = p.it(93)
+        i7 = p.it(102)
+
+        Colonie(1,i1).save()
+        Colonie(1,i2).save()
+        Route(1,i1.lien(i3)).save()
 
         c1 = CartesDeveloppement(0,0,0,0,3)
         c2 = Cartes.RIEN
         c3 = CartesDeveloppement(1,1,1,1,0)
         
-        a1 = self.it[23].lien(self.it[12])
-        a2 = self.it[34].lien(self.it[44])
-        a3 = self.it[3].lien(self.it[14])
-        a4 = self.it[3].lien(self.it[117])
+        a1 = i1.lien(i5)
+        a2 = i3.lien(i4)
+        a3 = i2.lien(i6)
+        a4 = i2.lien(i7)
 
         j1.setCartes(tg,c1)
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
         
-        j1.enRuine = True
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
-        # Joueur en ruine
-        j1.enRuine = False
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+#        # Joueur en ruine
+#        j1.enRuine = False
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a3))
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,False,a3))
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a3,False,a4))
@@ -169,59 +180,57 @@ class TestDeveloppement(TestJoueur):
         j1.setCartes(tg,c3)
         self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
 
-        j1.terres = [tg,td]
-        Colonie(j1,self.it[49])
-        a5 = self.it[49].lien(self.it[59])
+        j1.addTerre(td)
+        Colonie(1,p.it(59)).save()
+        a5 = p.it(49).lien(p.it(59))
         j1.setCartes(tg,c1)
         self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a5))
 
         j1.setCartes(tg,c1)
         Jeu.jouer_construction_routes(j1,tg,True,a1,True,a2)
         self.assertEqual(j1.getCartes(tg),Cartes.CONSTRUCTION_ROUTES * 2)
-        self.assertTrue(a1.route != 0)
-        self.assertTrue(a2.route != 0)
-        self.assertTrue(a1.route.joueur == j1)
-        self.assertTrue(a2.route.joueur == j1)
+        r1 = Route.getRoute(a1)
+        r2 = Route.getRoute(a2)
+        self.assertTrue(r1 != 0)
+        self.assertTrue(r2 != 0)
+        self.assertEqual(r1.joueur,j1.num)
+        self.assertEqual(r2.joueur,j1.num)
 
         j1.setCartes(tg,c1)
         Jeu.jouer_construction_routes(j1,tg,False,a3,False,a4)
         self.assertEqual(j1.getCartes(tg),Cartes.CONSTRUCTION_ROUTES * 2)
-        self.assertTrue(a3.bateau != 0)
-        self.assertTrue(a4.bateau != 0)
-        self.assertTrue(a3.bateau.joueur == j1)
-        self.assertTrue(a4.bateau.joueur == j1)
-        self.assertEqual(len(j1.bateaux_transport),2)
-        self.assertEqual(len(j1.cargo),0)
-        self.assertEqual(len(j1.voilier),0)
+        b3s = Bateau.getBateaux(a3)
+        b4s = Bateau.getBateaux(a4)
+        self.assertTrue(len(b3s) != 0)
+        self.assertTrue(len(b4s) != 0)
+        self.assertTrue(b3s[0].joueur == j1.num)
+        self.assertTrue(b4s[0].joueur == j1.num)
+        self.assertEqual(len(j1.getBateauxTransport()),2)
+        self.assertEqual(len(j1.getCargos()),0)
+        self.assertEqual(len(j1.getVoiliers()),0)
 
 
 
-    def teest_peut_jouer_monopole(self):
+    def test_peut_jouer_monopole(self):
 
         j1 = self.j1
         j2 = self.j2
-        j3 = self.j3
-        j4 = self.j4
+        j3 = Joueur(3)
+        j4 = Joueur(4)
         j5 = Joueur(5)
         j6 = Joueur(6)
 
         tg = self.tg
         td = self.td
 
-        j1.terres = [tg]
-        j2.terres = [tg,td]
-        j3.terres = [tg]
-        j4.terres = [tg]
-        j5.terres = [tg]
-        j6.terres = [td]
+        j1.addTerre(tg)
+        j2.addTerre(tg)
+        j2.addTerre(td)
+        j3.addTerre(tg)
+        j4.addTerre(tg)
+        j5.addTerre(tg)
+        j6.addTerre(td)
 
-        j1.mains = [0]
-        j2.mains = [0,0]
-        j3.mains = [0]
-        j4.mains = [0]
-        j5.mains = [0]
-        j6.mains = [0]
-        
         r = Cartes.ARGILE
         rch = Cartes.CHEVALLIER
         
@@ -240,10 +249,10 @@ class TestDeveloppement(TestJoueur):
         j6.setCartes(td,c4)
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[j2,j3,j4]))
         
-        j1.enRuine = True
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[j2,j3,j4]))
-        # Joueur en ruine
-        j1.enRuine = False
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[j2,j3,j4]))
+#        # Joueur en ruine
+#        j1.enRuine = False
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[j2,j3]))
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[j2]))
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[]))
