@@ -562,8 +562,8 @@ class TestVoleur(unittest.TestCase):
         self.t = Terre(1,'Antaria',[self.h2,self.h3,self.h4],[self.h1,self.h5])
         plateau.terres = [self.t]
 
-        self.v1 = Voleur(self.h1, Voleur.VoleurType.PIRATE)
-        self.v2 = Voleur(self.h2, Voleur.VoleurType.BRIGAND)
+        self.v1 = Voleur(self.h1, Voleur.VoleurType.PIRATE,self.t)
+        self.v2 = Voleur(self.h2, Voleur.VoleurType.BRIGAND,self.t)
         self.v1.save()
         self.v2.save()
          
@@ -571,6 +571,7 @@ class TestVoleur(unittest.TestCase):
     def test_bdd(self):
         self.assertTrue(REDIS.exists('T1:brigand:position'))
         self.assertTrue(REDIS.exists('T1:pirate:position'))
+        print REDIS.get('T1:pirate:position')
         self.assertEqual(REDIS.get('T1:pirate:position'),'1')       
         self.assertEqual(REDIS.get('T1:brigand:position'),'2')       
 

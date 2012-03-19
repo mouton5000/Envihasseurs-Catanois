@@ -38,7 +38,7 @@ class TestDeveloppement(TestJoueur):
 #        # Joueur en ruine
 #        j1.enRuine = False
         
-    def teest_jouer_chevalliers(self):
+    def test_jouer_chevalliers(self):
 
         # Le joueur 1 joue une carte de chevallier si il en a en main et s'il ne l'a pas achete recemment. Il l'ajoute a son armee locale et deplace le voleur.
         
@@ -46,14 +46,30 @@ class TestDeveloppement(TestJoueur):
         j2 = self.j2
         tg = self.tg
         td = self.td
-        j1.terres = [tg]
-        j2.terres = [tg,td]
+        j1.addTerre(tg)
+        j2.addTerre(td)
+       
+        j1.set_deplacement_voleur(tg,False) 
+        j2.set_deplacement_voleur(tg,False)
+        j2.set_deplacement_voleur(td,False)
 
-        Colonie(j2,self.it[86]) 
-        Colonie(j2,self.it[81]) 
+        p = Plateau.getPlateau()
+
+        Colonie(2,p.it(103)).save()
+        Colonie(2,p.it(90)).save()
         
-        self.tg.deplacer_brigand(self.h23)
-        self.td.brigand = Voleur(self.h26,Voleur.VoleurType)
+        h1 = p.hexa(42)
+        h2 = p.hexa(35)
+
+        desg = p.hexa(22)
+        desd = p.hexa(25)
+        
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
         
         br = Voleur.VoleurType.BRIGAND
         # Aucun test pour voleur ici, ils sont deja fait dans deplacer voleur, les regles sont les memes
@@ -65,25 +81,30 @@ class TestDeveloppement(TestJoueur):
         j2.setCartes(tg,Cartes.RIEN)
         j2.setCartes(td,Cartes.RIEN)
 
-        j1.setCartes(tg,c1)
-        self.assertTrue(Jeu.peut_jouer_chevallier(j1,tg,br,self.h32,j2))
-        
-        j1.enRuine = True
-        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,self.h32,j2))
-        # Joueur en ruine
-        j1.enRuine = False
-        
-        self.assertFalse(Jeu.peut_jouer_chevallier(j1,td,br,self.h37,j2))
-        j1.setCartes(tg,c2)
-        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,self.h32,j2))
-        j1.setCartes(tg,c3)
-        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,self.h32,j2))
+
 
         j1.setCartes(tg,c1)
-        j1.chevalliers = [0]
-        Jeu.jouer_chevallier(j1,tg,br,self.h32,j2)
-        self.assertEqual(tg.brigand.position,self.h32)
-        self.assertEqual(j1.chevalliers,[1])
+        self.assertTrue(Jeu.peut_jouer_chevallier(j1,tg,br,h1,j2))
+        
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,self.h32,j2))
+#        # Joueur en ruine
+#        j1.enRuine = False
+        
+        self.assertFalse(Jeu.peut_jouer_chevallier(j1,td,br,h2,j2))
+        j1.setCartes(tg,c2)
+        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,h1,j2))
+        j1.setCartes(tg,c3)
+        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,h1,j2))
+
+        j1.setCartes(tg,c1)
+        j1.set_chevalliers(tg,0)
+        self.assertTrue(Jeu.peut_jouer_chevallier(j1,tg,br,h1,j2))
+        Jeu.jouer_chevallier(j1,tg,br,h1,j2)
+        brg = tg.getBrigand()
+        self.assertEqual(brg.position,h1)
+        self.assertEqual(j1.get_chevalliers(tg),1)
+        self.assertEqual(j1.getCartes(tg),CartesDeveloppement(2,0,0,0,0))
 
 
 
@@ -291,3 +312,169 @@ class TestDeveloppement(TestJoueur):
         self.assertEqual(j2.getCartes(tg).get_cartes_de_type(r), 0)
         self.assertEqual(j3.getCartes(tg).get_cartes_de_type(r), 0)
         self.assertEqual(j4.getCartes(tg).get_cartes_de_type(r), 0)
+
+    def test_armee_la_plus_grande(self):
+        j1 = self.j1
+        j2 = self.j2
+        tg = self.tg
+        td = self.td
+        j1.addTerre(tg)
+        j1.addTerre(td)
+        j2.addTerre(tg)
+        j2.addTerre(td)
+       
+        j1.set_deplacement_voleur(tg,False) 
+        j1.set_deplacement_voleur(td,False) 
+        j2.set_deplacement_voleur(tg,False)
+        j2.set_deplacement_voleur(td,False)
+
+        p = Plateau.getPlateau()
+
+        Colonie(1,p.it(42)).save()
+        Colonie(1,p.it(88)).save()
+        Colonie(2,p.it(35)).save()
+        Colonie(2,p.it(90)).save()
+        
+        h1 = p.hexa(16)
+        h2 = p.hexa(17)
+        h1d = p.hexa(39)
+
+        desg = p.hexa(22)
+        desd = p.hexa(25)
+        
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+        
+        br = Voleur.VoleurType.BRIGAND
+        # Aucun test pour voleur ici, ils sont deja fait dans deplacer voleur, les regles sont les memes
+
+        c1 = CartesDeveloppement(100,0,0,0,0)
+        
+        j1.setCartes(tg,c1)
+        j2.setCartes(tg,c1)
+        j2.setCartes(td,c1)
+
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),0)
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),0)
+
+        Jeu.jouer_chevallier(j1,tg,br,h2,j2)
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+        
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),0)
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),0)
+        
+        Jeu.jouer_chevallier(j1,tg,br,h2,j2)
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+        
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),0)
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),0)
+        
+        Jeu.jouer_chevallier(j1,tg,br,h2,j2)
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+        
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),(1,3))
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),0)
+
+        Jeu.jouer_chevallier(j2,tg,br,h1,j1)
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+        
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),(1,3))
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),0)
+
+        Jeu.jouer_chevallier(j2,tg,br,h1,j1)
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+        
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),(1,3))
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),0)
+
+        Jeu.jouer_chevallier(j2,tg,br,h1,j1)
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+        
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),(1,3))
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),0)
+        
+        Jeu.jouer_chevallier(j2,tg,br,h1,j1)
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+       
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),(2,4))
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),0)
+
+        Jeu.jouer_chevallier(j2,td,br,h1d,j1)
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+       
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),(2,4))
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),0)
+        
+        Jeu.jouer_chevallier(j2,td,br,h1d,j1)
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+       
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),(2,4))
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),0)
+       
+        Jeu.jouer_chevallier(j2,td,br,h1d,j1)
+        brg = tg.getBrigand()
+        brg.deplacer(desg)
+        brd = td.getBrigand()
+        brd.deplacer(desd)
+        brg.save()
+        brd.save()
+       
+        self.assertEqual(Jeu.get_armee_la_plus_grande(tg),(2,4))
+        self.assertEqual(Jeu.get_armee_la_plus_grande(td),(2,3))
+
+
+# Que se passe til si le meilleur passe en ruine?        
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,self.h32,j2))
+#        # Joueur en ruine
+#        j1.enRuine = False
+        

@@ -462,20 +462,26 @@ class Voleur:
         BRIGAND = 'voleur_brigand'
         PIRATE = 'voleur_pirate'
 
-    def __init__(self,hex,etat):
+    def __init__(self,hex,etat,terre):
         ''' Pose un voleur de type etat, sur l'hexagone hex.'''
         self.position = hex
         self.etat = etat
+        self.terre = terre
 
     def deplacer(self,hex):
         ''' Déplace le voleur sur l'hexagone hex'''
-        self.position = hex
+        if hex == 0 or hex.terre == self.terre:
+            self.position = hex
 
     def save(self):
         if(self.etat == Voleur.VoleurType.BRIGAND):
-            REDIS.set("T"+str(self.position.terre.num)+":brigand:position",self.position.num)
-        else: 
-            REDIS.set("T"+str(self.position.terre.num)+":pirate:position",self.position.num)
+            REDIS.set("T"+str(self.terre.num)+":brigand:position",self.position.num)
+        else:
+            if self.position == 0:
+                n = 0
+            else:
+                n = self.position.num 
+            REDIS.set("T"+str(self.terre.num)+":pirate:position",n)
 
 
  
@@ -522,14 +528,22 @@ class Terre:
         hexIdStr = REDIS.get("T"+str(self.num)+":brigand:position")
         if hexIdStr != None:
             hexId = int(hexIdStr)
-            return Voleur(Plateau.getPlateau().hexa(hexId),Voleur.VoleurType.BRIGAND) 
+            if hexId == 0:
+                hex = 0
+            else:
+                hex = Plateau.getPlateau().hexa(hexId)
+            return Voleur(hex,Voleur.VoleurType.BRIGAND,self) 
         return 0
 
     def getPirate(self):
         hexIdStr = REDIS.get("T"+str(self.num)+":pirate:position")
         if hexIdStr != None:
             hexId = int(hexIdStr)
-            return Voleur(Plateau.getPlateau().hexa(hexId),Voleur.VoleurType.PIRATE)
+            if hexId == 0:
+                hex = 0
+            else:
+                hex = Plateau.getPlateau().hexa(hexId)
+            return Voleur(hex,Voleur.VoleurType.PIRATE,self)
         return 0
 
 class Distances:

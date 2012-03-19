@@ -38,7 +38,7 @@ class Des:
     def roll():
         ''' Enregistre une liste de 4 lancés de dés dans la bdd '''
         dices = []
-        for i in xrange(NB_LANCES):
+        for i in xrange(Des.NB_LANCES):
             dices.append(random.randint(2, 12))
         Des.save(dices)
 
@@ -49,14 +49,14 @@ class Des:
         return int(REDIS.get('dices:joueur_origine'))
     
     @staticmethod
-    def setOrigin():
+    def setOrigin(num):
         ''' Enregistre le nombre de lancés de dés depuis le début de la partie '''
-        REDIS.set('dices:joueur_origine')
+        REDIS.set('dices:joueur_origine',num)
     
     @staticmethod
     def incrOrigin():
         ''' Incrémente le nombre de lancé de dés '''
-        REDIS.incr('dices:joueur_origin',NB_LANCES)
+        REDIS.incr('dices:joueur_origine',Des.NB_LANCES)
 
     @staticmethod
     def save(dices):
@@ -68,7 +68,9 @@ class Des:
     @staticmethod
     def getDices():
         ''' Renvoie les 4 derniers lancés de dés '''
-        return r.lrange('dices',0,-1)
+        a =  REDIS.lrange('dices',0,-1)
+        dices = [int(i) for i in a]
+        return dices
 
 class Joueur:
     ''' Classe représentant un joueur, avec ses pions (construction, bateau), permettant de récupérer les informations relatives à ce joueur, voire d'en modifier.'''
@@ -180,7 +182,7 @@ class Joueur:
 
     def getBateaux(self):
         ''' Renvoie les identifiants des bateaux du joueur, tout type confondu'''
-        return self.getBateauxTransport() + self.getCargos() + self.getVoiliers()
+        return self.getBateauxTransport().union(self.getCargos()).union(self.getVoiliers())
     
     def getBateauxTransport(self):
         return REDIS.smembers('J'+str(self.num)+':transports')
@@ -204,7 +206,7 @@ class Joueur:
     
     def getBateauxPositions(self):
         ''' Renvoie les bateaux du joueur, tout type confondu'''
-        return self.getBateauxTransportPositions() + self.getCargosPositions() + self.getVoiliersPositions()
+        return self.getBateauxTransportPositions().union(self.getCargosPositions()).union(self.getVoiliersPositions())
 
     def getColonies(self):
         ''' Renvoie tous les intersection où se trouvent les colonies du joueur'''
@@ -240,7 +242,7 @@ class Joueur:
  
     def get_deplacement_voleur(self,terre):
         ''' Renvoie vrai si sur cette terre, le joueur doit déplacer le voleur'''
-        return int(REDIS.get('J'+str(self.num)+':T'+str(terre.num)+':deplacement_voleur'))
+        return REDIS.get('J'+str(self.num)+':T'+str(terre.num)+':deplacement_voleur') == 'True'
          
     def get_carte_armee_la_plus_grande(self,terre):
         ''' Renvoie vrai si le joueur a l'armée la plus grande sur cette terre'''
@@ -304,7 +306,7 @@ class Joueur:
         return ForetAction.setNewNextRoot(root,self) 
 
     @staticmethod
-    def saveNbJoueurs(nb):
+    def setNbJoueurs(nb):
         REDIS.set('NombreJoueurs',nb)
         
     @staticmethod
@@ -322,6 +324,81 @@ class Jeu:
             joueurs.append(Joueur(j+1))
         return joueurs
 
+    # Renvoie le joueur qui possède la route la plus longue sur la terre terre et sa longueur.
+    @staticmethod
+    def get_route_la_plus_longue(terre):
+        j = REDIS.get('T'+str(terre.num)+':carte_rlpl:joueur')
+        l = REDIS.get('T'+str(terre.num)+':carte_rlpl:longueur')
+        if j != None and l != None:
+            return (int(j),int(l))
+        else:
+            return 0
+
+    @staticmethod
+    def set_route_la_plus_longue(terre,j,n):
+        REDIS.set('T'+str(terre.num)+':carte_rlpl:joueur',j)
+        REDIS.set('T'+str(terre.num)+':carte_rlpl:longueur',n)
+    
+    @staticmethod
+    def delete_route_la_plus_longue(terre):
+        REDIS.delete('T'+str(terre.num)+':carte_rlpl:joueur')
+        REDIS.delete('T'+str(terre.num)+':carte_rlpl:longueur')
+
+    # Vérifie si j a une route plus longue que la route la plus longue sur la terre terre. Si la route actuelle est nulle, alors vérifie si j a une route de plus de 5 troncons. Si c'est le cas, j prend la plus du joueur actuellement en position
+    @staticmethod
+    def challenge_route_la_plus_longue(j,terre):
+            n = j.get_route_la_plus_longue(terre)
+            if n>=5:
+                u = Jeu.get_route_la_plus_longue(terre)
+                if u == 0 or  n > u[1]:
+                    Jeu.set_route_la_plus_longue(terre,j.num,n)
+                    
+    # Recalcule qui parmi les colons de la terre a la carte de route la plus longue. Si il y a égalité, si la route la plus longue est identique à celle précédemment inscrite dans la base de données, alors elle est conservée, sinon, la carte est retirée du jeu jusqu'à ce que ait un montant plus important.
+    @staticmethod
+    def recalcul_route_la_plus_longue(terre):
+        jt = terre.getJoueurs()
+        rlpl = 0
+        jmax = []
+        for jtn in jt:
+            j = Joueur(int(jtn))
+            rlplj = j.get_route_la_plus_longue(terre)
+            if rlplj > rlpl:
+                rlpl = rlplj
+                jmax = [j.num]
+            elif rlplj == rlpl:
+                jmax.append(j.num)
+        if len(jmax) == 1 and rlpl >= 5:
+            Jeu.set_route_la_plus_longue(terre,jmax[0],rlpl)
+        else:
+            t = Jeu.get_route_la_plus_longue(terre)
+            if t != 0  and t[1] > rlpl:
+                Jeu.delete_route_la_plus_longue(terre)
+                
+
+
+    # Renvoie le joueur qui possède l'armee la plus grande sur la terre terre et sa longueur.
+    @staticmethod
+    def get_armee_la_plus_grande(terre):
+        j = REDIS.get('T'+str(terre.num)+':carte_alpg:joueur')
+        s = REDIS.get('T'+str(terre.num)+':carte_alpg:taille')
+        if j != None and s != None:
+            return (int(j),int(s))
+        else:
+            return 0
+
+    @staticmethod
+    def set_armee_la_plus_grande(terre,j,s):
+        REDIS.set('T'+str(terre.num)+':carte_alpg:joueur',j)
+        REDIS.set('T'+str(terre.num)+':carte_alpg:taille',s)
+                
+    # Vérifie si j a une armee plus grande que la armee la plus grande sur la terre terre. Si l'armee actuelle est nulle, alors vérifie si j a une armee de plus de 3 chevalliers. Si c'est le cas, j prend la plus du joueur actuellement en position
+    @staticmethod
+    def challenge_armee_la_plus_grande(j,terre):
+        n = j.get_chevalliers(terre)
+        if n>=3:
+            u = Jeu.get_armee_la_plus_grande(terre)
+            if u == 0 or  n > u[1]:
+                Jeu.set_armee_la_plus_grande(terre,j.num,n)
 
 # -----------------------------------------------------
 #    Actions de la nuit
@@ -348,6 +425,9 @@ class Jeu:
 # -----------------------------------------------------
 
 
+
+
+
     @staticmethod
     def peut_construire_colonie(j,intersection):
         ''' Un joueur peut construire une colonie si il n'est aps en ruine, si il ne la construit pas a un emplacement voisin d'une autre colonie, si il la construit sur un emplacement voisin d'une de ses routes, si cet emplacement est sur terre et si il peut payer la construiction.'''
@@ -357,8 +437,7 @@ class Jeu:
             for i in intersection.neigh:
                 if Colonie.hasColonie(i):
                     return False
-            for i in intersection.neigh:
-                a = i.lien(intersection)
+            for a in intersection.liens:
                 jrout = Route.getRouteJoueur(a)
                 if jrout == j.num:
                     return True
@@ -374,9 +453,12 @@ class Jeu:
         j.addStaticPoints(terre,1)
 
         c.save()
-        for jj in Jeu.get_all_joueurs():
-            jj.recalcul_route_la_plus_longue(terre)
+        for a in intersection.liens:
+            jrout = Route.getRouteJoueur(a)
+            if jrout != 0 and jrout != j.num:
+                Joueur(jrout).recalcul_route_la_plus_longue(terre)
 
+        Jeu.recalcul_route_la_plus_longue(terre)
 
     @staticmethod
     def peut_construire_route(j, arrete, construction_route = False):
@@ -403,6 +485,7 @@ class Jeu:
                 j.payer(terre,Tarifs.ROUTE)
             r.save()
             j.recalcul_route_la_plus_longue(terre)
+            Jeu.challenge_route_la_plus_longue(j,terre)
             return True
         else:
             return False
@@ -686,18 +769,171 @@ class Jeu:
     @staticmethod
     @protection
     def jouer_construction_routes(joueur,terre,isFirstRoute,a1,isSecondRoute,a2):
-            joueur.payer(terre,Cartes.CONSTRUCTION_ROUTES)
-            if isFirstRoute:
-                Jeu.construire_route(joueur,a1,True)
-            else:
-                Jeu.construire_bateau(joueur,a1,True)
-            if isSecondRoute:
-                Jeu.construire_route(joueur,a2,True)
-            else:
-                Jeu.construire_bateau(joueur,a2,True)
+        joueur.payer(terre,Cartes.CONSTRUCTION_ROUTES)
+        if isFirstRoute:
+            Jeu.construire_route(joueur,a1,True)
+        else:
+            Jeu.construire_bateau(joueur,a1,True)
+        if isSecondRoute:
+            Jeu.construire_route(joueur,a2,True)
+        else:
+            Jeu.construire_bateau(joueur,a2,True)
+
+    @staticmethod
+    def peut_defausser(joueur,terre,cartes):
+        if not joueur.enRuine and 7 in Des.getDices() and joueur.aColoniseTerre(terre):
+            c = joueur.getCartes(terre)
+            rs = c.ressources_size()
 
 
+            bs = []
+            for bn in joueur.getBateaux():
+                b = Bateau.getBateau(int(bn))
+                if b.est_proche(terre):
+                    bs.append(b.num)
+                    rs += b.cargaison.ressources_size()
+            if rs <= 7:
+                return cartes == (Cartes.RIEN,[])
+            
+            res = cartes[0]
+            cargs = cartes[1]
+
+            ds = rs/2 + rs%2 # ressource arrondi au superieur
+            rs2 = rs - ds
+
+            while rs2 > 7:
+                ds += rs2/2 + rs2%2 # ressource arrondi au superieur
+                rs2 = rs - ds
+            if res <= c and res.est_ressource() and res.est_physiquement_possible():
+                ss = res.ressources_size()
+                for cb in cargs:
+                    if cb[0].num in bs and cb[1] <= cb[0].cargaison and cb[1].est_physiquement_possible() and cb[1].est_ressource():
+                        ss += cb[1].ressources_size()
+                    else:
+                        return False
+                return ss == ds
+        return False
+
+    @staticmethod
+    @protection
+    def defausser(joueur,terre,cartes):
+        joueur.payer(terre,cartes[0])
+        for cb in cartes[1]:
+            cb[0].remove(cb[1])
+            cb[0].save()
+
+    
+    @staticmethod
+    def positions_possibles_voleur(joueur,terre,voleur):
+        if voleur == 0:
+            return []
+        b = voleur.etat == Voleur.VoleurType.PIRATE
+        if not b:
+            hexs = terre.hexagones[:]
+        else:
+            hexs = terre.espaceMarin[:]
+        if voleur.position != 0:
+            hexs.remove(voleur.position)
+        possibilite = []
+        if b:
+            for h in hexs:
+                if h.commerceType!= 0:
+                    for i in h.ints:
+                        col = Colonie.getColonie(i)
+                        if (col != 0) and (col.joueur != joueur.num):
+                            possibilite.append((h,col.joueur))
+                for a in h.liens:
+                    for bat in Bateau.getBateaux(a):
+                        if (bat != 0) and (bat.joueur != joueur.num):
+                            possibilite.append((h,bat.joueur))
+            if possibilite == []:
+                return [(0,0)]
+        else:
+            for h in hexs:
+                for i in h.ints:
+                    col = Colonie.getColonie(i)
+                    if (col != 0) and (col.joueur != joueur.num):
+                            possibilite.append((h,col.joueur))
+            if possibilite == []:
+                for h in voleur.position.terre.hexagones:
+                    if h.etat == HexaType.DESERT and h.commerceType == 0:
+                        possibilite.append((h,0))
+        return possibilite 
+
+
+
+    @staticmethod
+    def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,chevallier = False):
+        if not joueur.enRuine and (joueur.get_deplacement_voleur(terre) or chevallier) and (hex == 0 or hex.terre == terre):
+            if voleurType == Voleur.VoleurType.BRIGAND:
+                voleur = terre.getBrigand()
+            else:
+                voleur = terre.getPirate()
+            if jvol == 0:
+                t = (hex, 0)
+            else:
+                t = (hex, jvol.num)
+            return joueur.aColoniseTerre(terre) and t in Jeu.positions_possibles_voleur(joueur,terre,voleur)
+        return False
+
+    @staticmethod
+    def voler(j1,terre,j2):
+        ressources_terrestres = j2.getCartes(terre)
+        nc = ressources_terrestres.ressources_size()
+        ressources_bateaux = []
+        s = nc
+        for bn in j2.getBateaux():
+            b = Bateau.getBateau(int(bn))
+            if b.en_position_echange() and b.position.getTerre() == terre:
+                n = b.cargaison.size()
+                ressources_bateaux.append((n,b))
+                s+=n
+        if s == 0:
+            return
+        u = random.randint(1,s)
+        if u <= nc:
+            c = ressources_terrestres.carte(u)
+            j2.payer(terre,c)
+            j1.recevoir(terre,c)
+        else:
+            u-=nc
+            for rb in ressources_bateaux:
+                if u <= rb[0]:
+                    c = rb[1].cargaison.carte(u)
+                    rb[1].remove(c)
+                    rb[1].save()
+                    j1.recevoir(terre,c)
+                    return
+                else:
+                    u -= rb[0]
+
+    @staticmethod
+    def deplacer_voleur(joueur,terre,voleurType,hex,jvol, chevallier = False):
+        if Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,chevallier):
+            if voleurType == Voleur.VoleurType.BRIGAND:
+                voleur = terre.getBrigand()
+            else:
+                voleur = terre.getPirate()
+            voleur.deplacer(hex)
+            voleur.save()
+            Jeu.voler(joueur,terre,jvol)
+            if not chevallier:
+                joueur.set_deplacement_voleur(terre,False)
+            return True
+        else:
+            return False
                 
+    @staticmethod
+    def peut_jouer_chevallier(joueur,terre,voleurType, hex,jvol):
+        return not joueur.enRuine and Cartes.CHEVALLIER <= joueur.getCartes(terre) and joueur.aColoniseTerre(terre) and Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
+
+    @staticmethod
+    @protection
+    def jouer_chevallier(joueur,terre,voleurType, hex,jvol):
+            joueur.add_chevallier(terre)
+            joueur.payer(terre,Cartes.CHEVALLIER)
+            Jeu.challenge_armee_la_plus_grande(joueur,terre)
+            Jeu.deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
 
 
 if __name__ == '__main__':
