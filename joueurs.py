@@ -247,7 +247,7 @@ class Joueur:
     def get_carte_armee_la_plus_grande(self,terre):
         ''' Renvoie vrai si le joueur a l'armée la plus grande sur cette terre'''
         u = Jeu.get_armee_la_plus_grande(terre)
-        return u!=0 and u[0] == self
+        return u!=0 and u[0] == self.num
  
     def get_route_la_plus_longue(self,terre):
         ''' Renvoie la taille de la route la plus longue du joueur sur cette terre'''
@@ -271,7 +271,7 @@ class Joueur:
     def get_carte_route_la_plus_longue(self,terre):
         ''' Vérifie si ce joueur a la carte de la route al plus longue sur cette terre'''
         u = Jeu.get_route_la_plus_longue(terre)
-        return u!=0 and u[0]== self
+        return u!=0 and u[0]== self.num
 
     def addStaticPoints(self,terre,nb):
         ''' Ajoute nb points aux points statiques (ie batiments) de cette terre'''
@@ -285,16 +285,14 @@ class Joueur:
 
     def getPoints(self,terre):
         ''' Calcule le nombre de points de ce joueur sur cette terre'''
-        if self.enRuine:
+        if self.enRuine or not self.aColoniseTerre(terre):
             return 0
-        i = self.getTerreIndex(terre)
         p = 0
         if (self.get_carte_route_la_plus_longue(terre)):
             p += 2
         if (self.get_carte_armee_la_plus_grande(terre)):
             p += 2
-        if i!=-1:
-            return self.getStaticPoints(terre) + self.getCartes(terre).get_cartes_de_type(Cartes.POINT_VICTOIRE) + p
+        return self.getStaticPoints(terre) + self.getCartes(terre).get_cartes_de_type(Cartes.POINT_VICTOIRE) + p
 
     def addRoot(self):
         return ForetAction.setNewRoot(self) 
@@ -457,7 +455,6 @@ class Jeu:
             jrout = Route.getRouteJoueur(a)
             if jrout != 0 and jrout != j.num:
                 Joueur(jrout).recalcul_route_la_plus_longue(terre)
-
         Jeu.recalcul_route_la_plus_longue(terre)
 
     @staticmethod
@@ -507,7 +504,6 @@ class Jeu:
         terre = intersection.getTerre()
         j.payer(terre,Tarifs.VILLE)
         j.addStaticPoints(terre,1)
-
         colonie.save()
     
     @staticmethod
@@ -657,6 +653,7 @@ class Jeu:
     def coloniser(j,bateau,position,transfert):
             Colonie(j.num,position).save()
             terre = position.getTerre()
+            j.addStaticPoints(terre,1)
             j.addTerre(terre)
             j.recevoir(terre,transfert)
             bateau.remove(Tarifs.COLONIE + transfert)
