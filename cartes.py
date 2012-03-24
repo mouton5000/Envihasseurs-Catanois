@@ -152,20 +152,15 @@ class CartesGeneral:
         return i
 
 
-    def setTo(self,key):
-        pipe = REDIS.pipeline()
+    def setTo(self,key, bdd = REDIS):
         for att in CartesGeneral.attributs:
-            pipe.set(key+':'+att,getattr(self,att))
-        pipe.set(key+':exists',0)
-        pipe.execute()
+            bdd.set(key+':'+att,getattr(self,att))
+        bdd.set(key+':exists',0)
 
     @staticmethod
-    def get(key):
-        pipe = REDIS.pipeline()
-        if REDIS.exists(key+':exists'):
-            for att in CartesGeneral.attributs:
-                pipe.get(key+':'+att)
-            values = pipe.execute()
+    def get(key, bdd = REDIS):
+        if bdd.exists(key+':exists'):
+            values = [bdd.get(key+':'+att) for att in CartesGeneral.attributs]
             valuesInt = []
             for value in values:
                 valuesInt.append(int(value))

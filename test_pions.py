@@ -1,6 +1,6 @@
 import unittest
 from cartes import *
-from constructions import *
+from pions import *
 from plateau import *
 from joueurs import *
 import redis
@@ -571,13 +571,12 @@ class TestVoleur(unittest.TestCase):
     def test_bdd(self):
         self.assertTrue(REDIS.exists('T1:brigand:position'))
         self.assertTrue(REDIS.exists('T1:pirate:position'))
-        print REDIS.get('T1:pirate:position')
         self.assertEqual(REDIS.get('T1:pirate:position'),'1')       
         self.assertEqual(REDIS.get('T1:brigand:position'),'2')       
 
  
-        v1 = self.t.getPirate()
-        v2 = self.t.getBrigand()
+        v1 = Voleur.getPirate(self.t)
+        v2 = Voleur.getBrigand(self.t)
         self.assertNotEqual(v1,0)
         self.assertNotEqual(v2,0)
         self.assertEqual(v1.position, self.h1)

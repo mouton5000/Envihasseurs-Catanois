@@ -130,20 +130,6 @@ class Intersection:
                     self._isMarche = True
         return self._isMarche
  
-    def isMarcheNonBrigande(self):
-        ''' Renvoie vrai si l'intersection est sur un hexagone de type marché, parmi les espaces de commerce non occupé par un brigand'''
-        for h in self.hexagones:
-            if (h.isMarche() and self in h.lintp and not h.isBrigande()):
-                return True
-        return False
-    
-    def marcheNonBrigande(self):
-        ''' Renvoie l'ensemble des hexagones cette intersection de type marché, parmi les espaces de commerce, non occupés par un brigand'''
-        marches = []
-        for h in self.hexagones:
-            if (h.isMarche() and self in h.lintp and not h.isBrigande()):
-                marches.append(h)
-        return marches
     
 
 
@@ -156,20 +142,6 @@ class Intersection:
                     self._isPort = True
         return self._isPort
 
-    def isPortNonPirate(self):
-        ''' Renvoie vrai si l'intersection est sur un hexagone de type port, parmi les espaces de commerce, non occupé par un pirate'''
-        for h in self.hexagones:
-            if (h.isPort() and self in h.lintp and not h.isPirate()):
-                return True
-        return False
-
-    def portNonPirate(self):
-        ''' Renvoie l'ensemble des hexagones de l'intersection de type port, parmi les espaces de commerce, non occupé par un pirate'''
-        ports = []
-        for h in self.hexagones:
-            if (h.isPort() and self in h.lintp and not h.isPirate()):
-                ports.append(h)
-        return ports
 
 
     def getTerre(self):
@@ -317,12 +289,6 @@ class Arrete:
             
 
 
-    def est_pirate(self):
-        '''Renvoie vrai si l'arrete est occupée par le pirate'''
-        for h in self.hexagones:
-            if (h.etat == HexaType.MER and h.isPirate()):
-                return True
-        return False
 
     def lien(self,a):
         '''Renvoie vrai si l'arrete est occupée par le pirate'''
@@ -446,44 +412,7 @@ class Hexagone:
         else:
             return self.neigh
 
-    def isBrigande(self):
-        v = self.terre.getBrigand()
-        return v != 0 and v.position.num == self.num
     
-    def isPirate(self):
-        v = self.terre.getPirate()
-        return v != 0 and v.position.num == self.num
-    
-class Voleur:
-    ''' Classe représentant le pion voleur.'''
-    
-    class VoleurType:
-        ''' Les type de voleur : briguand sur terre, pirate sur mer'''
-        BRIGAND = 'voleur_brigand'
-        PIRATE = 'voleur_pirate'
-
-    def __init__(self,hex,etat,terre):
-        ''' Pose un voleur de type etat, sur l'hexagone hex.'''
-        self.position = hex
-        self.etat = etat
-        self.terre = terre
-
-    def deplacer(self,hex):
-        ''' Déplace le voleur sur l'hexagone hex'''
-        if hex == 0 or hex.terre == self.terre:
-            self.position = hex
-
-    def save(self):
-        if(self.etat == Voleur.VoleurType.BRIGAND):
-            REDIS.set("T"+str(self.terre.num)+":brigand:position",self.position.num)
-        else:
-            if self.position == 0:
-                n = 0
-            else:
-                n = self.position.num 
-            REDIS.set("T"+str(self.terre.num)+":pirate:position",n)
-
-
  
 class Terre:
     ''' Cette classe représente un ensemble d'hexagones regroupés pour former une terre avec un espace maritime.'''
@@ -503,48 +432,28 @@ class Terre:
 
         # Attention voleurs à initialiser dans la BDD directement
 
-    def addJoueur(self, j):
+    def addJoueur(self, j, bdd = REDIS):
         ''' Ajoute le joueur j aux joueur ayant colonisé cette terre'''
-        REDIS.rpush('T'+str(self.num)+':joueurs',j.num)
+        bdd.rpush('T'+str(self.num)+':joueurs',j.num)
 
-    def getJoueurIndex(self, j):
+    def getJoueurIndex(self, j, bdd = REDIS):
         ''' Renvoie le rang du joueur parmi les colon de cette terre'''
-        js = self.getJoueurs()
+        js = self.getJoueurs(bdd)
         return js.index(str(j.num))
     
-    def getJoueur(self,index):
+    def getJoueur(self,index, bdd = REDIS):
         ''' Renvoie le joueur en position index sur cette terre '''
-        return REDIS.lindex('T'+str(self.num)+':joueurs',index)
+        return bdd.lindex('T'+str(self.num)+':joueurs',index)
     
-    def getJoueurs(self):
+    def getJoueurs(self, bdd = REDIS):
         ''' Renvoie tous les joueurs ayant colonisé cette terre '''
-        return REDIS.lrange('T'+str(self.num)+':joueurs',0,-1)
+        return bdd.lrange('T'+str(self.num)+':joueurs',0,-1)
+    
 
-    def getNbJoueurs(self): 
+    def getNbJoueurs(self, bdd = REDIS): 
         ''' Renvoie le nombre de joueurs ayant colonisé cette terre'''
-        return REDIS.llen('T'+str(self.num)+':joueurs')
+        return bdd.llen('T'+str(self.num)+':joueurs')
 
-    def getBrigand(self):
-        hexIdStr = REDIS.get("T"+str(self.num)+":brigand:position")
-        if hexIdStr != None:
-            hexId = int(hexIdStr)
-            if hexId == 0:
-                hex = 0
-            else:
-                hex = Plateau.getPlateau().hexa(hexId)
-            return Voleur(hex,Voleur.VoleurType.BRIGAND,self) 
-        return 0
-
-    def getPirate(self):
-        hexIdStr = REDIS.get("T"+str(self.num)+":pirate:position")
-        if hexIdStr != None:
-            hexId = int(hexIdStr)
-            if hexId == 0:
-                hex = 0
-            else:
-                hex = Plateau.getPlateau().hexa(hexId)
-            return Voleur(hex,Voleur.VoleurType.PIRATE,self)
-        return 0
 
 class Distances:
     ''' Classe qui gère le calcule des distances entre arrêtes ou intersection (l'algo est le même).'''

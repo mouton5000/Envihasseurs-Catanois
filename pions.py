@@ -34,18 +34,18 @@ class Colonie:
         ''' Renvoie vrai si la colonie est au bord de la mer.'''
         return self.position.isCotier()
 
-    def ressources(self):
+    def ressources(self, bdd = REDIS):
         ''' Renvoie dans un tableau l'ensemble des ressources au format (numéro de pastille, ensemble des ressources acquises si ce numéro tombe, or acquis si ce numéro tombe).
          Par exemple, si la colonie est entourée par un hexagone Bois de pastille 4, un Argile de pastille 5 et un Or de pastille 5, la méthode renverra
          [(4,Cartes.BOIS,0), (5,Cartes.ARGILE,1)]'''
         t = []
         for i in range(10):
-           u = self.ressources_from_past(i+3)
+           u = self.ressources_from_past(i+3, bdd)
            if u != 0:
                t.append((i+3,u[0],u[1]))
         return t
 
-    def ressources_from_past(self,past):
+    def ressources_from_past(self,past, bdd = REDIS):
         ''' Renvoie un 2 upplet contenant les ressources et le nombre de pépites d'or acquies si le nombre past tombe.'''
         t = []
         bois = 0
@@ -59,7 +59,7 @@ class Colonie:
         else:
             i = 1
         for h in self.position.hexagones:
-            if(not h.isBrigande() and h.past == past):
+            if(not Voleur.isBrigande(h, bdd) and h.past == past):
                 if (h.etat == HexaType.BOIS):
                     bois += i
                 elif h.etat == HexaType.ARGILE:
@@ -77,54 +77,52 @@ class Colonie:
         else:
             return 0
 
-    def save(self):
+    def save(self, bdd = REDIS):
         pos = 'I'+str(self.position.num)
-        if(REDIS.exists(pos+'colonie')):
-            befJ = REDIS.get(pos+'colonie')
+        if(bdd.exists(pos+'colonie')):
+            befJ = bdd.get(pos+'colonie')
             befjcol = 'J'+befJ+':colonies'
             befjvil = 'J'+befJ+':villes'
             befJ = int(befJ)
         else:
             befJ = 0
-        pipe = REDIS.pipeline()
         if(befJ != self.joueur):
-            pipe.set(pos+':colonie',self.joueur)
-        pipe.set(pos+':isVille',self.isVille)
+            bdd.set(pos+':colonie',self.joueur)
+        bdd.set(pos+':isVille',self.isVille)
         jcol = 'J'+str(self.joueur)+':colonies'
         jvil = 'J'+str(self.joueur)+':villes'
         
         if(befJ != 0 and befJ != self.joueur):
-            pipe.srem(befjcol,self.position.num)
-            pipe.srem(befjvil,self.position.num)
+            bdd.srem(befjcol,self.position.num)
+            bdd.srem(befjvil,self.position.num)
 
         if self.isVille:    
-            pipe.srem(jcol,self.position.num)
-            pipe.sadd(jvil,self.position.num)
+            bdd.srem(jcol,self.position.num)
+            bdd.sadd(jvil,self.position.num)
         else:
-            pipe.srem(jvil,self.position.num)
-            pipe.sadd(jcol,self.position.num)
-        pipe.execute()
+            bdd.srem(jvil,self.position.num)
+            bdd.sadd(jcol,self.position.num)
 
     @staticmethod
-    def getColonie(it):
+    def getColonie(it, bdd = REDIS):
         key = 'I'+str(it.num)+':colonie'
-        if REDIS.exists(key):
-            jnum = int(REDIS.get(key))
+        if bdd.exists(key):
+            jnum = int(bdd.get(key))
             j = jnum
             c = Colonie(j,it)
             key2 = 'I'+str(it.num)+':isVille'
-            c.isVille = (REDIS.get(key2) == 'True')
+            c.isVille = (bdd.get(key2) == 'True')
             return c
         else:
             return 0
 
     @staticmethod
-    def hasColonie(it):
-        return REDIS.exists('I'+str(it.num)+':colonie')
+    def hasColonie(it, bdd = REDIS):
+        return bdd.exists('I'+str(it.num)+':colonie')
 
     @staticmethod
-    def getColonieJoueur(it):
-        num = REDIS.get('I'+str(it.num)+':colonie')
+    def getColonieJoueur(it, bdd = REDIS):
+        num = bdd.get('I'+str(it.num)+':colonie')
         if num == None:
             return -1
         else:
@@ -143,12 +141,12 @@ class Route:
         self.joueur = jnum
 
    
-    def est_extremite(self):
+    def est_extremite(self, bdd = REDIS):
         ''' Vérifie si la route est une extrémité du réseau du joueur.'''
         i1 = self.position.int1
         i2 = self.position.int2
-        col1 = Colonie.getColonie(i1)
-        col2 = Colonie.getColonie(i2)
+        col1 = Colonie.getColonie(i1, bdd)
+        col2 = Colonie.getColonie(i2, bdd)
         if (col1 != 0 and col1.joueur != self.joueur) or (col2 != 0 and col2.joueur != self.joueur):
             return True
         ir1 = i1.neighb()
@@ -156,7 +154,7 @@ class Route:
         for i in ir1:
             if i2 != i:
                 a = i.lien(i1)
-                ar = Route.getRoute(a)
+                ar = Route.getRoute(a, bdd)
                 b = b and (ar == 0 or ar.joueur != self.joueur)
         if b:
             return True
@@ -165,74 +163,72 @@ class Route:
         for i in ir2:
             if i1 != i:
                 a = i.lien(i2)
-                ar = Route.getRoute(a)
+                ar = Route.getRoute(a, bdd)
                 b = b and (ar == 0 or ar.joueur != self.joueur)
         return b
 
-    def rlplfr(self):
+    def rlplfr(self, bdd = REDIS):
         ''' Renvoie la route la plus longue qui commence en self.'''
-        return self.rlplfrwb([])
+        return self.rlplfrwb([], bdd)
 
-    def voisins_routables(self,l):
+    def voisins_routables(self,l, bdd = REDIS):
         ''' Renvoie l'ensemble des voisins de la route qui sont aussi des routes du meme joueur, et qui ne sont pas dans l, ou qui ne font pas faire un demi tour (par exemple sur un emplacement dhexagone, on a une étoile à 3 branches, si la dernière route de l est une de ces branche, que self en est une autre, alors la troisieme branche n'est pas un voisin routable'''
         a = self.position
         j = self.joueur
         ar = []
         for n in a.neighb():
             if not(n in l) and (len(l) == 0 or l[len(l)-1].lien(n) == 0):
-                nr = Route.getRoute(n)
+                nr = Route.getRoute(n, bdd)
                 if(nr != 0 and nr.joueur == j):
                     i = n.lien(a)
-                    col = Colonie.getColonie(i)
+                    col = Colonie.getColonie(i, bdd)
                     if (col == 0 or col.joueur == j):
                         ar.append(nr)
         return ar
 
-    def rlplfrwb(self,beginning):
+    def rlplfrwb(self,beginning, bdd = REDIS):
         ''' Renvoie la route la plus longue commençant par beginning, passant par self'''
         beg2 = beginning + [self.position]
-        vr = self.voisins_routables(beginning)
+        vr = self.voisins_routables(beginning, bdd)
         i = 0
         for r in vr:
-            i = max(i,r.rlplfrwb(beg2))
+            i = max(i,r.rlplfrwb(beg2, bdd))
         return i + 1
         
-    def save(self):
+    def save(self, bdd = REDIS):
         pos = 'A'+str(self.position.num)+':route'
-        if(REDIS.exists(pos)):
-            befJ = REDIS.get(pos)
+        if(bdd.exists(pos)):
+            befJ = bdd.get(pos)
             befjrout = 'J'+befJ+':routes'
             befJ = int(befJ)
         else:
             befJ = 0
-        pipe = REDIS.pipeline()
         if(befJ != self.joueur):
-            pipe.set(pos,self.joueur)
+            bdd.set(pos,self.joueur)
         jrout = 'J'+str(self.joueur)+':routes'
         
         if(befJ != 0 and befJ != self.joueur):
-            pipe.srem(befjrout,self.position.num)
+            bdd.srem(befjrout,self.position.num)
 
-        pipe.sadd(jrout,self.position.num)
-        pipe.execute()
+        bdd.sadd(jrout,self.position.num)
     
     @staticmethod
-    def getRoute(ar):
+    def getRoute(ar,bdd = REDIS):
         key = 'A'+str(ar.num)+':route'
-        if REDIS.exists(key):
-            jnum = int(REDIS.get(key))
+        if bdd.exists(key):
+            jnum = int(bdd.get(key))
             j = jnum
             return Route(j,ar)
         else:
             return 0
 
     @staticmethod
-    def hasRoute(ar):
-        return REDIS.exists('A'+str(ar.num)+':route')
+    def hasRoute(ar, bdd = REDIS):
+        return bdd.exists('A'+str(ar.num)+':route')
 
     @staticmethod
-    def getRouteJoueur(ar):
-        num = REDIS.get('A'+str(ar.num)+':route')
+    def getRouteJoueur(ar, bdd = REDIS):
+        num = bdd.get('A'+str(ar.num)+':route')
         if num == None:
             return -1
         else:
@@ -320,14 +316,14 @@ class Bateau:
                     intf.append(pos)
         return intf
 
-    def en_position_echange(self):
+    def en_position_echange(self, bdd = REDIS):
         ''' Vérifie que le bateau est sur un emplacement où il peut échanger avec une terre : un port ou une colonie cotière'''
         i1 = self.position.int1
         i2 = self.position.int2
-        col1 = Colonie.getColonie(i1)
-        col2 = Colonie.getColonie(i2)
+        col1 = Colonie.getColonie(i1, bdd)
+        col2 = Colonie.getColonie(i2, bdd)
         j = joueurs.Joueur(self.joueur)
-        return  ((col1 != 0 and col1.joueur == self.joueur) or (col2 != 0 and col2.joueur == self.joueur) or i1.isPort() or i2.isPort()) and j.aColoniseTerre(self.position.getTerre()) 
+        return  ((col1 != 0 and col1.joueur == self.joueur) or (col2 != 0 and col2.joueur == self.joueur) or i1.isPort() or i2.isPort()) and j.aColoniseTerre(self.position.getTerre(), bdd) 
     
     def est_proche(self,terre):
         ''' Est vrai si le bateau est à un déplacement d'un emplacement cotier'''
@@ -343,30 +339,29 @@ class Bateau:
                 return True
         return False
 
-    def save(self):
+    def save(self, bdd = REDIS):
         pos = 'B'+str(self.num)
 
-        if(REDIS.exists(pos+':position')):
-            befA = REDIS.get(pos+':position')
+        if(bdd.exists(pos+':position')):
+            befA = bdd.get(pos+':position')
             befAboat = 'A'+befA+':bateaux'
             befA = int(befA)
         else:
             befA = 0
 
-        pipe = REDIS.pipeline()
         if(befA != self.position.num):
-            pipe.set(pos+':position',self.position.num)
+            bdd.set(pos+':position',self.position.num)
 
-        pipe.set(pos+':joueur',self.joueur)
-        pipe.set(pos+':type',self.etat)
-        self.cargaison.setTo(pos+":cargaison")
-        pipe.set(pos+':aBouge', self.aBouge)
+        bdd.set(pos+':joueur',self.joueur)
+        bdd.set(pos+':type',self.etat)
+        self.cargaison.setTo(pos+":cargaison",bdd)
+        bdd.set(pos+':aBouge', self.aBouge)
 
         aBoat = 'A'+str(self.position.num)+':bateaux'
         if(befA != 0 and befA != self.position.num):
-            pipe.srem(befAboat,self.num)
+            bdd.srem(befAboat,self.num)
 
-        pipe.sadd(aBoat,self.num)
+        bdd.sadd(aBoat,self.num)
        
         jtrans = 'J'+str(self.joueur)+':transports'
         jtransPos = 'J'+str(self.joueur)+':transports:positions'
@@ -376,42 +371,146 @@ class Bateau:
         jvoilPos = 'J'+str(self.joueur)+':voiliers:positions'
 
         if self.etat == Bateau.BateauType.TRANSPORT:    
-            pipe.sadd(jtrans,self.num)
-            pipe.sadd(jtransPos,self.position.num)
+            bdd.sadd(jtrans,self.num)
+            bdd.sadd(jtransPos,self.position.num)
         elif self.etat == Bateau.BateauType.CARGO:
-            pipe.srem(jtrans,self.num)
-            pipe.srem(jtransPos,self.position.num)
-            pipe.sadd(jcarg,self.num)
-            pipe.sadd(jcargPos,self.position.num)
+            bdd.srem(jtrans,self.num)
+            bdd.srem(jtransPos,self.position.num)
+            bdd.sadd(jcarg,self.num)
+            bdd.sadd(jcargPos,self.position.num)
         elif self.etat == Bateau.BateauType.VOILIER:
-            pipe.srem(jtrans,self.num)
-            pipe.srem(jtransPos,self.position.num)
-            pipe.srem(jcarg,self.num)
-            pipe.srem(jcargPos,self.position.num)
-            pipe.sadd(jvoil,self.num)
-            pipe.sadd(jvoilPos,self.position.num)
-        pipe.execute()
+            bdd.srem(jtrans,self.num)
+            bdd.srem(jtransPos,self.position.num)
+            bdd.srem(jcarg,self.num)
+            bdd.srem(jcargPos,self.position.num)
+            bdd.sadd(jvoil,self.num)
+            bdd.sadd(jvoilPos,self.position.num)
 
     @staticmethod
-    def getBateau(num):
+    def getBateau(num,bdd = REDIS):
         key = 'B'+str(num)
-        if REDIS.exists(key+':position') :
-            a = Plateau.getPlateau().ar(int(REDIS.get(key+':position')))
-            jnum = int(REDIS.get(key+':joueur'))
-            carg = CartesGeneral.get(key+':cargaison')
-            etat = REDIS.get(key+':type')
-            aBouge = (REDIS.get(key+':aBouge') == 'True')
+        if bdd.exists(key+':position') :
+            a = Plateau.getPlateau().ar(int(bdd.get(key+':position')))
+            jnum = int(bdd.get(key+':joueur'))
+            carg = CartesGeneral.get(key+':cargaison',bdd)
+            etat = bdd.get(key+':type')
+            aBouge = (bdd.get(key+':aBouge') == 'True')
             return Bateau(num,jnum,a,carg,etat,aBouge)
         return 0
 
     @staticmethod
-    def getBateaux(ar):
+    def getBateaux(ar,bdd = REDIS):
         b = []
-        bn = REDIS.smembers('A'+str(ar.num)+':bateaux')
+        bn = bdd.smembers('A'+str(ar.num)+':bateaux')
         for n in bn:
-            b.append(Bateau.getBateau(int(n)))
+            b.append(Bateau.getBateau(int(n), bdd))
         return b
 
     @staticmethod
-    def getBateauxNum(ar):
-        return REDIS.smembers('A'+str(ar.num)+':bateaux')
+    def getBateauxNum(ar, bdd = REDIS):
+        return bdd.smembers('A'+str(ar.num)+':bateaux')
+
+class Voleur:
+    ''' Classe représentant le pion voleur.'''
+    
+    class VoleurType:
+        ''' Les type de voleur : briguand sur terre, pirate sur mer'''
+        BRIGAND = 'voleur_brigand'
+        PIRATE = 'voleur_pirate'
+
+    def __init__(self,hex,etat,terre):
+        ''' Pose un voleur de type etat, sur l'hexagone hex.'''
+        self.position = hex
+        self.etat = etat
+        self.terre = terre
+
+    def deplacer(self,hex):
+        ''' Déplace le voleur sur l'hexagone hex'''
+        if hex == 0 or hex.terre == self.terre:
+            self.position = hex
+
+    def save(self, bdd = REDIS):
+        if(self.etat == Voleur.VoleurType.BRIGAND):
+            bdd.set("T"+str(self.terre.num)+":brigand:position",self.position.num)
+        else:
+            if self.position == 0:
+                n = 0
+            else:
+                n = self.position.num 
+            bdd.set("T"+str(self.terre.num)+":pirate:position",n)
+
+    @staticmethod
+    def getBrigand(terre, bdd = REDIS):
+        hexIdStr = bdd.get("T"+str(terre.num)+":brigand:position")
+        if hexIdStr != None:
+            hexId = int(hexIdStr)
+            if hexId == 0:
+                hex = 0
+            else:
+                hex = Plateau.getPlateau().hexa(hexId)
+            return Voleur(hex,Voleur.VoleurType.BRIGAND,terre) 
+        return 0
+
+    @staticmethod
+    def getPirate(terre, bdd = REDIS):
+        hexIdStr = bdd.get("T"+str(terre.num)+":pirate:position")
+        if hexIdStr != None:
+            hexId = int(hexIdStr)
+            if hexId == 0:
+                hex = 0
+            else:
+                hex = Plateau.getPlateau().hexa(hexId)
+            return Voleur(hex,Voleur.VoleurType.PIRATE,terre)
+        return 0
+
+    @staticmethod
+    def isMarcheNonBrigande(intersection, bdd = REDIS):
+        ''' Renvoie vrai si l'intersection est sur un hexagone de type marché, parmi les espaces de commerce non occupé par un brigand'''
+        for h in intersection.hexagones:
+            if (h.isMarche() and intersection in h.lintp and not Voleur.isBrigande(h, bdd)):
+                return True
+        return False
+    
+    @staticmethod
+    def marcheNonBrigande(intersection, bdd = REDIS):
+        ''' Renvoie l'ensemble des hexagones cette intersection de type marché, parmi les espaces de commerce, non occupés par un brigand'''
+        marches = []
+        for h in intersection.hexagones:
+            if (h.isMarche() and intersection in h.lintp and not Voleur.isBrigande(h, bdd)):
+                marches.append(h)
+        return marches
+
+    @staticmethod
+    def isPortNonPirate(intersection, bdd = REDIS):
+        ''' Renvoie vrai si l'intersection est sur un hexagone de type port, parmi les espaces de commerce, non occupé par un pirate'''
+        for h in intersection.hexagones:
+            if (h.isPort() and intersection in h.lintp and not Voleur.isPirate(h, bdd)):
+                return True
+        return False
+
+    @staticmethod
+    def portNonPirate(intersection, bdd = REDIS):
+        ''' Renvoie l'ensemble des hexagones de l'intersection de type port, parmi les espaces de commerce, non occupé par un pirate'''
+        ports = []
+        for h in intersection.hexagones:
+            if (h.isPort() and intersection in h.lintp and not Voleur.isPirate(h, bdd)):
+                ports.append(h)
+        return ports
+    
+    @staticmethod
+    def est_pirate(arrete, bdd = REDIS):
+        '''Renvoie vrai si l'arrete est occupée par le pirate'''
+        for h in arrete.hexagones:
+            if (h.etat == HexaType.MER and Voleur.isPirate(h, bdd)):
+                return True
+        return False
+
+    @staticmethod
+    def isBrigande(h, bdd = REDIS):
+        v = Voleur.getBrigand(h.terre, bdd)
+        return v != 0 and v.position.num == h.num
+    
+    @staticmethod
+    def isPirate(h, bdd = REDIS):
+        v = Voleur.getPirate(h.terre, bdd)
+        return v != 0 and v.position.num == h.num
