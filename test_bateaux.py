@@ -41,6 +41,12 @@ class TestBateaux(TestJoueur):
         Colonie(1,i1).save()
         self.assertTrue(Jeu.peut_construire_bateau(j1,a2)) # ok
         self.assertTrue(Jeu.peut_construire_bateau(j1,a3)) # ok
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_construire_bateau(j1,a2))
+        self.assertFalse(Jeu.peut_construire_bateau(j1,a3))
+        # En ruine
+        j1.setEnRuine(False)
 
         Colonie(2,i2).save()
         self.assertFalse(Jeu.peut_construire_bateau(j1,a4)) # relie mais a un adversaire
@@ -55,9 +61,6 @@ class TestBateaux(TestJoueur):
         j1.setCartes(self.tg,Tarifs.BATEAU_TRANSPORT)
 
 
-#        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_construire_bateau(j1,a67)) # Joueur en ruine 
-#        j1.enRuine = False
 
         i = len(j1.getBateauxTransport())
         Jeu.construire_bateau(j1,a2)
@@ -90,11 +93,19 @@ class TestBateaux(TestJoueur):
         b12.save()
         b2.save()
 
+        self.assertTrue(Jeu.peut_deplacer_bateau(j1,b1,a6)) # ok cotier
+        self.assertTrue(Jeu.peut_deplacer_bateau(j1,b1,a7)) # ok
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a6))
+        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a7))
+        # En ruine
+        j1.setEnRuine(False)
+        
+
         self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a3)) # Trop loin
         self.assertFalse(Jeu.peut_deplacer_bateau(j1,b2,a4)) # Bateau adverse
         self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a5)) # En pleine terre
-        self.assertTrue(Jeu.peut_deplacer_bateau(j1,b1,a6)) # ok cotier
-        self.assertTrue(Jeu.peut_deplacer_bateau(j1,b1,a7)) # ok
         self.assertFalse(Jeu.peut_deplacer_bateau(j1,b12,a8)) # Pirate
         
         a9 = p.it(56).lien(p.it(57))
@@ -125,11 +136,6 @@ class TestBateaux(TestJoueur):
 
         
 
-#        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_deplacer_bateau(j1,a46,a57))
-#        # Joueur en ruine
-#        j1.enRuine = False
-        
         Jeu.deplacer_bateau(j1,b1,a7)
         self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a0)) # a deja bouge
 
@@ -188,10 +194,17 @@ class TestBateaux(TestJoueur):
         c2.save()
         
         self.assertTrue(Jeu.peut_evoluer_bateau(j1,b1)) # OK touche une colonie
+        self.assertTrue(Jeu.peut_evoluer_bateau(j1,b5)) # Ok touche un port
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
+        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5))
+        # En ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_evoluer_bateau(j1,b2)) # En pleine mer
         self.assertFalse(Jeu.peut_evoluer_bateau(j1,b3)) # Colonie ennemie
         self.assertFalse(Jeu.peut_evoluer_bateau(j1,b4)) # Relie à la terre mais pas en position echange
-        self.assertTrue(Jeu.peut_evoluer_bateau(j1,b5)) # Ok touche un port
         self.assertFalse(Jeu.peut_evoluer_bateau(j1,b6)) # Port mais sur une terre non colonisee
         self.assertFalse(Jeu.peut_evoluer_bateau(j1,b7)) # Relié à une colonie mais pas un bateau allie
         j1.setCartes(tg,Cartes.RIEN)
@@ -209,12 +222,15 @@ class TestBateaux(TestJoueur):
         cechtdouble = CartesGeneral(0,0,0,0,0,0,0,0,0,0.5) 
         cechbdouble = CartesGeneral(0,0,0,0,1,0.5,0,0,0,0) 
         
-#        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_echanger_bateau(j1,ab1,cecht,cechb))
-#        # Joueur en ruine
-#        j1.enRuine = False
         
-        self.assertTrue(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb)) # OK touche une colonie
+        self.assertTrue(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        # En ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
@@ -270,6 +286,13 @@ class TestBateaux(TestJoueur):
         b7.save()
 
         self.assertTrue(Jeu.peut_evoluer_bateau(j1,b1)) # OK touche une colonie
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
+        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5))
+        # En ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_evoluer_bateau(j1,b2)) # En pleine mer
         self.assertFalse(Jeu.peut_evoluer_bateau(j1,b3)) # Colonie ennemie
         self.assertFalse(Jeu.peut_evoluer_bateau(j1,b4)) # Relie a rien
@@ -293,10 +316,17 @@ class TestBateaux(TestJoueur):
 #        j1.enRuine = False
         
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb)) # OK touche une colonie
+        self.assertTrue(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb)) # Ok touche un port
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        # En ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
-        self.assertTrue(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb)) # Ok touche un port
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b6,cecht,cechb)) # Port mais sur une terre non colonisee
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b7,cecht,cechb)) # Pas un bateau allie
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch1,cechb)) # Trop de ressources demandees, le bateau est plein
@@ -360,10 +390,17 @@ class TestBateaux(TestJoueur):
 #        j1.enRuine = False
         
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb)) # OK touche une colonie
+        self.assertTrue(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb)) # Ok touche un port
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        # En ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
-        self.assertTrue(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb)) # Ok touche un port
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b6,cecht,cechb)) # Port mais sur une terre non colonisee
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b7,cecht,cechb)) # Pas un bateau allie
         self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch1,cechb)) # Trop de ressources demandees, le bateau est plein
@@ -441,6 +478,13 @@ class TestBateaux(TestJoueur):
         b1.cargaison = carg1
         self.assertTrue(Jeu.peut_coloniser(j1,b1,i1,Cartes.RIEN))
         self.assertTrue(Jeu.peut_coloniser(j1,b1,i5,Cartes.RIEN))
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,Cartes.RIEN))
+        self.assertFalse(Jeu.peut_coloniser(j1,b1,i5,Cartes.RIEN))
+        # En ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_coloniser(j1,b1,i2,Cartes.RIEN)) # Trop loin
         self.assertFalse(Jeu.peut_coloniser(j1,b1,i3,Cartes.RIEN)) # Dans l'eau
         self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,transf1toomuch)) # Transfert trop eleve
@@ -489,6 +533,7 @@ class TestBateaux(TestJoueur):
 #        self.assertEqual(j1.get_carte_armee_la_plus_grande(td),False) 
 #        self.assertEqual(j1.get_carte_route_la_plus_longue(td),False) 
 #        j2.cartes_routes_les_plus_longues = [False,False]
+        b1 = Bateau.getBateau(b1.num)
         self.assertEqual(b1.cargaison,carg2 - transf2 - Tarifs.COLONIE)
         self.assertEqual(len(j1.getColonies()),1)
         self.assertEqual(len(j1.getRoutes()),0)

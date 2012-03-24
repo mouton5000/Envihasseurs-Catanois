@@ -25,6 +25,12 @@ class TestTroc(TestJoueur):
         self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE)) # On ne peut acheter sans or
         j1.setOr(tg,1)
         self.assertTrue(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE))
+
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE))
+        # Joueur en ruine
+        j1.setEnRuine(False)
+
         j1.setOr(tg,2)
         self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,CartesRessources(1,1,0,0,0))) # On ne peut acheter plus d'une carte à la fois
         j1.setOr(tg,1)
@@ -67,6 +73,12 @@ class TestTroc(TestJoueur):
 
 
         self.assertTrue(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2ech)) # Ok
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2ech))
+        # Joueur en ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech2,c2ech)) # J1 n'a pas la somme requise
         self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech3,c2ech)) # J1 offre des cartes de developpement  
         self.assertFalse(Jeu.peut_echanger(j1,j2,td,c1ech3,c2ech)) # J1 n'est pas sur td
@@ -76,10 +88,6 @@ class TestTroc(TestJoueur):
         self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2echdouble)) # Echante non entier
 
         
-#        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2ech))
-#        # Joueur en ruine
-#        j1.enRuine = False
        
         Jeu.echanger(j1,j2,tg,c1ech1,c2ech)
         self.assertEqual(j1.getCartes(tg),c1 - c1ech1 + c2ech)        
@@ -106,14 +114,20 @@ class TestTroc(TestJoueur):
         port = p.hexa(2)
         marche = p.hexa(32)
 
-        br = tg.getBrigand()
-        pr = tg.getPirate()
+        br = Voleur.getBrigand(tg)
+        pr = Voleur.getPirate(tg)
         br.deplacer(p.hexa(22))
         pr.deplacer(p.hexa(1))
         br.save()
         pr.save()
         
         self.assertTrue(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        # Joueur en ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_echanger_classique(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne Terre
         self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Aucun Commerce
         self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Aucun Commerce.
@@ -126,10 +140,6 @@ class TestTroc(TestJoueur):
         self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,ctoomuch)) # Trop de demande
         
         
-#        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
-#        # Joueur en ruine
-#        j1.enRuine = False
        
         Jeu.echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE)
         self.assertEqual(j1.getCartes(tg), CartesRessources(4,8,0,4,4))
@@ -144,6 +154,12 @@ class TestTroc(TestJoueur):
         Colonie(1,p.it(23)).save()
         port.commerceType = CommerceType.TOUS
         self.assertTrue(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        # Joueur en ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne terre
         self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
         self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
@@ -160,11 +176,6 @@ class TestTroc(TestJoueur):
         pr.deplacer(p.hexa(1))
         br.save()
         pr.save()
-        
-#        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
-#        # Joueur en ruine
-#        j1.enRuine = False
        
         Jeu.echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)
         self.assertEqual(j1.getCartes(tg), CartesRessources(3,6,0,3,3))
@@ -173,6 +184,12 @@ class TestTroc(TestJoueur):
         j1.setCartes(tg,c1)
         port.commerceType = CommerceType.BOIS
         self.assertTrue(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        # Joueur en ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_echanger_commerce(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne terre
         self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
         self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
@@ -189,11 +206,6 @@ class TestTroc(TestJoueur):
         pr.deplacer(p.hexa(1))
         br.save()
         pr.save()
-        
-#        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
-#        # Joueur en ruine
-#        j1.enRuine = False
         
         Jeu.echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)
         self.assertEqual(j1.getCartes(tg), CartesRessources(2,4,0,2,2))
@@ -234,10 +246,6 @@ class TestTroc(TestJoueur):
         br.save()
         pr.save()
         
-#        j2.enRuine = True
-#        self.assertFalse(Jeu.peut_echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE))
-#        # Joueur en ruine
-#        j2.enRuine = False
        
         Jeu.echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE)
         self.assertEqual(j2.getCartes(tg), CartesRessources(2,2,0,2,2))

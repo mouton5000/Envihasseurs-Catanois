@@ -42,6 +42,11 @@ class TestColonieEtRoute(TestJoueur):
 
         j1.setCartes(self.tg,Tarifs.COLONIE)
         self.assertTrue(Jeu.peut_construire_colonie(j1,i83)) # Ok
+
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_construire_colonie(j1,i83)) # En ruine
+        j1.setEnRuine(False)
+
         self.assertFalse(Jeu.peut_construire_colonie(j1,i72))# Il y a deja une colonie
         self.assertFalse(Jeu.peut_construire_colonie(j1,i73))# Il y a une colonie a 1 case
         self.assertFalse(Jeu.peut_construire_colonie(j1,i54))# Il n'y a aucun lien
@@ -121,6 +126,13 @@ class TestColonieEtRoute(TestJoueur):
 
         self.assertTrue(Jeu.peut_construire_route(j1,a4333))  # ok relie a une route
         self.assertTrue(Jeu.peut_construire_route(j1,a5363))  # ok relie a une colonie
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_construire_route(j1,a4333))
+        self.assertFalse(Jeu.peut_construire_route(j1,a5363))
+        # En ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_construire_route(j1,a5343)) # existe deja
         self.assertFalse(Jeu.peut_construire_route(j1,a103104)) # relie a rien
         self.assertFalse(Jeu.peut_construire_route(j1,a4434)) # relie seulement a l'ennemi
@@ -160,6 +172,12 @@ class TestColonieEtRoute(TestJoueur):
 
         j1.setCartes(self.tg,Tarifs.VILLE)
         self.assertTrue(Jeu.peut_evoluer_colonie(j1,i1))
+        
+        j1.setEnRuine(True)
+        self.assertFalse(Jeu.peut_evoluer_colonie(j1,i1))
+        # En ruine
+        j1.setEnRuine(False)
+        
         self.assertFalse(Jeu.peut_evoluer_colonie(j1,i2)) # Colonie adverse
         self.assertFalse(Jeu.peut_evoluer_colonie(j1,i3)) # Pas de colonie
         j1.setCartes(self.tg,Cartes.RIEN)
@@ -237,20 +255,20 @@ class TestColonieEtRoute(TestJoueur):
         Jeu.recolter_ressources(6)
         self.assertEqual(j1.getCartes(tg),c)
         self.assertEqual(j1.getOr(tg),1)
-
-        #j1.setCartes(tg,c)
-        #j1.setOr(0)
-        #self.j1.enRuine = True
-        #Jeu.recolter_ressources(4)
-        #self.assertEqual(j1.getCartes(tg),c)
-        #self.assertEqual(j1.getOr(tg),0)
-        #Jeu.recolter_ressources(9)
-        #self.assertEqual(j1.getCartes(tg),c)
-        #self.assertEqual(j1.getOr(tg),0)
-        #self.j1.enRuine = False
         
+        j1.setCartes(tg,c)
+        j1.setOr(tg,0)
+        j1.setEnRuine(True)
+        Jeu.recolter_ressources(6)
+        self.assertEqual(j1.getCartes(tg),c)
+        self.assertEqual(j1.getOr(tg),0)
+        Jeu.recolter_ressources(5)
+        self.assertEqual(j1.getCartes(tg),c)
+        self.assertEqual(j1.getOr(tg),0)
+        # En ruine
+        j1.setEnRuine(False)
 
-        v = tg.getBrigand()
+        v = Voleur.getBrigand(tg)
 
         # Voleur sur une colonie
         j1.setCartes(tg,c)
@@ -356,10 +374,11 @@ class TestColonieEtRoute(TestJoueur):
         self.assertEqual(j1.get_route_la_plus_longue(td),3)
 
         
-        #j1.enRuine = True
-        #self.assertEqual(j1.route_la_plus_longue(tg,True),0)
-        # Joueur en ruine
-        #j1.enRuine = False
+        j1.ruiner()
+        self.assertEqual(j1.get_route_la_plus_longue(tg),0)
+        self.assertEqual(j1.get_route_la_plus_longue(td),0)
+        # En ruine
+        j1.setEnRuine(False)
 
 
     def test_route_la_plus_longue_global(self):
@@ -456,6 +475,7 @@ class TestColonieEtRoute(TestJoueur):
         t32 = (1,6)
         t33 = (1,6)
         t34 = (1,6)
+        t35 = (2,6)
 
         j1.setCartes(tg,Tarifs.COLONIE*100 + Tarifs.ROUTE*100)
         j2.setCartes(tg,Tarifs.COLONIE*100 + Tarifs.ROUTE*100)
@@ -529,3 +549,8 @@ class TestColonieEtRoute(TestJoueur):
         self.assertEqual(Jeu.get_route_la_plus_longue(tg),t33)
         Jeu.construire_colonie(j1,i34)
         self.assertEqual(Jeu.get_route_la_plus_longue(tg),t34)
+        
+        j1.ruiner()
+        self.assertEqual(Jeu.get_route_la_plus_longue(tg),t35)
+        # En ruine
+        j1.setEnRuine(False)

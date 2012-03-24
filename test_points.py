@@ -52,6 +52,7 @@ class TestPoints(TestJoueur):
         j1.recevoir(tg,Cartes.POINT_VICTOIRE)
         self.assertEqual(j1.getStaticPoints(tg),4)
         self.assertEqual(j1.getPoints(tg),5) # Carte pv = 1 point
+        self.assertEqual(j1.getVisiblePoints(tg),4) # Les cartes PV ne sont pas visibles
         j1.payer(tg,Cartes.POINT_VICTOIRE)
         self.assertEqual(j1.getStaticPoints(tg),4)
         self.assertEqual(j1.getPoints(tg),4)
@@ -74,6 +75,7 @@ class TestPoints(TestJoueur):
         Jeu.set_route_la_plus_longue(tg,1,2390)
         self.assertEqual(j1.getStaticPoints(tg),4)
         self.assertEqual(j1.getPoints(tg),6)
+        self.assertEqual(j1.getVisiblePoints(tg),6)
         
 
         # La plus grande armee vaut 2 points
@@ -81,10 +83,12 @@ class TestPoints(TestJoueur):
         Jeu.set_armee_la_plus_grande(tg,1,90)
         self.assertEqual(j1.getStaticPoints(tg),4)
         self.assertEqual(j1.getPoints(tg),8)
+        self.assertEqual(j1.getVisiblePoints(tg),8)
         self.assertEqual(j1.getPoints(td),0) 
 
         
-#        j1.enRuine = True
-#        self.assertEqual(j1.getPoints(tg),0)
-#        # Joueur en ruine
-#        j1.enRuine = False
+        j1.setEnRuine(True)
+        self.assertEqual(j1.getStaticPoints(tg),0)
+        self.assertEqual(j1.getPoints(tg),0)
+        # Joueur en ruine
+        j1.setEnRuine(False)
