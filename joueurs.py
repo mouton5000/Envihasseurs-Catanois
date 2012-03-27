@@ -30,6 +30,10 @@ def protection(f):
 
     return helper
 
+def kallable(f):
+    f.peut_etre_appellee = True
+    return f
+
 class Des:
 
     NB_LANCES = 4
@@ -348,12 +352,16 @@ class Joueur:
     def peutExecuterAction(self, action):
         ''' Vérifie si on peut executer l'action, avec la base de donnée bdd '''
         func = getattr(Jeu, 'peut_'+action.func)
-        return Jeu.func(self,*action.paramsi)
+        if func.peut_etre_appelee:
+            return Jeu.func(self,*action.paramsi)
+        return False
 
     def executerAction(self, action):
         ''' Execute l'action, avec la base de donnée bdd '''
         func = getattr(Jeu, action.func)
-        return Jeu.func(self,*action.params)
+        if func.peut_etre_appelee:
+            return Jeu.func(self,*action.params)
+        return False
 
     def executerNode(self, node):
         ''' Execute l'ensemble des actions du noeud jusqu' à la dernière ou jusqu'a ce qu'une des action renvoie faux. Dans le premire cas, elle renvoie vrai et dans l'autre, vide la  base de données et renvoie faux.'''
@@ -560,6 +568,7 @@ class Jeu:
             return True
 
     @staticmethod
+    @kallable
     @protection
     def recolter_ressources(des):
         ''' Effectue pour tous les joueurs sur toutes les terres la récolte des ressources sauf s'ils sont en ruine'''
@@ -592,6 +601,7 @@ class Jeu:
         return False
 
     @staticmethod
+    @kallable
     @protection
     def construire_colonie(j, intersection):
         ''' Pose une nouvelle colonie du joueur j sur l'intersection si il en a la possibilité, et effectue le paiement.'''
@@ -625,6 +635,7 @@ class Jeu:
         return False
 
     @staticmethod
+    @kallable
     def construire_route(j,arrete, construction_route = False):
         ''' Pose, si c'est possible, une route du joueur j sur l'arrete et effectue le paiement.'''
         bdd = j.bdd
@@ -650,6 +661,7 @@ class Jeu:
         return not j.getEnRuine() and not colonie.isVille and colonie.joueur == j.num and j.peut_payer(intersection.getTerre(), Tarifs.VILLE)
 
     @staticmethod
+    @kallable
     @protection
     def evoluer_colonie(j,intersection):
         ''' Evolue si c'est possible la colonie, via le joueur j et effectue le paiement'''
@@ -668,6 +680,7 @@ class Jeu:
         return not j.getEnRuine() and j.aColoniseTerre(terre) and j.getOr(terre) > 0 and carte.est_ressource() and carte.size() == 1 and carte.est_physiquement_possible()
 
     @staticmethod
+    @kallable
     @protection
     def acheter_ressource(j,terre, carte):
         ''' Effectue via le joueur j sur cette terre l'achat de cette carte si il est possible'''
@@ -691,6 +704,7 @@ class Jeu:
         return False
     
     @staticmethod
+    @kallable
     def construire_bateau(j,arrete, construction_route = False):
         ''' Pose, si c'est possible un bateau du joueur j sur l'arrete et effectue le paiement.'''
         bdd = j.bdd
@@ -719,6 +733,7 @@ class Jeu:
         return not j.getEnRuine() and bateau.joueur == j.num and not Voleur.est_pirate(bateau.position,bdd) and arrete.isMaritimeOuCotier() and (arrete in bateau.position.neighb() or (bateau.etat == Bateau.BateauType.VOILIER and arrete in bateau.position.doubleNeighb() )) and not bateau.aBouge
     
     @staticmethod
+    @kallable
     @protection
     def deplacer_bateau(j,bateau,arrete):
         ''' Déplace si c'est possible le bateau via le joueur j sur l'arrete'''
@@ -734,6 +749,7 @@ class Jeu:
         return not j.getEnRuine() and j.num == bateau.joueur and bateau.en_position_echange(bdd) and j.peut_payer(bateau.position.getTerre(), ct) and bateau.peut_recevoir_et_payer(ct,cb) and ct.est_physiquement_possible() and cb.est_physiquement_possible()
 
     @staticmethod
+    @kallable
     @protection
     def echanger_bateau(j,bateau,ct,cb):
         ''' Echange si c'est possible des cartes entre la cargaison du bateau et la main de j sur la terre où se trouve le bateau, ct cartes depuis la terre vers le bateau et cb depuis le bateau'''
@@ -753,6 +769,7 @@ class Jeu:
 
     
     @staticmethod
+    @kallable
     @protection
     def evoluer_bateau(j,bateau):
         ''' Evolue, si c'est possible le bateau via le joueur j et effectue le paiement'''
@@ -775,6 +792,7 @@ class Jeu:
         return not j.getEnRuine() and j.aColoniseTerre(terre) and j.peut_payer(terre,Tarifs.DEVELOPPEMENT)
    
     @staticmethod
+    @kallable
     @protection 
     def acheter_carte_developpement(j,terre):
         ''' Pioche pour le joueur j sur cette terre, une carte de développement si c'est possible, et effectue le paiement.'''
@@ -798,6 +816,7 @@ class Jeu:
 
 
     @staticmethod
+    @kallable
     @protection
     def coloniser(j,bateau,position,transfert):
         bdd = j.bdd
@@ -816,6 +835,7 @@ class Jeu:
         return not j1.getEnRuine() and not j2.getEnRuine() and j1.aColoniseTerre(terre) and j2.aColoniseTerre(terre) and j1.peut_payer(terre,c1) and j2.peut_payer(terre,c2) and c1.est_ressource() and c2.est_ressource() and c1.est_physiquement_possible() and c2.est_physiquement_possible()
 
     @staticmethod
+    @kallable
     @protection
     def echanger(j1,j2num,terre,c1,c2):
         ''' Effectue si il est possible un échange de cartes entre j1 et j2 sur cette terre, avec j1 donnant c1 cartes et j2 donnant c2 cartes.'''
@@ -831,6 +851,7 @@ class Jeu:
         return not j.getEnRuine() and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.aColoniseTerre(terre) and j.peut_payer(terre,t1*4)
 
     @staticmethod
+    @kallable
     @protection
     def echanger_classique(j,terre,t1,t2):
         ''' Effectue s'il est possible un échange classique de cartes (4 cartes de t1 contre 1carte de t2) sur cette terre, via le joueur j'''
@@ -844,6 +865,7 @@ class Jeu:
         return not j.getEnRuine() and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and j.aColoniseTerre(terre) and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*3) and j.contient_commerce_utilisable(terre,CommerceType.TOUS)
     
     @staticmethod
+    @kallable
     @protection
     def echanger_commerce_tous(j,terre,t1,t2):
         ''' Effectue s'il est possible un échange commerce '?' de cartes (3 cartes de t1 contre 1carte de t2) sur cette terre, via le joueur j'''
@@ -871,6 +893,7 @@ class Jeu:
         return False
     
     @staticmethod
+    @kallable
     @protection
     def echanger_commerce(j,terre,t1,t2):
         ''' Effectue s'il est possible un échange de commerce spécialisé de cartes (2 cartes de t1 contre 1carte de t2) sur cette terre, via le joueur j'''
@@ -883,6 +906,7 @@ class Jeu:
         return not joueur.getEnRuine() and Cartes.DECOUVERTE <= joueur.getCartes(terre) and joueur.aColoniseTerre(terre) and cartes.size() == 2 and cartes.est_ressource() and cartes.est_physiquement_possible()
 
     @staticmethod
+    @kallable
     @protection
     def jouer_decouverte(joueur,terre,cartes):
             joueur.recevoir(terre,cartes)
@@ -900,6 +924,7 @@ class Jeu:
         return b
 
     @staticmethod
+    @kallable
     @protection
     def jouer_monopole(joueur,terre,t1,jvols):
         i = 0
@@ -916,6 +941,7 @@ class Jeu:
         return not joueur.getEnRuine() and a1 != a2 and Cartes.CONSTRUCTION_ROUTES <= joueur.getCartes(terre) and joueur.aColoniseTerre(terre) and (a1.getTerre() == terre or a1.int1.getTerre() == terre or a1.int2.getTerre() == terre) and (a2.getTerre() == terre or a2.int1.getTerre() == terre or a2.int2.getTerre() == terre) and ((isFirstRoute and a1.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a1,True)) or (not(isFirstRoute) and a1.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a1,True))) and ((isSecondRoute and a2.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a2,True)) or (not(isSecondRoute) and a2.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a2,True))) and ((isFirstRoute and a1.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a1,True)) or (not(isFirstRoute) and a1.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a1,True))) and ((isSecondRoute and a2.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a2,True)) or (not(isSecondRoute) and a2.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a2,True)))
 
     @staticmethod
+    @kallable
     @protection
     def jouer_construction_routes(joueur,terre,isFirstRoute,a1,isSecondRoute,a2):
         joueur.payer(terre,Cartes.CONSTRUCTION_ROUTES)
@@ -965,6 +991,7 @@ class Jeu:
         return False
 
     @staticmethod
+    @kallable
     @protection
     def defausser(joueur,terre,cartes):
         joueur.payer(terre,cartes[0])
@@ -1063,6 +1090,7 @@ class Jeu:
                     u -= rb[0]
 
     @staticmethod
+    @kallable
     def deplacer_voleur(joueur,terre,voleurType,hex,jvol, chevallier = False):
         bdd = joueur.bdd
         if Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,chevallier):
@@ -1084,6 +1112,7 @@ class Jeu:
         return not joueur.getEnRuine() and Cartes.CHEVALLIER <= joueur.getCartes(terre) and joueur.aColoniseTerre(terre) and Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
 
     @staticmethod
+    @kallable
     @protection
     def jouer_chevallier(joueur,terre,voleurType, hex,jvol):
             joueur.add_chevallier(terre)
