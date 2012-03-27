@@ -208,11 +208,11 @@ class TestVoleur(TestJoueur):
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(32),0)) # Desert mais Marche
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desd,0)) # Autre terre
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(31),0)) # Mer
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desg,j2)) # Il ne faut pas de joueur
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desg,2)) # Il ne faut pas de joueur
 
         self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,0,0))
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,marg,0)) # Il ne faut pas d hexagone
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,0,j2)) # Il ne faut pas de joueur
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,0,2)) # Il ne faut pas de joueur
         
         # Un seul joueur sur l'ile 
         
@@ -230,11 +230,11 @@ class TestVoleur(TestJoueur):
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(32),0)) # desert mais marche
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desd,0)) # autre terre        
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(31),0)) # mer
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desg,j2)) # il ne faut pas de joueur
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desg,2)) # il ne faut pas de joueur
 
         self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,0,0))
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,marg,0)) # Il ne faut pas d hexagone
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,0,j2)) # Il ne faut pas de joueur
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,0,2)) # Il ne faut pas de joueur
 
         #Deux joueurs sur l ile mais le voleur est sur le seul hexagone occupe par le deuxieme joueur
 
@@ -259,12 +259,12 @@ class TestVoleur(TestJoueur):
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(32),0)) # desert mais marche
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desd,0)) # autre terre        
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(31),0)) # mer
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desg,j2)) # il ne faut pas de joueur
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desg,2)) # il ne faut pas de joueur
 
         self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,0,0))
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(4),0)) # Il ne faut pas d hexagone
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(41),0)) # Aucun deplacement
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,0,j2)) # Il ne faut pas de joueur        
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,0,2)) # Il ne faut pas de joueur        
         # Brigand
         # Deplacement sur un hexagone sans joueur
         # Deplacement sur le meme hexagone
@@ -277,23 +277,23 @@ class TestVoleur(TestJoueur):
         
         Colonie(2,p.it(35)).save() # Colonie cotiere pas sur un port
 
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,0,j2)) # Pas d'hexagone
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,0,2)) # Pas d'hexagone
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(16),0)) # Pas de joueur
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(12),j2)) # Le joueur 2 n'est pas la
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desg,j2)) # Le voleur ne bouge pas
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(13),j2)) # Deplacement a cote de la deuxieme colonie du joueur mais en mer
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),j2))
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(12),2)) # Le joueur 2 n'est pas la
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,desg,2)) # Le voleur ne bouge pas
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(13),2)) # Deplacement a cote de la deuxieme colonie du joueur mais en mer
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),2))
         
         j1.set_deplacement_voleur(tg, False)
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),j2)) # Ce n'est pas a son our
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),2)) # Ce n'est pas a son our
         j1.set_deplacement_voleur(tg, True)
 
         Colonie(2,p.it(48)).save() # Colonie cotiere pas sur un port sur td
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(19),j2)) # Deplacement sur une autre terre
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,br,p.hexa(19),j2)) # Deplacement sur une autre terre
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,br,p.hexa(17),j2)) # Deplacement depuis une terre non colonisee
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(19),2)) # Deplacement sur une autre terre
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,br,p.hexa(19),2)) # Deplacement sur une autre terre
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,br,p.hexa(17),2)) # Deplacement depuis une terre non colonisee
         
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(37),j1)) # Le joueur 1 ne peut s'attaquer a lui meme
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(37),1)) # Le joueur 1 ne peut s'attaquer a lui meme
         
         # Pirate
         # Deplacement sur un hexagone sans colonie ni bateau
@@ -309,21 +309,21 @@ class TestVoleur(TestJoueur):
 
         Colonie(2,p.it(115)).save()
 
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,0,j2)) # Pas d'hexagone
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,0,2)) # Pas d'hexagone
         self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(11),0)) # Pas de joueur
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(11),j2)) # Le joueur 2 n'est pas la
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,marg,j2)) # Le voleur ne bouge pas
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(36),j2)) # Deplacement en terre
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(47),j2)) # Deplacement en terre
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(11),2)) # Le joueur 2 n'est pas la
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,marg,2)) # Le voleur ne bouge pas
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(36),2)) # Deplacement en terre
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(47),2)) # Deplacement en terre
         
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(57),j2))
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(41),j2))
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(57),2))
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(41),2))
         
         prg.deplacer(0)
         brg.save()
         prg.save()
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(57),j2))
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(41),j2))
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(57),2))
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(41),2))
 
 #        j1.enRuine = True
 #        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(52),0))
@@ -331,30 +331,30 @@ class TestVoleur(TestJoueur):
 #        j1.enRuine = False
 
         j1.set_deplacement_voleur(tg,False)
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(57),j2)) # Ce n'est pas a son tour
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(41),j2)) # Ce n'est pas a son tour
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(57),2)) # Ce n'est pas a son tour
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(41),2)) # Ce n'est pas a son tour
 
         j1.set_deplacement_voleur(tg,True)
         Colonie(2,p.it(90)).save()
         b2.deplacer(p.it(107).lien(p.it(108)))
         b2.save()
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(45),j2)) # Deplacement sur une autre terre
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(44),j2)) # Deplacement sur une autre terre
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,pr,p.hexa(45),j2)) # Deplacement sur une autre terre
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,pr,p.hexa(44),j2)) # Deplacement sur une autre terre
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(45),2)) # Deplacement sur une autre terre
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(44),2)) # Deplacement sur une autre terre
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,pr,p.hexa(45),2)) # Deplacement sur une autre terre
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,pr,p.hexa(44),2)) # Deplacement sur une autre terre
         
         b2.deplacer(p.it(92).lien(p.it(82)))
         b2.save()
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,pr,p.hexa(57),j2)) # Deplacement depuis une autre terre
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,pr,p.hexa(41),j2)) # Deplacement depuis une autre terre
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,pr,p.hexa(57),2)) # Deplacement depuis une autre terre
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,td,pr,p.hexa(41),2)) # Deplacement depuis une autre terre
  
         prg.deplacer(marg)
         brg.save()
         prg.save()
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(57),j2))
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(41),j2))
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(57),2))
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(41),2))
   
-        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(21),j1)) # Le joueur 1 ne peut s'attaquer a lui meme
+        self.assertFalse(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(21),1)) # Le joueur 1 ne peut s'attaquer a lui meme
  
         # Vol
         # Vol avec bateau a 1 case
@@ -377,8 +377,8 @@ class TestVoleur(TestJoueur):
 
         
         j1.set_deplacement_voleur(tg, True)
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),j2))
-        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),j2)
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),2))
+        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
         brg = Voleur.getBrigand(tg)
         self.assertEqual(brg.position,p.hexa(17))
         self.assertEqual(j2.getCartes(tg),c0)
@@ -391,8 +391,8 @@ class TestVoleur(TestJoueur):
         brg.deplacer(desg)
         brg.save()
         j1.set_deplacement_voleur(tg, True)
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),j2))
-        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),j2)
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),2))
+        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
 
         brg = Voleur.getBrigand(tg)
         self.assertEqual(brg.position,p.hexa(17))
@@ -405,8 +405,8 @@ class TestVoleur(TestJoueur):
         j2.setCartes(tg,cch)
         j1.setCartes(tg,c0)
         j1.set_deplacement_voleur(tg, True)
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(57),j2))
-        Jeu.deplacer_voleur(j1,tg,pr,p.hexa(57),j2)
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(57),2))
+        Jeu.deplacer_voleur(j1,tg,pr,p.hexa(57),2)
 
         prg = Voleur.getPirate(tg)
         self.assertEqual(prg.position,p.hexa(57))
@@ -424,8 +424,8 @@ class TestVoleur(TestJoueur):
         b2.cargaison = Cartes.BLE
         b2.save()
         j1.set_deplacement_voleur(tg, True)
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(7),j2))
-        Jeu.deplacer_voleur(j1,tg,pr,p.hexa(7),j2)
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,pr,p.hexa(7),2))
+        Jeu.deplacer_voleur(j1,tg,pr,p.hexa(7),2)
         prg = Voleur.getPirate(tg)
         self.assertEqual(prg.position,p.hexa(7))
         self.assertEqual(j2.getCartes(tg),c0)
@@ -443,8 +443,8 @@ class TestVoleur(TestJoueur):
         brg.deplacer(desg)
         brg.save()
         j1.set_deplacement_voleur(tg, True)
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),j2))
-        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),j2)
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),2))
+        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
         brg = Voleur.getBrigand(tg)
         self.assertEqual(brg.position,p.hexa(17))
         self.assertEqual(j2.getCartes(tg),c0)
@@ -462,8 +462,8 @@ class TestVoleur(TestJoueur):
         brg.deplacer(desg)
         brg.save()
         j1.set_deplacement_voleur(tg, True)
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),j2))
-        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),j2)
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(17),2))
+        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
         brg = Voleur.getBrigand(tg)
         self.assertEqual(brg.position,p.hexa(17))
         self.assertEqual(j2.getCartes(tg),c0)
@@ -479,8 +479,8 @@ class TestVoleur(TestJoueur):
         b2.cargaison = Cartes.BLE
         b2.save()
         j1.set_deplacement_voleur(tg, True)
-        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(47),j2))
-        Jeu.deplacer_voleur(j1,tg,br,p.hexa(47),j2)
+        self.assertTrue(Jeu.peut_deplacer_voleur(j1,tg,br,p.hexa(47),2))
+        Jeu.deplacer_voleur(j1,tg,br,p.hexa(47),2)
         self.assertEqual(j2.getCartes(tg),c0)
         self.assertEqual(j1.getCartes(tg),c0)
         b2 = Bateau.getBateau(2)

@@ -72,24 +72,24 @@ class TestTroc(TestJoueur):
         c2echdouble = CartesRessources(0,0,0,0.5,0)
 
 
-        self.assertTrue(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2ech)) # Ok
+        self.assertTrue(Jeu.peut_echanger(j1,2,tg,c1ech1,c2ech)) # Ok
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2ech))
+        self.assertFalse(Jeu.peut_echanger(j1,2,tg,c1ech1,c2ech))
         # Joueur en ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech2,c2ech)) # J1 n'a pas la somme requise
-        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech3,c2ech)) # J1 offre des cartes de developpement  
-        self.assertFalse(Jeu.peut_echanger(j1,j2,td,c1ech3,c2ech)) # J1 n'est pas sur td
-        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1neg,c2ech)) # Echange Negatif
-        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1double,c2ech)) # Echange non entier
-        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2echneg)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger(j1,j2,tg,c1ech1,c2echdouble)) # Echante non entier
+        self.assertFalse(Jeu.peut_echanger(j1,2,tg,c1ech2,c2ech)) # J1 n'a pas la somme requise
+        self.assertFalse(Jeu.peut_echanger(j1,2,tg,c1ech3,c2ech)) # J1 offre des cartes de developpement  
+        self.assertFalse(Jeu.peut_echanger(j1,2,td,c1ech3,c2ech)) # J1 n'est pas sur td
+        self.assertFalse(Jeu.peut_echanger(j1,2,tg,c1ech1neg,c2ech)) # Echange Negatif
+        self.assertFalse(Jeu.peut_echanger(j1,2,tg,c1ech1double,c2ech)) # Echange non entier
+        self.assertFalse(Jeu.peut_echanger(j1,2,tg,c1ech1,c2echneg)) # Echange negatif
+        self.assertFalse(Jeu.peut_echanger(j1,2,tg,c1ech1,c2echdouble)) # Echante non entier
 
         
        
-        Jeu.echanger(j1,j2,tg,c1ech1,c2ech)
+        Jeu.echanger(j1,2,tg,c1ech1,c2ech)
         self.assertEqual(j1.getCartes(tg),c1 - c1ech1 + c2ech)        
         self.assertEqual(j2.getCartes(tg),c2g + c1ech1 - c2ech)        
 

@@ -1,4 +1,4 @@
-# *-* coding: iso-8859-1 *-*
+# -*- coding: utf8 -*-
 from plateau import *
 from cartes import *
 from redis import *
@@ -322,8 +322,8 @@ class Bateau:
         i2 = self.position.int2
         col1 = Colonie.getColonie(i1, bdd)
         col2 = Colonie.getColonie(i2, bdd)
-        j = joueurs.Joueur(self.joueur)
-        return  ((col1 != 0 and col1.joueur == self.joueur) or (col2 != 0 and col2.joueur == self.joueur) or i1.isPort() or i2.isPort()) and j.aColoniseTerre(self.position.getTerre(), bdd) 
+        j = joueurs.Joueur(self.joueur, bdd)
+        return  ((col1 != 0 and col1.joueur == self.joueur) or (col2 != 0 and col2.joueur == self.joueur) or i1.isPort() or i2.isPort()) and j.aColoniseTerre(self.position.getTerre()) 
     
     def est_proche(self,terre):
         ''' Est vrai si le bateau est à un déplacement d'un emplacement cotier'''
