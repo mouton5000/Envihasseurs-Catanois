@@ -41,6 +41,10 @@ class ForetAction:
         return int(REDIS.get('N'+str(node)+':sibling'))
 
     @staticmethod
+    def hasSiblingNode(node):
+        return REDIS.get('N'+str(node)+':sibling') != '-1'
+
+    @staticmethod
     def setPSiblingNode(node,pSiblingNode):
         REDIS.set('N'+str(node)+':psibling',pSiblingNode)
 
@@ -84,6 +88,10 @@ class ForetAction:
     @staticmethod
     def getNextRoot(root):
         return int(REDIS.get('N'+str(root)+':racineSuivante'))
+    
+    @staticmethod
+    def hasNextRoot(root):
+        return REDIS.get('N'+str(root)+':racineSuivante') != '-1'
     
     @staticmethod
     def setPreviousRoot(root,node):
@@ -284,6 +292,7 @@ class ForetAction:
 
     @staticmethod
     def addChild(fatherNode):
+        ''' Ajoute un fils à la fin de la liste des fils de fatherNode '''
         lastNode = ForetAction.getNextNodeId()
 
         if ForetAction.hasChild(fatherNode):
@@ -309,6 +318,7 @@ class ForetAction:
 
     @staticmethod
     def addFirstChild(fatherNode):
+        ''' Ajoute un fils au début de la liste des fils de fatherNode '''
         lastNode = ForetAction.getNextNodeId()
 
         if ForetAction.hasChild(fatherNode):
@@ -335,6 +345,7 @@ class ForetAction:
 
     @staticmethod
     def addSibling(node):
+        ''' Ajoute un frere à node, le place après node dans la liste des fils du pere de node'''
         lastNode = ForetAction.getNextNodeId()
         
         fatherNode = ForetAction.getFatherNode(node)
@@ -363,6 +374,7 @@ class ForetAction:
     
     @staticmethod
     def removeNode(node):
+        ''' Retire node de son arbre '''
         
         fatherNode = ForetAction.getFatherNode(node)
         siblingNode = ForetAction.getSiblingNode(node)
@@ -408,22 +420,37 @@ class ForetAction:
 
         ForetAction.deleteNode(node)
 
+    @staticmethod
+    def getActions(node):
+        ''' Ajoute une action au noeud node, en fin de liste des actions '''
+        return REDIS.lrange('N'+str(node)+':actions',0,-1)
 
     @staticmethod
     def addAction(node,action):
+        ''' Ajoute une action au noeud node, en fin de liste des actions '''
         REDIS.rpush('N'+str(node)+':actions',action.num)
 
     @staticmethod
     def lPushAction(node,action):
+        ''' Ajoute une action au noeud node, au début de liste des actions '''
         REDIS.lpush('N'+str(node)+':actions',action.num)
     
     @staticmethod
     def insertAction(node,beforeAction,action):
+        ''' Ajoute une action au noeud node juste après l'action beforeAction '''
         key = 'N' + str(node) + ':actions'
         REDIS.linsert(key,'after',beforeAction, action.num)
+    
+    @staticmethod
+    def insertActionByIndex(node,index,action):
+        ''' Ajoute une action au noeud node juste après l'action située à l'indice index '''
+        key = 'N' + str(node) + ':actions'
+        beforeAction = REDIS.lindex(key,index)
+        ForetAction.insertAction(node,beforeAction,action)
 
     @staticmethod
     def removeAction(node,action):
+        ''' Retire l'action du noeud node '''
         REDIS.lrem('N'+str(node)+':actions',0,action.num)
         Action.delAction(action.num)
         
