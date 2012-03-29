@@ -5,7 +5,7 @@ import redis
 
 REDIS = redis.StrictRedis()
 
-class TestForetAction(unittest.TestCase):
+class TestBDD(unittest.TestCase):
     def setUp(self):
         # On crée un arbre avec une racine vide, sans fils. Le curseur est placé sur
         # la racine
