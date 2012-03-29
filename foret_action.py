@@ -1,272 +1,119 @@
-# *-* coding: iso-8859-1 *-*
+# *-* coding: utf8 *-*
 import redis
 from plateau import *
 from joueurs import *
 REDIS = redis.StrictRedis()
 
-class ForetAction:
+
+class Node:
     ''' Classe représentant une forêt dont les arbres sont placés les uns à la suite.
     Chaque noeud contient un ensemble d'étiquettes qu'il enregistre. Puis un curseur
     peut se ballader de pere en fils ou de frere en frere. Si le curseur est au bout
     d'un arbre est qu'on souhaite voir le fils, le curseur passe à l'arbre suivant.'''
 
 
-
-    @staticmethod
-    def setNextNode(fatherNode,childNode):
-        REDIS.set('N'+str(fatherNode)+':next',childNode)
-
-    @staticmethod
-    def getNextNode(fatherNode):
-        return int(REDIS.get('N'+str(fatherNode)+':next'))
-
-    @staticmethod
-    def hasChild(fatherNode):
-        return REDIS.get('N'+str(fatherNode)+':lastChild') != '-1'
-
-    @staticmethod
-    def setFatherNode(childNode,fatherNode):
-        REDIS.set('N'+str(childNode)+':father',fatherNode)
-
-    @staticmethod
-    def getFatherNode(childNode):
-        return int(REDIS.get('N'+str(childNode)+':father'))
-
-    @staticmethod
-    def setSiblingNode(node,siblingNode):
-        REDIS.set('N'+str(node)+':sibling',siblingNode)
-
-    @staticmethod
-    def getSiblingNode(node):
-        return int(REDIS.get('N'+str(node)+':sibling'))
-
-    @staticmethod
-    def hasSiblingNode(node):
-        return REDIS.get('N'+str(node)+':sibling') != '-1'
-
-    @staticmethod
-    def setPSiblingNode(node,pSiblingNode):
-        REDIS.set('N'+str(node)+':psibling',pSiblingNode)
-
-    @staticmethod
-    def getPSiblingNode(node):
-        return int(REDIS.get('N'+str(node)+':psibling'))
+    def __init__(self,num):
+        self.num = num
     
-
-    @staticmethod
-    def setLastChildNode(fatherNode,lastChildNode):
-        REDIS.set('N'+str(fatherNode)+':lastChild',lastChildNode)
- 
-    @staticmethod
-    def getLastChildNode(fatherNode):
-        return int(REDIS.get('N'+str(fatherNode)+':lastChild'))
-   
-    @staticmethod
-    def setFirstRoot(node,j):
-        REDIS.set('J'+str(j.num)+':racine',node)
-
-    @staticmethod
-    def getFirstRoot(j):
-        return int(REDIS.get('J'+str(j.num)+':racine'))
-
-    @staticmethod
-    def hasRoot(j):
-        return REDIS.exists('J'+str(j.num)+':racine')
-
-    @staticmethod
-    def setLastRoot(node,j):
-        REDIS.set('J'+str(j.num)+':derniereRacine',node)
-
-    @staticmethod
-    def getLastRoot(j):
-        return int(REDIS.get('J'+str(j.num)+':derniereRacine'))
     
-    @staticmethod
-    def setNextRoot(root,node):
-        REDIS.set('N'+str(root)+':racineSuivante',node)
-
-    @staticmethod
-    def getNextRoot(root):
-        return int(REDIS.get('N'+str(root)+':racineSuivante'))
+    def __eq__(self,other):
+        return self.num == other.num
     
-    @staticmethod
-    def hasNextRoot(root):
-        return REDIS.get('N'+str(root)+':racineSuivante') != '-1'
+    def __ne__(self,other):
+        return self.num != other.num
     
-    @staticmethod
-    def setPreviousRoot(root,node):
-        REDIS.set('N'+str(root)+':racinePrecedente',node)
+    def __str__(self):
+        return str(self.num)
 
-    @staticmethod
-    def getPreviousRoot(root):
-        return int(REDIS.get('N'+str(root)+':racinePrecedente'))
-
-    @staticmethod
-    def setNewRoot(j):
-
-        node = ForetAction.getNextNodeId()
-        hasRoot = ForetAction.hasRoot(j)
-        if hasRoot:
-            lastRoot = ForetAction.getLastRoot(j)
-            ForetAction.setNextRoot(lastRoot,node)
-            ForetAction.setPreviousRoot(node,lastRoot)
-        else:
-            ForetAction.setFirstRoot(node,j)
-            ForetAction.setPreviousRoot(node,-1)
-        ForetAction.setLastRoot(node,j)
-        ForetAction.setNextRoot(node,-1)
-        
-        ForetAction.setPlayer(node,j)
-        ForetAction.setRoot(node,node)
-        ForetAction.setNextNode(node,-1)
-        ForetAction.setLastChildNode(node,-1)
-        ForetAction.setSiblingNode(node,-1)
-        ForetAction.setPSiblingNode(node,-1)
-        ForetAction.setFatherNode(node,-1)
+# Interface avec la base de données
     
-        ForetAction.incrNodeId()
+    def setPlayer(node, jnum):
+        REDIS.set('N'+str(node.num)+':joueur',jnum)
 
-
-        if hasRoot: 
-            ls = ForetAction.getLeavesOf(lastRoot)
-            for n in ls:
-                ForetAction.setNextNode(n,node)
-        return node
-
-    @staticmethod
-    def setNewFirstRoot(j):
-
-        node = ForetAction.getNextNodeId()
-        if ForetAction.hasRoot(j):
-            firstRoot = ForetAction.getFirstRoot(j)
-            ForetAction.setNextRoot(node,firstRoot)
-            ForetAction.setPreviousRoot(firstRoot,node)
-        else:
-            ForetAction.setLastRoot(node,j)
-            ForetAction.setNextRoot(node,-1)
-        ForetAction.setFirstRoot(node,j)
-        ForetAction.setPreviousRoot(node,-1)
-
-        ForetAction.setPlayer(node,j)
-        ForetAction.setRoot(node,node)
-        ForetAction.setNextNode(node,-1)
-        ForetAction.setLastChildNode(node,-1)
-        ForetAction.setSiblingNode(node,-1)
-        ForetAction.setPSiblingNode(node,-1)
-        ForetAction.setFatherNode(node,-1)
-        ForetAction.incrNodeId()
-        
-        return node
-    
-    @staticmethod
-    def setNewNextRoot(root, j):
-
-        node = ForetAction.getNextNodeId()
-        lastRoot = ForetAction.getLastRoot(j)
-        if lastRoot == root:
-            ForetAction.setLastRoot(node,j)
-            yyForetAction.setNextRoot(node,-1)
-        nroot = ForetAction.getNextRoot(root)
-        ForetAction.setNextRoot(node, nroot)
-        if nroot != -1:
-            ForetAction.setPreviousRoot(nroot,node)
-        ForetAction.setNextRoot(root,node)
-        ForetAction.setPreviousRoot(node,root)
-
-        ForetAction.setPlayer(node,j)
-        ForetAction.setRoot(node,node)
-        ForetAction.setNextNode(node,-1)
-        ForetAction.setLastChildNode(node,-1)
-        ForetAction.setSiblingNode(node,-1)
-        ForetAction.setPSiblingNode(node,-1)
-        ForetAction.setFatherNode(node,-1)
-        ForetAction.incrNodeId()
-
-
-        ls = ForetAction.getLeavesOf(root)
-        for n in ls:
-            ForetAction.setNextNode(n,node)
-        return node
-   
-    @staticmethod
-    def removeRoot(root):
-        j = ForetAction.getPlayer(root)
-        froot = ForetAction.getFirstRoot(j)
-        lroot = ForetAction.getLastRoot(j)
-        nroot = ForetAction.getNextRoot(root)
-        proot = ForetAction.getPreviousRoot(root)
-
-        if proot != -1:
-            ForetAction.setNextRoot(proot,nroot) 
-            ls = ForetAction.getLeavesOf(proot)
-            for n in ls:
-                ForetAction.setNextNode(n,nroot)
-        if nroot != -1:
-            ForetAction.setPreviousRoot(nroot,proot)
-        if root == froot:
-            ForetAction.setFirstRoot(nroot,j)
-        if root == lroot:
-            ForetAction.setLastRoot(proot,j)
- 
-
-        l = ForetAction.selectNodesFromRoot(root)
-        for n in l:
-            ForetAction.deleteNode(n)
-        
-        key = 'N'+str(root)
-        REDIS.delete(key+':racineSuivante')
-        REDIS.delete(key+':racinePrecedente')
-        ForetAction.deleteNode(root)
-
-    @staticmethod
-    def selectNodesFromRoot(root):
-        l = []
-
-        if(not ForetAction.hasChild(root)):
-            return l
-
-        node = ForetAction.getNextNode(root)
-        while(node != -1):
-            l.append(node)
-            l.extend(ForetAction.selectNodesFromRoot(node))
-            node = ForetAction.getSiblingNode(node)
-
-        return l
-
-    @staticmethod
-    def getLeavesOf(root):
-
-        if not ForetAction.hasChild(root):
-            return [root]
-
-        l = []
-        node = ForetAction.getNextNode(root)
-        while(node != -1):
-            l.extend(ForetAction.getLeavesOf(node))
-            node = ForetAction.getSiblingNode(node)
-
-        return l
-    
-    @staticmethod
-    def setPlayer(node, j):
-        REDIS.set('N'+str(node)+':joueur',j.num)
-
-    @staticmethod
     def getPlayer(node):
-        jnum = int(REDIS.get('N'+str(node)+':joueur'))
-        return Plateau.getPlateau().j(jnum)
+        return int(REDIS.get('N'+str(node.num)+':joueur'))
+
+    def setNextNode(fatherNode,childNode):
+        REDIS.set('N'+str(fatherNode.num)+':next',childNode.num)
+
+    def getNextNode(fatherNode):
+        return Node(int(REDIS.get('N'+str(fatherNode.num)+':next')))
+
+    def hasChild(fatherNode):
+        return REDIS.get('N'+str(fatherNode.num)+':lastChild') != '-1'
+
+    def setFatherNode(childNode,fatherNode):
+        REDIS.set('N'+str(childNode.num)+':father',fatherNode.num)
+
+    def getFatherNode(childNode):
+        return Node(int(REDIS.get('N'+str(childNode.num)+':father')))
+
+    def setSiblingNode(node,siblingNode):
+        REDIS.set('N'+str(node.num)+':sibling',siblingNode.num)
+
+    def getSiblingNode(node):
+        return Node(int(REDIS.get('N'+str(node.num)+':sibling')))
+
+    def hasSiblingNode(node):
+        return REDIS.get('N'+str(node.num)+':sibling') != '-1'
+
+    def setPSiblingNode(node,pSiblingNode):
+        REDIS.set('N'+str(node.num)+':psibling',pSiblingNode.num)
+
+    def getPSiblingNode(node):
+        return Node(int(REDIS.get('N'+str(node.num)+':psibling')))
+    
+    def setLastChildNode(fatherNode,lastChildNode):
+        REDIS.set('N'+str(fatherNode.num)+':lastChild',lastChildNode.num)
  
+    def getLastChildNode(fatherNode):
+        return Node(int(REDIS.get('N'+str(fatherNode.num)+':lastChild')))
+
+    # Interface pour les racines
+   
     @staticmethod
+    def setFirstRoot(node,jnum):
+        REDIS.set('J'+str(jnum)+':racine',node.num)
+
+    @staticmethod
+    def getFirstRoot(jnum):
+        return Node(int(REDIS.get('J'+str(jnum)+':racine')))
+
+    @staticmethod
+    def hasRoot(jnum):
+        return REDIS.exists('J'+str(jnum)+':racine')
+
+    @staticmethod
+    def setLastRoot(node,jnum):
+        REDIS.set('J'+str(jnum)+':derniereRacine',node.num)
+
+    @staticmethod
+    def getLastRoot(jnum):
+        return Node(int(REDIS.get('J'+str(jnum)+':derniereRacine')))
+    
+    def setNextRoot(root,node):
+        REDIS.set('N'+str(root.num)+':racineSuivante',node.num)
+
+    def getNextRoot(root):
+        return Node(int(REDIS.get('N'+str(root.num)+':racineSuivante')))
+    
+    def hasNextRoot(root):
+        return REDIS.get('N'+str(root.num)+':racineSuivante') != '-1'
+    
+    def setPreviousRoot(root,node):
+        REDIS.set('N'+str(root.num)+':racinePrecedente',node.num)
+
+    def getPreviousRoot(root):
+        return Node(int(REDIS.get('N'+str(root.num)+':racinePrecedente')))
+    
     def setRoot(node, rootNode):
-        REDIS.set('N'+str(node)+':root',rootNode)
+        REDIS.set('N'+str(node.num)+':root',rootNode.num)
 
-    @staticmethod
     def getRoot(node):
-        return int(REDIS.get('N'+str(node)+':root'))
+        return Node(int(REDIS.get('N'+str(node.num)+':root')))
 
-    @staticmethod
     def deleteNode(node):
-        key = 'N'+str(node)
+        key = 'N'+str(node.num)
         REDIS.delete(key+':next')
         REDIS.delete(key+':sibling')
         REDIS.delete(key+':psibling')
@@ -274,6 +121,10 @@ class ForetAction:
         REDIS.delete(key+':lastChild')
         REDIS.delete(key+':joueur')
         REDIS.delete(key+':root')
+        REDIS.delete(key+':racineSuivante')
+        REDIS.delete(key+':racinePrecedente')
+
+# Interface avec la base de donnée concernant l'ajout d'un nouveau noeud    
 
     @staticmethod
     def getNextNodeId():
@@ -286,154 +137,306 @@ class ForetAction:
         return lastNode
 
     @staticmethod
+    def getNextNewNode():
+        return Node(Node.getNextNodeId())
+
+    @staticmethod
     def incrNodeId():
         REDIS.incr('LastNode')
-        
+
+# Methode de travail avec des racines
 
     @staticmethod
-    def addChild(fatherNode):
-        ''' Ajoute un fils à la fin de la liste des fils de fatherNode '''
-        lastNode = ForetAction.getNextNodeId()
+    def setNewRoot(jnum):
 
-        if ForetAction.hasChild(fatherNode):
-            lastChild = ForetAction.getLastChildNode(fatherNode)
-            ForetAction.setSiblingNode(lastChild,lastNode)
-            ForetAction.setPSiblingNode(lastNode,lastChild)
+        node = Node.getNextNewNode()
+        hasRoot = Node.hasRoot(jnum)
+        if hasRoot:
+            lastRoot = Node.getLastRoot(jnum)
+            lastRoot.setNextRoot(node)
+            node.setPreviousRoot(lastRoot)
         else:
-            ForetAction.setNextNode(fatherNode,lastNode)
-            ForetAction.setPSiblingNode(lastNode,-1)
-        ForetAction.setLastChildNode(fatherNode,lastNode)
-        ForetAction.setFatherNode(lastNode,fatherNode)
-        ForetAction.setLastChildNode(lastNode,-1)
-        ForetAction.setSiblingNode(lastNode,-1)
-        ForetAction.incrNodeId()
-        root = ForetAction.getRoot(fatherNode)
-        ForetAction.setRoot(lastNode, root)
-        ForetAction.setPlayer(lastNode, ForetAction.getPlayer(fatherNode))
+            Node.setFirstRoot(node,jnum)
+            node.setPreviousRoot(NodeCst.NULL)
+        Node.setLastRoot(node,jnum)
+        node.setNextRoot(NodeCst.NULL)
         
-        nextRoot = ForetAction.getNextRoot(root)
-        ForetAction.setNextNode(lastNode,nextRoot)
+        node.setPlayer(jnum)
+        node.setRoot(node)
+        node.setNextNode(NodeCst.NULL)
+        node.setLastChildNode(NodeCst.NULL)
+        node.setSiblingNode(NodeCst.NULL)
+        node.setPSiblingNode(NodeCst.NULL)
+        node.setFatherNode(NodeCst.NULL)
+    
+        Node.incrNodeId()
 
-        return lastNode
+        if hasRoot: 
+            ls = lastRoot.getLeavesOf()
+            for n in ls:
+                n.setNextNode(n,node)
+        return node
 
     @staticmethod
-    def addFirstChild(fatherNode):
-        ''' Ajoute un fils au début de la liste des fils de fatherNode '''
-        lastNode = ForetAction.getNextNodeId()
+    def setNewFirstRoot(j):
 
-        if ForetAction.hasChild(fatherNode):
-            firstChild = ForetAction.getNextNode(fatherNode)
-            ForetAction.setPSiblingNode(firstChild,lastNode)
-            ForetAction.setSiblingNode(lastNode,firstChild)
+        node = Node.getNextNewNode()
+        if Node.hasRoot(j):
+            firstRoot = Node.getFirstRoot(j)
+            node.setNextRoot(firstRoot)
+            firstRoot.setPreviousRoot(node)
         else:
-            ForetAction.setLastChildNode(fatherNode,lastNode)
-            ForetAction.setSiblingNode(lastNode,-1)
-        ForetAction.setNextNode(fatherNode,lastNode)
-        ForetAction.setFatherNode(lastNode,fatherNode)
-        ForetAction.setNextNode(lastNode,-1)
-        ForetAction.setLastChildNode(lastNode,-1)
-        ForetAction.setPSiblingNode(lastNode,-1)
-        ForetAction.incrNodeId()
-        root = ForetAction.getRoot(fatherNode)
-        ForetAction.setRoot(lastNode, root)
-        ForetAction.setPlayer(lastNode, ForetAction.getPlayer(fatherNode))
-        
-        nextRoot = ForetAction.getNextRoot(root)
-        ForetAction.setNextNode(lastNode,nextRoot)
-        return lastNode
-        
+            Node.setLastRoot(node,j)
+            node.setNextRoot(NodeCst.NULL)
+        node.setFirstRoot(j)
+        node.setPreviousRoot(NodeCst.NULL)
 
-    @staticmethod
-    def addSibling(node):
-        ''' Ajoute un frere à node, le place après node dans la liste des fils du pere de node'''
-        lastNode = ForetAction.getNextNodeId()
+        Node.setPlayer(node,j)
+        node.setRoot(node)
+        node.setNextNode(NodeCst.NULL)
+        node.setLastChildNode(NodeCst.NULL)
+        node.setSiblingNode(NodeCst.NULL)
+        node.setPSiblingNode(NodeCst.NULL)
+        node.setFatherNode(NodeCst.NULL)
+        Node.incrNodeId()
         
-        fatherNode = ForetAction.getFatherNode(node)
-        siblingNode = ForetAction.getSiblingNode(node)
-
-        ForetAction.setFatherNode(lastNode,fatherNode)
-        ForetAction.setSiblingNode(lastNode,siblingNode)
-        if siblingNode != -1:
-            ForetAction.setPSiblingNode(siblingNode,lastNode)
-        ForetAction.setPSiblingNode(lastNode,node)
-        ForetAction.setSiblingNode(node,lastNode)
-        ForetAction.setNextNode(lastNode,-1)
-        ForetAction.setLastChildNode(lastNode,-1)
-
-        if siblingNode == -1:
-            ForetAction.setLastChildNode(fatherNode,lastNode)
-        
-        ForetAction.incrNodeId()
-        root = ForetAction.getRoot(fatherNode)
-        ForetAction.setRoot(lastNode, root)
-        ForetAction.setPlayer(lastNode, ForetAction.getPlayer(node))
-        
-        nextRoot = ForetAction.getNextRoot(root)
-        ForetAction.setNextNode(lastNode,nextRoot)
-        return lastNode
+        return node
     
     @staticmethod
+    def setNewNextRoot(root, j):
+
+        node = Node.getNextNewNode()
+        lastRoot = Node.getLastRoot(j)
+        if lastRoot == root:
+            Node.setLastRoot(node,j)
+            node.setNextRoot(NodeCst.NULL)
+        nroot = root.getNextRoot()
+        node.setNextRoot(nroot)
+        if nroot != NodeCst.NULL:
+            nroot.setPreviousRoot(node)
+        root.setNextRoot(node)
+        node.setPreviousRoot(root)
+
+        Node.setPlayer(node,j)
+        node.setRoot(node)
+        node.setNextNode(NodeCst.NULL)
+        node.setLastChildNode(NodeCst.NULL)
+        node.setSiblingNode(NodeCst.NULL)
+        node.setPSiblingNode(NodeCst.NULL)
+        node.setFatherNode(NodeCst.NULL)
+        Node.incrNodeId()
+
+
+        ls = Node.getLeavesOf(root)
+        for n in ls:
+            n.setNextNode(node)
+        return node
+   
+    @staticmethod
+    def removeRoot(root):
+        j = root.getPlayer()
+        froot = Node.getFirstRoot(j)
+        lroot = Node.getLastRoot(j)
+        nroot = root.getNextRoot()
+        proot = root.getPreviousRoot()
+
+        if proot != NodeCst.NULL:
+            proot.setNextRoot(nroot) 
+            ls = proot.getLeavesOf()
+            for n in ls:
+                n.setNextNode(nroot)
+        if nroot != NodeCst.NULL:
+            nroot.setPreviousRoot(proot)
+        if root == froot:
+            Node.setFirstRoot(nroot,j)
+        if root == lroot:
+            Node.setLastRoot(proot,j)
+ 
+
+        l = Node.selectNodesFromRoot(root)
+        for n in l:
+            n.deleteNode()
+        
+        root.deleteNode()
+
+
+    def selectNodesFromRoot(root):
+        l = []
+
+        if(not root.hasChild()):
+            return l
+
+        node = root.getNextNode()
+        while(node != NodeCst.NULL):
+            l.append(node)
+            l.extend(node.selectNodesFromRoot())
+            node = node.getSiblingNode()
+        return l
+
+
+    def getLeavesOf(root):
+
+        if not Node.hasChild(root):
+            return [root]
+
+        l = []
+        node = root.getNextNode()
+        while(node != NodeCst.NULL):
+            l.extend(node.getLeavesOf())
+            node = node.getSiblingNode()
+
+        return l
+
+
+# Methode de travail avec des noeuds non racines        
+
+    def addChild(fatherNode):
+        ''' Ajoute un fils à la fin de la liste des fils de fatherNode '''
+        lastNode = Node.getNextNewNode()
+
+        if fatherNode.hasChild():
+            lastChild = fatherNode.getLastChildNode()
+            lastChild.setSiblingNode(lastNode)
+            lastNode.setPSiblingNode(lastChild)
+        else:
+            fatherNode.setNextNode(lastNode)
+            lastNode.setPSiblingNode(NodeCst.NULL)
+        fatherNode.setLastChildNode(lastNode)
+
+        lastNode.setFatherNode(fatherNode)
+        lastNode.setLastChildNode(NodeCst.NULL)
+        lastNode.setSiblingNode(NodeCst.NULL)
+
+        Node.incrNodeId()
+
+        root = fatherNode.getRoot()
+        lastNode.setRoot(root)
+        lastNode.setPlayer(fatherNode.getPlayer())
+        
+        nextRoot = root.getNextRoot()
+        lastNode.setNextNode(nextRoot)
+
+        return lastNode
+
+    def addFirstChild(fatherNode):
+        ''' Ajoute un fils au début de la liste des fils de fatherNode '''
+        lastNode = Node.getNextNewNode()
+
+        if fatherNode.hasChild():
+            firstChild = fatherNode.getNextNode()
+            firstChild.setPSiblingNode(lastNode)
+            lastNode.setSiblingNode(firstChild)
+        else:
+            fatherNode.setLastChildNode(lastNode)
+            lastNode.setSiblingNode(NodeCst.NULL)
+        fatherNode.setNextNode(lastNode)
+        lastNode.setFatherNode(fatherNode)
+        lastNode.setNextNode(NodeCst.NULL)
+        lastNode.setLastChildNode(NodeCst.NULL)
+        lastNode.setPSiblingNode(NodeCst.NULL)
+        Node.incrNodeId()
+        root = fatherNode.getRoot()
+        lastNode.setRoot(root)
+        lastNode.setPlayer(fatherNode.getPlayer())
+        
+        nextRoot = root.getNextRoot()
+        lastNode.setNextNode(nextRoot)
+        return lastNode
+        
+
+    def addSibling(node):
+        ''' Ajoute un frere à node, le place après node dans la liste des fils du pere de node'''
+        lastNode = Node.getNextNewNode()
+        
+        fatherNode = node.getFatherNode()
+        siblingNode = node.getSiblingNode()
+
+        lastNode.setFatherNode(fatherNode)
+        lastNode.setSiblingNode(siblingNode)
+        if siblingNode != NodeCst.NULL:
+            siblingNode.setPSiblingNode(lastNode)
+        lastNode.setPSiblingNode(node)
+        node.setSiblingNode(lastNode)
+        lastNode.setNextNode(NodeCst.NULL)
+        lastNode.setLastChildNode(NodeCst.NULL)
+
+        if siblingNode == NodeCst.NULL:
+            fatherNode.setLastChildNode(lastNode)
+        
+        Node.incrNodeId()
+        root = fatherNode.getRoot()
+        lastNode.setRoot(root)
+        lastNode.setPlayer(node.getPlayer())
+        
+        nextRoot = root.getNextRoot()
+        lastNode.setNextNode(nextRoot)
+        return lastNode
+    
     def removeNode(node):
         ''' Retire node de son arbre '''
         
-        fatherNode = ForetAction.getFatherNode(node)
-        siblingNode = ForetAction.getSiblingNode(node)
-        pSiblingNode = ForetAction.getPSiblingNode(node)
+        fatherNode = node.getFatherNode()
+        siblingNode = node.getSiblingNode()
+        pSiblingNode = node.getPSiblingNode()
         childs = []
-        child = ForetAction.getNextNode(node)
-        while(child != -1):
+        child = node.getNextNode()
+        while(child != NodeCst.NULL):
             childs.append(child)
-            child = ForetAction.getSiblingNode(child)
+            child = child.getSiblingNode()
 
         for child in childs:
-            ForetAction.setFatherNode(child,fatherNode)
+            child.setFatherNode(fatherNode)
         if(len(childs) != 0):
-            if pSiblingNode != -1:
-                ForetAction.setSiblingNode(pSiblingNode,childs[0])
-            if siblingNode != -1:
-                ForetAction.setPSiblingNode(siblingNode,childs[len(childs)-1])
-            ForetAction.setSiblingNode(childs[len(childs)-1],siblingNode)
-            ForetAction.setPSiblingNode(childs[0],pSiblingNode)
+            if pSiblingNode != NodeCst.NULL:
+                pSiblingNode.setSiblingNode(childs[0])
+            if siblingNode != NodeCst.NULL:
+                siblingNode.setPSiblingNode(childs[len(childs)-1])
+            childs[len(childs)-1].setSiblingNode(siblingNode)
+            childs[0].setPSiblingNode(pSiblingNode)
         else:
-            if pSiblingNode != -1:
-                ForetAction.setSiblingNode(pSiblingNode,siblingNode)
-            if siblingNode != -1:
-                ForetAction.setPSiblingNode(siblingNode,pSiblingNode)
+            if pSiblingNode != NodeCst.NULL:
+                pSiblingNode.setSiblingNode(siblingNode)
+            if siblingNode != NodeCst.NULL:
+                siblingNode.setPSiblingNode(pSiblingNode)
 
-        lastChild = ForetAction.getLastChildNode(fatherNode)
+        lastChild = fatherNode.getLastChildNode()
         if lastChild == node:
             if(len(childs) != 0):
-                ForetAction.setLastChildNode(fatherNode,childs[len(childs)-1])
+                fatherNode.setLastChildNode(childs[len(childs)-1])
             else:
-                ForetAction.setLastChildNode(fatherNode,pSiblingNode)
+                fatherNode.setLastChildNode(pSiblingNode)
 
-        child = ForetAction.getNextNode(fatherNode)
+        child = fatherNode.getNextNode()
         if(child == node):
             if(len(childs) != 0):
-                ForetAction.setNextNode(fatherNode,childs[0])
+                fatherNode.setNextNode(childs[0])
             else:
-                if siblingNode != -1:
-                    ForetAction.setNextNode(fatherNode,siblingNode)
+                if siblingNode != NodeCst.NULL:
+                    fatherNode.setNextNode(siblingNode)
                 else:
-                    nRoot = ForetAction.getNextRoot(ForetAction.getRoot(fatherNode))
-                    ForestAction.setNextNode(fatherNode, nRoot)
+                    nRoot = fatherNode.getRoot().getNextRoot()
+                    fatherNode.setNextNode(nRoot)
 
-        ForetAction.deleteNode(node)
+        node.deleteNode()
+
+
+
+# Travail avec les actions
 
     @staticmethod
     def getActions(node):
         ''' Ajoute une action au noeud node, en fin de liste des actions '''
-        return REDIS.lrange('N'+str(node)+':actions',0,-1)
+        return REDIS.lrange('N'+str(node.num)+':actions',0,-1)
 
     @staticmethod
     def addAction(node,action):
         ''' Ajoute une action au noeud node, en fin de liste des actions '''
-        REDIS.rpush('N'+str(node)+':actions',action.num)
+        REDIS.rpush('N'+str(node.num)+':actions',action.num)
 
     @staticmethod
     def lPushAction(node,action):
         ''' Ajoute une action au noeud node, au début de liste des actions '''
-        REDIS.lpush('N'+str(node)+':actions',action.num)
+        REDIS.lpush('N'+str(node.num)+':actions',action.num)
     
     @staticmethod
     def insertAction(node,beforeAction,action):
@@ -446,12 +449,12 @@ class ForetAction:
         ''' Ajoute une action au noeud node juste après l'action située à l'indice index '''
         key = 'N' + str(node) + ':actions'
         beforeAction = REDIS.lindex(key,index)
-        ForetAction.insertAction(node,beforeAction,action)
+        Node.insertAction(node,beforeAction,action)
 
     @staticmethod
     def removeAction(node,action):
         ''' Retire l'action du noeud node '''
-        REDIS.lrem('N'+str(node)+':actions',0,action.num)
+        REDIS.lrem('N'+str(node.num)+':actions',0,action.num)
         Action.delAction(action.num)
         
 
@@ -492,34 +495,77 @@ class Action:
         func = REDIS.delete(key+':fonction')
         params = REDIS.delete(key+':params')
 
+class NodeCst:
+    NULL = Node(-1)
+
 if __name__ == '__main__':
     
     REDIS.flushdb()
-    j = Joueur(1)
-    Plateau.getPlateau().joueurs = [j]
-
-    j.addRoot()
-    ForetAction.addChild(1)
-
+    print Node(-1) == NodeCst.NULL
     
 
-    a = Action(1,'hello',1,2,3)
-    b = Action(24,'youhou',3,"haa")
-    c = Action(12,'test',9,1,3,4,2)
-    a.save()
-    b.save()
-    c.save()
 
-    ForetAction.addAction(2,a)
-    ForetAction.addAction(2,b)
-    ForetAction.insertAction(2,1,c)
-   
-    ForetAction.removeAction(2,c) 
-
- 
-    ks =  REDIS.keys()
-    ks.sort()
-    for k in ks:
-        print k, REDIS.type(k)
+#    def addRoot(self):
+#        ''' Ajoute un arbre d'action à la foret de ce joueur, en fin de liste '''
+#        return ForetAction.setNewRoot(self) 
     
-    print REDIS.lrange('N2:actions',0,-1)
+#    def addFirstRoot(self):
+#        ''' Ajoute un arbre d'action à la foret de ce joueur, en début de liste '''
+#        return ForetAction.setNewFirstRoot(self) 
+    
+#    def getFirstRoot(self):
+#        ''' Ajoute un arbre d'action à la foret de ce joueur, en début de liste '''
+#        return ForetAction.getFirstRoot(self) 
+
+#    def addNextRoot(self,root):
+#        ''' Ajoute un arbre d'action à la foret de ce joueur, juste après l'arbre de racine root '''
+#        return ForetAction.setNewNextRoot(root,self) 
+    
+#    def peutExecuterAction(self, action):
+#        ''' Vérifie si on peut executer l'action, avec la base de donnée bdd '''
+#        func = getattr(Jeu, 'peut_'+action.func)
+#        if func.peut_etre_appelee:
+#            return Jeu.func(self,*action.paramsi)
+#        return False
+
+#    def executerAction(self, action):
+#        ''' Execute l'action, avec la base de donnée bdd '''
+#        func = getattr(Jeu, action.func)
+#        if func.peut_etre_appelee:
+#            return Jeu.func(self,*action.params)
+#        return False
+
+#    def executerNode(self, node):
+#        ''' Execute l'ensemble des actions du noeud jusqu' à la dernière ou jusqu'a ce qu'une des action renvoie faux. Dans le premire cas, elle renvoie vrai et dans l'autre, vide la  base de données et renvoie faux.'''
+#        actions = ForetAction.getActions(node)
+#        for actnum in actions:
+#            action = Action.getAction(int(actnum))
+#            b = self.executerAction(action)
+#            if not b:
+#                self.bdd.flushSurface()
+#                return False
+#        return True
+        
+#    def executerForetAction(self):
+#        ''' Execute l'ensemble de la foret d'action et renvoie la dernière base de données avant que l'execution ne s'arrete. '''
+#        node = self.getFirstRoot()
+#        bdd = REDIS
+#        b = True
+#        while True:
+#            if b:
+#                if ForetAction.hasChild(node):
+#                    node = ForetAction.getNextNode(node)
+#                    self.bdd = BDD(bdd)
+#                else:
+#                    root = ForetAction.getRoot(node)
+#                    if ForetAction.hasNextRoot(root):
+#                        node = ForetAction.getNextRoot(root)
+#                        continue
+#                    else:
+#                        return self.bdd
+#            else:
+#                if ForetAction.hasSibling(node):
+#                    node = ForetAction.getSiblingNode(node)
+#                else:
+#                    return self.bdd
+#            b = self.executerNode(node, self.bdd)
