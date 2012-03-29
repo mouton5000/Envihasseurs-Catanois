@@ -34,6 +34,10 @@ class CartesGeneral:
     def __eq__(self,other):
         ''' Renvoie vrai si les deux mains sont identiques'''
         return self._comparison(other, operator.eq)
+    
+    def __ne__(self,other):
+        ''' Renvoie vrai si les deux mains sont identiques'''
+        return not(self == other)
 
     def __add__(self,other):
         ''' Renvoie la fusion des deux mains'''
