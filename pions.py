@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# *-* coding: iso-8859-1 *-*
 from plateau import *
 from cartes import *
 from redis import *
