@@ -240,20 +240,38 @@ class Node:
         REDIS.delete(key+':racinePrecedente')
 
 
+# Méthode calculant des noeuds particuliers
+
     def getNextNode(node):
+        ''' Renvoie le noeud suivant au sens de l'éxécution classique d'un arbre d'action, à savoir le premier fils, ou s'il n'en a pas le premier fils de la racine de l'arbre d'action suivant. NULL sinon.'''
         if node.hasChild(node):
             return node.getFirstChild()
         else:
             root = node.getRoot()
             if root.hasNextRoot():
-                return root.getNextRoot()
+                return root.getNextRoot().getNextNode()
             else:
-                return
+                return NodeCst.NULL
 
-    def hasNextNode(node):
-        return node.hasChild() or node.getRoot().hasNextRoot()
+    def getPreviousNodes(node):
+        ''' Renvoie l'ensemble des noeuds précédents au sens de l'éxécution classique d'un arbre d'action, ie l'ensemble des noeuds dont getNextNode renvoie node'''
+        r = node.getiRoot()
+        if r == node:
+            proot = node.getPreviousRoot()
+            if proot == NodeCst.NULL:
+                return []
+            else:
+                return proot.getLeavesOf()
+        else:
+            f = node.getFatherNode()
+            if f == r:
+                return r.getPreviousNodes()
+            else:
+                return [f]
 
-    
+    def getAllPathsToAndFrom(node):
+        ''' Renvoie l'ensemble des chemins qui mènent au noeud node, et qui viennent du noeud node'''
+        pass
 
 
 # Interface avec la base de donnée concernant l'ajout d'un nouveau noeud    
