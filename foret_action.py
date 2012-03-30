@@ -53,7 +53,7 @@ class JoueurNodeInterface:
         
         node.setPlayer(self)
         node.setRoot(node)
-        node.setNextNode(NodeCst.NULL)
+        node.setFirstChild(NodeCst.NULL)
         node.setLastChildNode(NodeCst.NULL)
         node.setSiblingNode(NodeCst.NULL)
         node.setPSiblingNode(NodeCst.NULL)
@@ -78,7 +78,7 @@ class JoueurNodeInterface:
 
         node.setPlayer(self)
         node.setRoot(node)
-        node.setNextNode(NodeCst.NULL)
+        node.setFirstChild(NodeCst.NULL)
         node.setLastChildNode(NodeCst.NULL)
         node.setSiblingNode(NodeCst.NULL)
         node.setPSiblingNode(NodeCst.NULL)
@@ -86,6 +86,62 @@ class JoueurNodeInterface:
         Node.incrNodeId()
         
         return node
+
+# Execution
+    
+    def executer(self):
+        ''' Execute l'ensemble de la foret d'action et construit une base de données à partir de toutes les actions. '''
+        node = self.getFirstRoot()
+        ibdd = REDIS
+        b = True
+        while True:
+            if b:
+                if node.hasChild(node):
+                    node = node.getFirstChild(node)
+                    ibdd = BDD(ibdd)
+                else:
+                    root = node.getRoot()
+                    if root.hasNextRoot():
+                        node = ForetAction.getNextRoot(root)
+                        continue
+                    else:
+                        return ibdd
+            else:
+                if node.hasSibling():
+                    node = node.getSiblingNode()
+                else:
+                    return ibdd
+            b = self.executerNode(node, ibdd)
+    
+    def executerNode(self,node, ibdd):
+        ''' Execute l'ensemble des actions du noeud dans la base ibdd jusqu' à la dernière ou jusqu'a ce qu'une des action renvoie faux. Dans le premire cas, elle renvoie vrai et dans l'autre, vide la  base de données ibdd et renvoie faux.'''
+        actionsNum = ForetAction.getActions(node)
+        for actnum in actionsNum:
+            action = Action.getAction(int(actnum))
+            b = self.executerAction(action, ibdd)
+            if not b:
+                ibdd.flushSurface()
+                return False
+        return True
+
+    def executerAction(self, action, ibdd):
+        ''' Execute l'action, avec la base de donnée ibdd '''
+        j = Joueur(self.num, ibdd)
+        func = getattr(Jeu, action.func)
+        if func.peut_etre_appelee:
+            return Jeu.func(j,*action.params)
+        return False
+
+
+    def peutExecuterAction(self, action, ibdd):
+        ''' Vérifie si on peut executer l'action, avec la base de donnée ibdd '''
+        j = Joueur(self.num, ibdd)
+        func = getattr(Jeu, 'peut_'+action.func)
+        if func.peut_etre_appelee:
+            return Jeu.func(j,*action.paramsi)
+        return False
+
+        
 
 class Node:
     ''' Classe représentant une forêt dont les arbres sont placés les uns à la suite.
@@ -115,11 +171,11 @@ class Node:
     def getPlayer(node):
         return JoueurNodeInterface(int(REDIS.get('N'+str(node.num)+':joueur')))
 
-    def setNextNode(fatherNode,childNode):
-        REDIS.set('N'+str(fatherNode.num)+':next',childNode.num)
+    def setFirstChild(fatherNode,childNode):
+        REDIS.set('N'+str(fatherNode.num)+':firstChild',childNode.num)
 
-    def getNextNode(fatherNode):
-        return Node(int(REDIS.get('N'+str(fatherNode.num)+':next')))
+    def getFirstChild(fatherNode):
+        return Node(int(REDIS.get('N'+str(fatherNode.num)+':firstChild')))
 
     def hasChild(fatherNode):
         return REDIS.get('N'+str(fatherNode.num)+':lastChild') != '-1'
@@ -177,7 +233,7 @@ class Node:
 
     def deleteNode(node):
         key = 'N'+str(node.num)
-        REDIS.delete(key+':next')
+        REDIS.delete(key+':firstChild')
         REDIS.delete(key+':sibling')
         REDIS.delete(key+':psibling')
         REDIS.delete(key+':father')
@@ -190,7 +246,7 @@ class Node:
 # Interface avec la base de donnée concernant l'ajout d'un nouveau noeud    
 
     @staticmethod
-    def getNextNodeId():
+    def getFirstChildId():
         lastNode = REDIS.get('LastNode')
         if lastNode == None:
             lastNode = 1
@@ -201,7 +257,7 @@ class Node:
 
     @staticmethod
     def getNextNewNode():
-        return Node(Node.getNextNodeId())
+        return Node(Node.getFirstChildId())
 
     @staticmethod
     def incrNodeId():
@@ -226,7 +282,7 @@ class Node:
 
         node.setPlayer(j)
         node.setRoot(node)
-        node.setNextNode(NodeCst.NULL)
+        node.setFirstChild(NodeCst.NULL)
         node.setLastChildNode(NodeCst.NULL)
         node.setSiblingNode(NodeCst.NULL)
         node.setPSiblingNode(NodeCst.NULL)
@@ -265,7 +321,7 @@ class Node:
         if(not root.hasChild()):
             return l
 
-        node = root.getNextNode()
+        node = root.getFirstChild()
         while(node != NodeCst.NULL):
             l.append(node)
             l.extend(node.selectNodesFromRoot())
@@ -279,7 +335,7 @@ class Node:
             return [root]
 
         l = []
-        node = root.getNextNode()
+        node = root.getFirstChild()
         while(node != NodeCst.NULL):
             l.extend(node.getLeavesOf())
             node = node.getSiblingNode()
@@ -298,14 +354,14 @@ class Node:
             lastChild.setSiblingNode(lastNode)
             lastNode.setPSiblingNode(lastChild)
         else:
-            fatherNode.setNextNode(lastNode)
+            fatherNode.setFirstChild(lastNode)
             lastNode.setPSiblingNode(NodeCst.NULL)
         fatherNode.setLastChildNode(lastNode)
 
         lastNode.setFatherNode(fatherNode)
         lastNode.setLastChildNode(NodeCst.NULL)
         lastNode.setSiblingNode(NodeCst.NULL)
-        lastNode.setNextNode(NodeCst.NULL)
+        lastNode.setFirstChild(NodeCst.NULL)
 
         Node.incrNodeId()
 
@@ -321,15 +377,15 @@ class Node:
         lastNode = Node.getNextNewNode()
 
         if fatherNode.hasChild():
-            firstChild = fatherNode.getNextNode()
+            firstChild = fatherNode.getFirstChild()
             firstChild.setPSiblingNode(lastNode)
             lastNode.setSiblingNode(firstChild)
         else:
             fatherNode.setLastChildNode(lastNode)
             lastNode.setSiblingNode(NodeCst.NULL)
-        fatherNode.setNextNode(lastNode)
+        fatherNode.setFirstChild(lastNode)
         lastNode.setFatherNode(fatherNode)
-        lastNode.setNextNode(NodeCst.NULL)
+        lastNode.setFirstChild(NodeCst.NULL)
         lastNode.setLastChildNode(NodeCst.NULL)
         lastNode.setPSiblingNode(NodeCst.NULL)
         Node.incrNodeId()
@@ -353,7 +409,7 @@ class Node:
             siblingNode.setPSiblingNode(lastNode)
         lastNode.setPSiblingNode(node)
         node.setSiblingNode(lastNode)
-        lastNode.setNextNode(NodeCst.NULL)
+        lastNode.setFirstChild(NodeCst.NULL)
         lastNode.setLastChildNode(NodeCst.NULL)
 
         if siblingNode == NodeCst.NULL:
@@ -373,7 +429,7 @@ class Node:
         siblingNode = node.getSiblingNode()
         pSiblingNode = node.getPSiblingNode()
         childs = []
-        child = node.getNextNode()
+        child = node.getFirstChild()
         while(child != NodeCst.NULL):
             childs.append(child)
             child = child.getSiblingNode()
@@ -400,12 +456,12 @@ class Node:
             else:
                 fatherNode.setLastChildNode(pSiblingNode)
 
-        child = fatherNode.getNextNode()
+        child = fatherNode.getFirstChild()
         if(child == node):
             if(len(childs) != 0):
-                fatherNode.setNextNode(childs[0])
+                fatherNode.setFirstChild(childs[0])
             else:
-                fatherNode.setNextNode(siblingNode)
+                fatherNode.setFirstChild(siblingNode)
 
         node.deleteNode()
 
@@ -447,32 +503,6 @@ class Node:
         REDIS.lrem('N'+str(node.num)+':actions',0,action.num)
         Action.delAction(action.num)
 
-# Execution
-
-#    def peutExecuterAction(self, action):
-#        ''' Vérifie si on peut executer l'action, avec la base de donnée bdd '''
-#        func = getattr(Jeu, 'peut_'+action.func)
-#        if func.peut_etre_appelee:
-#            return Jeu.func(self,*action.paramsi)
-#        return False
-
-#    def executerAction(self, action):
-#        ''' Execute l'action, avec la base de donnée bdd '''
-#        func = getattr(Jeu, action.func)
-#        if func.peut_etre_appelee:
-#            return Jeu.func(self,*action.params)
-#        return False
-
-#    def executerNode(self):
-#        ''' Execute l'ensemble des actions du noeud jusqu' à la dernière ou jusqu'a ce qu'une des action renvoie faux. Dans le premire cas, elle renvoie vrai et dans l'autre, vide la  base de données et renvoie faux.'''
-#        actions = ForetAction.getActions(node)
-#        for actnum in actions:
-#            action = Action.getAction(int(actnum))
-#            b = self.executerAction(action)
-#            if not b:
-#                self.bdd.flushSurface()
-#                return False
-#        return True
         
 
 class Action:
@@ -522,43 +552,3 @@ if __name__ == '__main__':
     
 
 
-#    def addRoot(self):
-#        ''' Ajoute un arbre d'action à la foret de ce joueur, en fin de liste '''
-#        return ForetAction.setNewRoot(self) 
-    
-#    def addFirstRoot(self):
-#        ''' Ajoute un arbre d'action à la foret de ce joueur, en début de liste '''
-#        return ForetAction.setNewFirstRoot(self) 
-    
-#    def getFirstRoot(self):
-#        ''' Ajoute un arbre d'action à la foret de ce joueur, en début de liste '''
-#        return ForetAction.getFirstRoot(self) 
-
-#    def addNextRoot(self,root):
-#        ''' Ajoute un arbre d'action à la foret de ce joueur, juste après l'arbre de racine root '''
-#        return ForetAction.setNewNextRoot(root,self) 
-    
-        
-#    def executerForetAction(self):
-#        ''' Execute l'ensemble de la foret d'action et renvoie la dernière base de données avant que l'execution ne s'arrete. '''
-#        node = self.getFirstRoot()
-#        bdd = REDIS
-#        b = True
-#        while True:
-#            if b:
-#                if ForetAction.hasChild(node):
-#                    node = ForetAction.getNextNode(node)
-#                    self.bdd = BDD(bdd)
-#                else:
-#                    root = ForetAction.getRoot(node)
-#                    if ForetAction.hasNextRoot(root):
-#                        node = ForetAction.getNextRoot(root)
-#                        continue
-#                    else:
-#                        return self.bdd
-#            else:
-#                if ForetAction.hasSibling(node):
-#                    node = ForetAction.getSiblingNode(node)
-#                else:
-#                    return self.bdd
-#            b = self.executerNode(node, self.bdd)

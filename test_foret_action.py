@@ -470,7 +470,7 @@ class TestForetAction(unittest.TestCase):
     def assert_node(self, n, nN, fN, sN, pSN, lCN, r, p):
         ''' Vérifie si pour le noeud n, son premier fils est nN, son pere est fN, son frere droit est sN, son frere gauche est pSN, sont dernier fils est lCN, sa racine est r et son joueuer est p'''
 
-        self.assertEqual(n.getNextNode(),nN)
+        self.assertEqual(n.getFirstChild(),nN)
         self.assertEqual(n.getFatherNode(),fN)
         self.assertEqual(n.getSiblingNode(),sN)
         self.assertEqual(n.getPSiblingNode(),pSN)
