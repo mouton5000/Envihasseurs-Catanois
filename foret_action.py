@@ -98,20 +98,14 @@ class JoueurNodeInterface:
         b = True
         while True:
             if b:
-                if node.hasChild():
-                    node = node.getFirstChild()
+                node = node.getNextNode()
+                if node != NodeCst.NULL
                     ibdd = BDD(ibdd)
                 else:
-                    root = node.getRoot()
-                    if root.hasNextRoot():
-                        node = root.getNextRoot()
-                        continue
-                    else:
-                        return ibdd
+                    return ibdd
             else:
-                if node.hasSibling():
-                    node = node.getSiblingNode()
-                else:
+                node = node.getSiblingNode()
+                if node == NodeCst.NULL:
                     return ibdd
             b = self.executerNode(node, ibdd)
     
@@ -246,22 +240,20 @@ class Node:
         REDIS.delete(key+':racinePrecedente')
 
 
-#    def getNextNode(node):
-#        if node.hasChild(node):
-#            return node.getFirstChild()
-#                    ibdd = BDD(ibdd)
-#                else:
-#                    root = node.getRoot()
-#                    if root.hasNextRoot():
-#                        node = ForetAction.getNextRoot(root)
-#                        continue
-#                    else:
-#                        return ibdd
-#            else:
-#                if node.hasSibling():
-#                    node = node.getSiblingNode()
-#                else:
-#                    return ibdd
+    def getNextNode(node):
+        if node.hasChild(node):
+            return node.getFirstChild()
+        else:
+            root = node.getRoot()
+            if root.hasNextRoot():
+                return root.getNextRoot()
+            else:
+                return
+
+    def hasNextNode(node):
+        return node.hasChild() or node.getRoot().hasNextRoot()
+
+    
 
 
 # Interface avec la base de donnée concernant l'ajout d'un nouveau noeud    
