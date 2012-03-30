@@ -87,6 +87,8 @@ class JoueurNodeInterface:
         
         return node
 
+
+
 # Execution
     
     def executer(self):
@@ -96,13 +98,13 @@ class JoueurNodeInterface:
         b = True
         while True:
             if b:
-                if node.hasChild(node):
-                    node = node.getFirstChild(node)
+                if node.hasChild():
+                    node = node.getFirstChild()
                     ibdd = BDD(ibdd)
                 else:
                     root = node.getRoot()
                     if root.hasNextRoot():
-                        node = ForetAction.getNextRoot(root)
+                        node = root.getNextRoot()
                         continue
                     else:
                         return ibdd
@@ -115,7 +117,7 @@ class JoueurNodeInterface:
     
     def executerNode(self,node, ibdd):
         ''' Execute l'ensemble des actions du noeud dans la base ibdd jusqu' à la dernière ou jusqu'a ce qu'une des action renvoie faux. Dans le premire cas, elle renvoie vrai et dans l'autre, vide la  base de données ibdd et renvoie faux.'''
-        actionsNum = ForetAction.getActions(node)
+        actionsNum = node.getActions()
         for actnum in actionsNum:
             action = Action.getAction(int(actnum))
             b = self.executerAction(action, ibdd)
@@ -242,6 +244,25 @@ class Node:
         REDIS.delete(key+':root')
         REDIS.delete(key+':racineSuivante')
         REDIS.delete(key+':racinePrecedente')
+
+
+#    def getNextNode(node):
+#        if node.hasChild(node):
+#            return node.getFirstChild()
+#                    ibdd = BDD(ibdd)
+#                else:
+#                    root = node.getRoot()
+#                    if root.hasNextRoot():
+#                        node = ForetAction.getNextRoot(root)
+#                        continue
+#                    else:
+#                        return ibdd
+#            else:
+#                if node.hasSibling():
+#                    node = node.getSiblingNode()
+#                else:
+#                    return ibdd
+
 
 # Interface avec la base de donnée concernant l'ajout d'un nouveau noeud    
 
