@@ -653,13 +653,19 @@ class Jeu:
         terre = arrete.getTerre()
         # Si l'arrete n'a pas de terre, elle n'est surement pas reliée à la terre
         if terre == 0:
-            return False
-        if not j.getEnRuine() and arrete.isMaritimeOuCotier() and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.BATEAU_TRANSPORT)):
-            col1 = Colonie.getColonie(arrete.int1,bdd)
-            col2 = Colonie.getColonie(arrete.int2,bdd)
-            if (col1 != 0 and col1.joueur == j.num) or (col2 != 0 and col2.joueur == j.num):
-                return True
-        return False
+            raise BateauError(BateauError.ARRETE_NON_RELIEE)
+        if j.getEnRuine():
+            raise BateauError(BateauError.JOUEUR_EN_RUINE)
+        if not arrete.isMaritimeOuCotier():
+            raise BateauError(BateauError.ARRETE_NON_CONSTRUCTIBLE)
+        if not (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.BATEAU_TRANSPORT)):
+            raise BateauError(BateauError.RESSOURCES_INSUFFISANTES)
+
+        col1 = Colonie.getColonie(arrete.int1,bdd)
+        col2 = Colonie.getColonie(arrete.int2,bdd)
+        if (col1 != 0 and col1.joueur == j.num) or (col2 != 0 and col2.joueur == j.num):
+            return True
+        raise BateauError(BateauError.ARRETE_NON_RELIEE)
     
     @staticmethod
     @kallable
@@ -687,8 +693,20 @@ class Jeu:
         ''' Le joueur j peut déplacer un bateau sur une arrete, si il n'est pas en ruine, si le bateau appartient à ce joueur, si le bateau n'est pas abordé par un bateau pirate, si il souhaite se déplacer sur une arrete maritime, si cette arrete est voisine de la position actuelle du bateau ou a 2 déplacements pour un voillier, et si ce bateau n'a pas déjà bougé'''
         bdd = j.bdd
         if bateau == 0:
-            return False
-        return not j.getEnRuine() and bateau.joueur == j.num and not Voleur.est_pirate(bateau.position,bdd) and arrete.isMaritimeOuCotier() and (arrete in bateau.position.neighb() or (bateau.etat == Bateau.BateauType.VOILIER and arrete in bateau.position.doubleNeighb() )) and not bateau.aBouge
+            raise BateauError(BateauError.BATEAU_INEXISTANT)
+        if j.getEnRuine():
+            raise BateauError(BateauError.JOUEUR_EN_RUINE)
+        if bateau.joueur != j.num:
+            raise BateauError(BateauError.NON_PROPRIETAIRE)
+        if Voleur.est_pirate(bateau.position,bdd):
+            raise BateauError(BateauError.BATEAU_PIRATE)
+        if not arrete.isMaritimeOuCotier(): 
+            raise BateauError(BateauError.ARRETE_TERRESTRE)
+        if not (arrete in bateau.position.neighb() or (bateau.etat == Bateau.BateauType.VOILIER and arrete in bateau.position.doubleNeighb() )):
+            raise BateauError(BateauError.ARRETE_INATTEIGNABLE)
+        if bateau.aBouge:
+            raise BateauError(BateauError.BATEAU_DEJA_DEPLACE)
+        return True
     
     @staticmethod
     @kallable
@@ -704,7 +722,21 @@ class Jeu:
     def peut_echanger_bateau(j,bateau,ct,cb):
         ''' Le joueur j peut échanger avec ce bateau ct cartes de la terre où se trouve le bataeu vers le bateau et cb cartes du bateau vers la terre si il n'est pas en ruine, si le bateau appartient au joueur, si le bateau est sur une zone d'échange (colonie cotiere ou port), si il a assez de ressource sur la terre et dans le bateau et si les échanges sont des nombres entiers naturels.'''
         bdd = j.bdd
-        return not j.getEnRuine() and j.num == bateau.joueur and bateau.en_position_echange(bdd) and j.peut_payer(bateau.position.getTerre(), ct) and bateau.peut_recevoir_et_payer(ct,cb) and ct.est_physiquement_possible() and cb.est_physiquement_possible()
+        if j.getEnRuine():
+            raise BateauError(BateauError.JOUEUR_EN_RUINE)
+        if j.num != bateau.joueur:
+            raise BateauError(BateauError.NON_PROPRIETAIRE)
+        if not bateau.en_position_echange(bdd):
+            raise BateauError(BateauError.PAS_EMPLACEMENT_ECHANGE)
+        if not j.peut_payer(bateau.position.getTerre(), ct):
+            raise BateauError(BateauError.FLUX_TROP_ELEVE)
+        if not bateau.peut_recevoir_et_payer(ct,cb):
+            raise BateauError(BateauError.FLUX_TROP_ELEVE)
+        if not ct.est_physiquement_possible():
+            raise BateauError(BateauError.FLUX_IMPOSSIBLE)
+        if not cb.est_physiquement_possible():
+            raise BateauError(BateauError.FLUX_IMPOSSIBLE)
+        return True
 
     @staticmethod
     @kallable
@@ -723,7 +755,21 @@ class Jeu:
     def peut_evoluer_bateau(j,bateau):
         ''' Le joueur j peut faire evoluer le bateau si il n'est pas en ruine, si le bateau est a lui, si le bateau est en zone d'échange, si le bateau n'est pas un voilier et si il peut payer l'évolution.'''
         bdd = j.bdd
-        return not j.getEnRuine() and j.num == bateau.joueur and bateau.en_position_echange(bdd) and ((bateau.etat == Bateau.BateauType.TRANSPORT and j.peut_payer(bateau.position.getTerre(), Tarifs.CARGO)) or (bateau.etat == Bateau.BateauType.CARGO and j.peut_payer(bateau.position.getTerre(), Tarifs.VOILIER)))
+        if j.getEnRuine():
+            raise BateauError(BateauError.JOUEUR_EN_RUINE)
+        if j.num != bateau.joueur:
+            raise BateauError(BateauError.NON_PROPRIETAIRE)
+        if not bateau.en_position_echange(bdd):
+            raise BateauError(BateauError.PAS_EMPLACEMENT_ECHANGE)
+        if bateau.etat == Bateau.BateauType.TRANSPORT: 
+            if not j.peut_payer(bateau.position.getTerre(), Tarifs.CARGO):
+                raise BateauError(BateauError.RESSOURCES_INSUFFISANTES)
+            return True
+        if bateau.etat == Bateau.BateauType.CARGO:
+            if not j.peut_payer(bateau.position.getTerre(), Tarifs.VOILIER):
+                raise BateauError(BateauError.RESSOURCES_INSUFFISANTES)
+            return True
+        raise BateauError(BateauError.DEJA_EVOLUE)
 
     
     @staticmethod
@@ -760,17 +806,35 @@ class Jeu:
     @staticmethod
     def peut_coloniser(j,bateau,position,transfert):
         bdd = j.bdd
-        if not j.getEnRuine() and j.num == bateau.joueur and transfert.est_physiquement_possible() and transfert <= (bateau.cargaison-Tarifs.COLONIE) and Tarifs.COLONIE <= bateau.cargaison and position.isTerrestreOuCotier() and not j.aColoniseTerre(position.getTerre()):
-            col = Colonie.getColonie(position,bdd)
+        if j.getEnRuine():
+            raise BateauError(BateauError.JOUEUR_EN_RUINE)
+        if j.num != bateau.joueur:
+            raise BateauError(BateauError.NON_PROPRIETAIRE)
+        if not transfert.est_physiquement_possible():
+            raise BateauError(BateauError.FLUX_IMPOSSIBLE)
+        if not Tarifs.COLONIE <= bateau.cargaison:
+            raise ColonieError(ColonieError.RESSOURCES_INSUFFISANTES)
+        if not transfert <= (bateau.cargaison-Tarifs.COLONIE):
+            raise BateauError(BateauError.FLUX_TROP_ELEVE)
+        if not position.isTerrestreOuCotier():
+            raise ColonieError(ColonieError.EMPLACEMENT_MARITIME)
+        if j.aColoniseTerre(position.getTerre()):
+            raise BateauError(BateauError.TERRE_DEJA_COLONISEE)
+        
+       
+        col = Colonie.getColonie(position,bdd)
+        if col != 0:
+            raise ColonieError(ColonieError.EMPLACEMENT_OCCUPE)
+
+        for i in position.neighb():
+            col = Colonie.getColonie(i,bdd)
             if col != 0:
-                return False
-            for i in position.neighb():
-                col = Colonie.getColonie(i,bdd)
-                if col != 0:
-                    return False
-            return position in bateau.positions_colonisables()
-        else:
-            return False
+                raise ColonieError(ColonieError.EMPLACEMENTS_VOISINS_OCCUPES)
+
+        if not position in bateau.positions_colonisables():
+            raise BateauError(BateauError.EMPLACEMENT_INATTEIGNABLE)
+        
+        return True
 
 
     @staticmethod

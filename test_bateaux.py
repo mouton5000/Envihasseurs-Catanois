@@ -35,7 +35,9 @@ class TestBateaux(TestJoueur):
 
 
         j1.setCartes(self.tg,Tarifs.BATEAU_TRANSPORT)
-        self.assertFalse(Jeu.peut_construire_bateau(j1,a1)) # Aucun lien
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_construire_bateau(j1,a1)) # Aucun lien
+        self.assertEqual(err.exception.error_code, BateauError.ARRETE_NON_RELIEE)
 
 
         Colonie(1,i1).save()
@@ -43,21 +45,35 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_construire_bateau(j1,a3)) # ok
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_construire_bateau(j1,a2))
-        self.assertFalse(Jeu.peut_construire_bateau(j1,a3))
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_construire_bateau(j1,a2))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_construire_bateau(j1,a3))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
 
         Colonie(2,i2).save()
-        self.assertFalse(Jeu.peut_construire_bateau(j1,a4)) # relie mais a un adversaire
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_construire_bateau(j1,a4)) # relie mais a un adversaire
+        self.assertEqual(err.exception.error_code, BateauError.ARRETE_NON_RELIEE)
 
         Colonie(1,i3).save()
-        self.assertFalse(Jeu.peut_construire_bateau(j1,a5)) # terrestre
-        self.assertFalse(Jeu.peut_construire_bateau(j1,a6)) # relie mais terrestre
-        self.assertFalse(Jeu.peut_construire_bateau(j1,a7)) # a cote de la côte mais pas d'une colonie
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_construire_bateau(j1,a5)) # terrestre
+        self.assertEqual(err.exception.error_code, BateauError.ARRETE_NON_CONSTRUCTIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_construire_bateau(j1,a6)) # relie mais terrestre
+        self.assertEqual(err.exception.error_code, BateauError.ARRETE_NON_CONSTRUCTIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_construire_bateau(j1,a7)) # a cote de la côte mais pas d'une colonie
+        self.assertEqual(err.exception.error_code, BateauError.ARRETE_NON_RELIEE)
         
         j1.setCartes(self.tg,Cartes.RIEN)
-        self.assertFalse(Jeu.peut_construire_bateau(j1,a2)) # Pas assez de ressources
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_construire_bateau(j1,a2)) # Pas assez de ressources
+        self.assertEqual(err.exception.error_code, BateauError.RESSOURCES_INSUFFISANTES)
         j1.setCartes(self.tg,Tarifs.BATEAU_TRANSPORT)
 
 
@@ -97,16 +113,28 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_deplacer_bateau(j1,b1,a7)) # ok
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a6))
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a7))
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a6))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a7))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
 
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a3)) # Trop loin
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b2,a4)) # Bateau adverse
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a5)) # En pleine terre
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b12,a8)) # Pirate
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a3)) # Trop loin
+        self.assertEqual(err.exception.error_code, BateauError.ARRETE_INATTEIGNABLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b2,a4)) # Bateau adverse
+        self.assertEqual(err.exception.error_code, BateauError.NON_PROPRIETAIRE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a5)) # En pleine terre
+        self.assertEqual(err.exception.error_code, BateauError.ARRETE_TERRESTRE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b12,a8)) # Pirate
+        self.assertEqual(err.exception.error_code, BateauError.BATEAU_PIRATE)
         
         a9 = p.it(56).lien(p.it(57))
         a10 = p.it(27).lien(p.it(37))
@@ -122,10 +150,14 @@ class TestBateaux(TestJoueur):
         b14.save()
 
         self.assertTrue(Jeu.peut_deplacer_bateau(j1,b13,a11)) # ok
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b13,a12)) # Trop loin
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b13,a12)) # Trop loin
+        self.assertEqual(err.exception.error_code, BateauError.ARRETE_INATTEIGNABLE)
         self.assertTrue(Jeu.peut_deplacer_bateau(j1,b14,a13)) # ok, déplacement de 1 arrete
         self.assertTrue(Jeu.peut_deplacer_bateau(j1,b14,a14)) # ok, déplacement de  2 arretes
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b14,a15)) # Trop loin
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b14,a15)) # Trop loin
+        self.assertEqual(err.exception.error_code, BateauError.ARRETE_INATTEIGNABLE)
         
         b15 = Bateau(6,1,a7, Cartes.RIEN,Bateau.BateauType.VOILIER, False)
         b16 = Bateau(6,2,a6, Cartes.RIEN,Bateau.BateauType.CARGO, False)
@@ -137,10 +169,14 @@ class TestBateaux(TestJoueur):
         
 
         Jeu.deplacer_bateau(j1,b1,a7)
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a0)) # a deja bouge
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a0)) # a deja bouge
+        self.assertEqual(err.exception.error_code, BateauError.BATEAU_DEJA_DEPLACE)
 
         b13 = Bateau.getBateau(1)
-        self.assertFalse(Jeu.peut_deplacer_bateau(j1,b13,a0)) # a deja bouge
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b13,a0)) # a deja bouge
+        self.assertEqual(err.exception.error_code, BateauError.BATEAU_DEJA_DEPLACE)
 
 # test les echanges entre terre et bateau, et les evolutions de bateau
 # Ces tests sont faits au même endroit car ces deux évènements sont possibles dans les mêmes conditions
@@ -197,19 +233,37 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_evoluer_bateau(j1,b5)) # Ok touche un port
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5))
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b2)) # En pleine mer
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b3)) # Colonie ennemie
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b4)) # Relie à la terre mais pas en position echange
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b6)) # Port mais sur une terre non colonisee
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b7)) # Relié à une colonie mais pas un bateau allie
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b2)) # En pleine mer
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b3)) # Colonie ennemie
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b4)) # Relie à la terre mais pas en position echange
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b6)) # Port mais sur une terre non colonisee
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b7)) # Relié à une colonie mais pas un bateau allie
+        self.assertEqual(err.exception.error_code, BateauError.NON_PROPRIETAIRE)
         j1.setCartes(tg,Cartes.RIEN)
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1)) # Relié a une colonie mais Pas assez ressource
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5)) # 
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1)) # Relié a une colonie mais Pas assez ressource
+        self.assertEqual(err.exception.error_code, BateauError.RESSOURCES_INSUFFISANTES)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5)) # 
+        self.assertEqual(err.exception.error_code, BateauError.RESSOURCES_INSUFFISANTES)
         j1.setCartes(tg,cartes) 
 
         cecht = CartesGeneral(0,0,0,0,0,0,0,0,0,1) 
@@ -226,24 +280,52 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb)) # Ok touche un port
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b6,cecht,cechb)) # Port mais sur une terre non colonisee
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b7,cecht,cechb)) # Pas un bateau allie
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch1,cechb)) # Trop de ressources demandees, le bateau est plein
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch2,cechb)) # Trop de ressources demandees la colonie n'a pas tout ca
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbtoomuch)) # Trop de ressources demandees, le bateau n'a pas tout ca
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtneg,cechb)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbneg)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtdouble,cechb)) # Echange non entier
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbdouble)) # Echange non entier
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b6,cecht,cechb)) # Port mais sur une terre non colonisee
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b7,cecht,cechb)) # Pas un bateau allie
+        self.assertEqual(err.exception.error_code, BateauError.NON_PROPRIETAIRE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch1,cechb)) # Trop de ressources demandees, le bateau est plein
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_TROP_ELEVE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch2,cechb)) # Trop de ressources demandees la colonie n'a pas tout ca
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_TROP_ELEVE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbtoomuch)) # Trop de ressources demandees, le bateau n'a pas tout ca
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_TROP_ELEVE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtneg,cechb)) # Echange negatif
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbneg)) # Echange negatif
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtdouble,cechb)) # Echange non entier
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbdouble)) # Echange non entier
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
 
 
 #        j1.enRuine = True
@@ -288,20 +370,37 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_evoluer_bateau(j1,b1)) # OK touche une colonie
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5))
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b2)) # En pleine mer
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b3)) # Colonie ennemie
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b4)) # Relie a rien
-        self.assertTrue(Jeu.peut_evoluer_bateau(j1,b5)) # Ok touche un port
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b6)) # Port mais sur une terre non colonisee
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b7)) # Pas un bateau allie
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b2)) # En pleine mer
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b3)) # Colonie ennemie
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b4)) # Relie à la terre mais pas en position echange
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b6)) # Port mais sur une terre non colonisee
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b7)) # Relié à une colonie mais pas un bateau allie
+        self.assertEqual(err.exception.error_code, BateauError.NON_PROPRIETAIRE)
         j1.setCartes(tg,Cartes.RIEN)
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1)) # Pas assez ressource
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5)) # 
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1)) # Relié a une colonie mais Pas assez ressource
+        self.assertEqual(err.exception.error_code, BateauError.RESSOURCES_INSUFFISANTES)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5)) # 
+        self.assertEqual(err.exception.error_code, BateauError.RESSOURCES_INSUFFISANTES)
         j1.setCartes(tg,cartes) 
 
         cecht = CartesGeneral(2,2,0,0,0,0,0,0,0,1) 
@@ -319,23 +418,51 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb)) # Ok touche un port
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b6,cecht,cechb)) # Port mais sur une terre non colonisee
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b7,cecht,cechb)) # Pas un bateau allie
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch1,cechb)) # Trop de ressources demandees, le bateau est plein
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch2,cechb)) # Trop de ressources demandees la colonie n'a pas tout ca
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbtoomuch)) # Trop de ressources demandees, le bateau n'a pas tout ca
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtneg,cechb)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbneg)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtdouble,cechb)) # Echange non entier
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbdouble)) # Echange non entier
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b6,cecht,cechb)) # Port mais sur une terre non colonisee
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b7,cecht,cechb)) # Pas un bateau allie
+        self.assertEqual(err.exception.error_code, BateauError.NON_PROPRIETAIRE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch1,cechb)) # Trop de ressources demandees, le bateau est plein
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_TROP_ELEVE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch2,cechb)) # Trop de ressources demandees la colonie n'a pas tout ca
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_TROP_ELEVE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbtoomuch)) # Trop de ressources demandees, le bateau n'a pas tout ca
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_TROP_ELEVE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtneg,cechb)) # Echange negatif
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbneg)) # Echange negatif
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtdouble,cechb)) # Echange non entier
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbdouble)) # Echange non entier
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
 
 
 #        j1.enRuine = True
@@ -375,8 +502,12 @@ class TestBateaux(TestJoueur):
         b7.save()
         j1.setCartes(tg,cartes)
 
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1)) # Un voilier ne peut evoluer
-        self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5)) # 
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1)) # Un voilier ne peut evoluer
+        self.assertEqual(err.exception.error_code, BateauError.DEJA_EVOLUE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5)) # 
+        self.assertEqual(err.exception.error_code, BateauError.DEJA_EVOLUE)
 
         cecht = CartesGeneral(2,2,0,0,0,0,0,0,0,1) 
         cechb = CartesGeneral(0,0,0,0,1,1,0,0,0,0) 
@@ -384,32 +515,56 @@ class TestBateaux(TestJoueur):
         cechttoomuch2 = CartesGeneral(0,0,0,0,0,0,0,1,0,0) 
         cechbtoomuch = CartesGeneral(2,0,0,0,0,0,0,0,0,0) 
         
-#        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_echanger_bateau(j1,ab1,cecht,cechb))
-#        # Joueur en ruine
-#        j1.enRuine = False
         
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb)) # OK touche une colonie
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb)) # Ok touche un port
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b6,cecht,cechb)) # Port mais sur une terre non colonisee
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b7,cecht,cechb)) # Pas un bateau allie
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch1,cechb)) # Trop de ressources demandees, le bateau est plein
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch2,cechb)) # Trop de ressources demandees la colonie n'a pas tout ca
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbtoomuch)) # Trop de ressources demandees, le bateau n'a pas tout ca
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtneg,cechb)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbneg)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtdouble,cechb)) # Echange non entier
-        self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbdouble)) # Echange non entier
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b3,cecht,cechb)) # Colonie ennemie
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b4,cecht,cechb)) # Relie a rien
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b6,cecht,cechb)) # Port mais sur une terre non colonisee
+        self.assertEqual(err.exception.error_code, BateauError.PAS_EMPLACEMENT_ECHANGE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b7,cecht,cechb)) # Pas un bateau allie
+        self.assertEqual(err.exception.error_code, BateauError.NON_PROPRIETAIRE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch1,cechb)) # Trop de ressources demandees, le bateau est plein
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_TROP_ELEVE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechttoomuch2,cechb)) # Trop de ressources demandees la colonie n'a pas tout ca
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_TROP_ELEVE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbtoomuch)) # Trop de ressources demandees, le bateau n'a pas tout ca
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_TROP_ELEVE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtneg,cechb)) # Echange negatif
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbneg)) # Echange negatif
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cechtdouble,cechb)) # Echange non entier
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbdouble)) # Echange non entier
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
 
         j1.setCartes(tg,cartes)
         Jeu.echanger_bateau(j1,b1,cecht,cechb)
@@ -480,34 +635,59 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_coloniser(j1,b1,i5,Cartes.RIEN))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,Cartes.RIEN))
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i5,Cartes.RIEN))
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,Cartes.RIEN))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i5,Cartes.RIEN))
+        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i2,Cartes.RIEN)) # Trop loin
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i3,Cartes.RIEN)) # Dans l'eau
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,transf1toomuch)) # Transfert trop eleve
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,transf1neg)) # Transfert negatif
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i2,Cartes.RIEN)) # Trop loin
+        self.assertEqual(err.exception.error_code, BateauError.EMPLACEMENT_INATTEIGNABLE)
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i3,Cartes.RIEN)) # Dans l'eau
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENT_MARITIME)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,transf1toomuch)) # Transfert trop eleve
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_TROP_ELEVE)
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,transf1neg)) # Transfert negatif
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
+
         
 
         b1.cargaison = carg3
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,Cartes.RIEN)) # Pas assez de cargaison
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,Cartes.RIEN)) # Pas assez de cargaison
+        self.assertEqual(err.exception.error_code, ColonieError.RESSOURCES_INSUFFISANTES)
         
         b2.cargaison = carg1
-        self.assertFalse(Jeu.peut_coloniser(j1,b2,i8,Cartes.RIEN)) # Pas le bon bateau
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b2,i8,Cartes.RIEN)) # Pas le bon bateau
+        self.assertEqual(err.exception.error_code, BateauError.NON_PROPRIETAIRE)
 
         b1.cargaison = carg2
         self.assertTrue(Jeu.peut_coloniser(j1,b1,i1,transf2))
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,transf2double)) # Transfert non entier
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,transf2double)) # Transfert non entier
+        self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
 
         b2.cargaison = carg1
-        self.assertFalse(Jeu.peut_coloniser(j2,b2,i9,Cartes.RIEN)) # La terre est deja colonisee
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j2,b2,i9,Cartes.RIEN)) # La terre est deja colonisee
+        self.assertEqual(err.exception.error_code, BateauError.TERRE_DEJA_COLONISEE)
         
         c = Colonie(2,i7)    
         c.save()
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i7,transf2)) # Il y a une colonie a cet emplacement
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i6,transf2)) # Il y a une colonie voisine
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i7,transf2)) # Il y a une colonie a cet emplacement
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENT_OCCUPE)
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i6,transf2)) # Il y a une colonie voisine
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENTS_VOISINS_OCCUPES)
         self.assertTrue(Jeu.peut_coloniser(j1,b1,i5,transf2))
         
 #        j1.enRuine = True
@@ -516,7 +696,9 @@ class TestBateaux(TestJoueur):
 #        j1.enRuine = False
 
         b1.deplacer(a2)
-        self.assertFalse(Jeu.peut_coloniser(j1,b1,i5,transf2)) # Le bateau n'est pas cotier
+        with self.assertRaises(BateauError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i5,transf2)) # Le bateau n'est pas cotier
+        self.assertEqual(err.exception.error_code, BateauError.EMPLACEMENT_INATTEIGNABLE)
         b1.deplacer(a1)
         b1.aBouge = True
         self.assertTrue(Jeu.peut_coloniser(j1,b1,i5,transf2)) # Le bateau n'est pas cotier
