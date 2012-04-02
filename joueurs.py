@@ -6,6 +6,8 @@ from foret_action import *
 import random
 import functools
 import redis
+from errors import *
+
 
 REDIS = redis.StrictRedis()
 
@@ -515,26 +517,30 @@ class Jeu:
 # -----------------------------------------------------
 #    Actions dans la journee
 # -----------------------------------------------------
-
-
-
-
-
+    
     @staticmethod
     def peut_construire_colonie(j,intersection):
         ''' Un joueur peut construire une colonie si il n'est aps en ruine, si il ne la construit pas a un emplacement voisin d'une autre colonie, si il la construit sur un emplacement voisin d'une de ses routes, si cet emplacement est sur terre et si il peut payer la construiction.'''
         bdd = j.bdd
+        if j.getEnRuine():
+            raise ColonieError(ColonieError.JOUEUR_EN_RUINE)
+        if intersection.isMaritime():
+            raise ColonieError(ColonieError.EMPLACEMENT_MARITIME)
+        if not j.peut_payer(intersection.getTerre(), Tarifs.COLONIE):
+            raise ColonieError(ColonieError.RESSOURCES_INSUFFISANTES)
         col = Colonie.hasColonie(intersection, bdd)
-        if not j.getEnRuine() and not col and not intersection.isMaritime() and j.peut_payer(intersection.getTerre(), Tarifs.COLONIE):
-    
-            for i in intersection.neigh:
-                if Colonie.hasColonie(i,bdd):
-                    return False
-            for a in intersection.liens:
-                jrout = Route.getRouteJoueur(a,bdd)
-                if jrout == j.num:
-                    return True
-        return False
+        if col:
+            raise ColonieError(ColonieError.EMPLACEMENT_OCCUPE)
+
+        for i in intersection.neigh:
+            if Colonie.hasColonie(i,bdd):
+                raise ColonieError(ColonieError.EMPLACEMENTS_VOISINS_OCCUPES)
+                return False
+        for a in intersection.liens:
+            jrout = Route.getRouteJoueur(a,bdd)
+            if jrout == j.num:
+                return True
+        raise ColonieError(ColonieError.EMPLACEMENT_NON_RELIE)
 
     @staticmethod
     @kallable

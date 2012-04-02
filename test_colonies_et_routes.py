@@ -44,15 +44,29 @@ class TestColonieEtRoute(TestJoueur):
         self.assertTrue(Jeu.peut_construire_colonie(j1,i83)) # Ok
 
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_construire_colonie(j1,i83)) # En ruine
+        with self.assertRaises(ColonieError) as err:
+            Jeu.peut_construire_colonie(j1,i83) # En ruine
+        self.assertEqual(err.exception.error_code, ColonieError.JOUEUR_EN_RUINE)
+
         j1.setEnRuine(False)
 
-        self.assertFalse(Jeu.peut_construire_colonie(j1,i72))# Il y a deja une colonie
-        self.assertFalse(Jeu.peut_construire_colonie(j1,i73))# Il y a une colonie a 1 case
-        self.assertFalse(Jeu.peut_construire_colonie(j1,i54))# Il n'y a aucun lien
-        self.assertFalse(Jeu.peut_construire_colonie(j1,i51))# C'est la mer
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_construire_colonie(j1,i72))# Il y a deja une colonie
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENT_OCCUPE)
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_construire_colonie(j1,i73))# Il y a une colonie a 1 case
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENTS_VOISINS_OCCUPES)
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_construire_colonie(j1,i54))# Il n'y a aucun lien
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENT_NON_RELIE)
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_construire_colonie(j1,i51))# C'est la mer
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENT_MARITIME)
+        
         j1.setCartes(self.tg,Cartes.RIEN)
-        self.assertFalse(Jeu.peut_construire_colonie(j1,i83)) # Plus assez de ressources
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_construire_colonie(j1,i83)) # Plus assez de ressources
+        self.assertEqual(err.exception.error_code, ColonieError.RESSOURCES_INSUFFISANTES)
         
         i53 = p.it(53) 
         i43 = p.it(43) 
@@ -67,9 +81,15 @@ class TestColonieEtRoute(TestJoueur):
         c2.save()
         r3.save()
         r4.save()
-        self.assertFalse(Jeu.peut_construire_colonie(j1,i53)) # Colonie adverse
-        self.assertFalse(Jeu.peut_construire_colonie(j1,i43)) # Colonie adverse a une case
-        self.assertFalse(Jeu.peut_construire_colonie(j1,i44)) # Relie a une route mais adverse
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_construire_colonie(j1,i53)) # Colonie adverse
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENT_OCCUPE)
+        with self.assertRaises(ColonieError) as err:
+           self.assertFalse(Jeu.peut_construire_colonie(j1,i43)) # Colonie adverse a une case
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENTS_VOISINS_OCCUPES)
+        with self.assertRaises(ColonieError) as err:
+           self.assertFalse(Jeu.peut_construire_colonie(j1,i44)) # Relie a une route mais adverse
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENT_NON_RELIE)
 
         i63 = p.it(63)
         a63 = i63.lien(i53)
@@ -78,7 +98,9 @@ class TestColonieEtRoute(TestJoueur):
         r6 = Route(1,a73)
         r5.save()
         r6.save()
-        self.assertFalse(Jeu.peut_construire_colonie(j1,i63)) # Relie a une route mais colonie adverse a une case
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_construire_colonie(j1,i63)) # Relie a une route mais colonie adverse a une case
+        self.assertEqual(err.exception.error_code, ColonieError.EMPLACEMENTS_VOISINS_OCCUPES)
        
         i = len(j1.getBatiments())
         j = len(j1.getColonies())
