@@ -150,15 +150,31 @@ class TestColonieEtRoute(TestJoueur):
         self.assertTrue(Jeu.peut_construire_route(j1,a5363))  # ok relie a une colonie
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_construire_route(j1,a4333))
-        self.assertFalse(Jeu.peut_construire_route(j1,a5363))
+        
+        with self.assertRaises(RouteError) as err:
+            self.assertFalse(Jeu.peut_construire_route(j1,a4333))
+        self.assertEqual(err.exception.error_code, RouteError.JOUEUR_EN_RUINE)
+        
+        with self.assertRaises(RouteError) as err:
+            self.assertFalse(Jeu.peut_construire_route(j1,a5363))
+        self.assertEqual(err.exception.error_code, RouteError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_construire_route(j1,a5343)) # existe deja
-        self.assertFalse(Jeu.peut_construire_route(j1,a103104)) # relie a rien
-        self.assertFalse(Jeu.peut_construire_route(j1,a4434)) # relie seulement a l'ennemi
-        self.assertFalse(Jeu.peut_construire_route(j1,a5464)) # relie seulement a l'ennemi
+        with self.assertRaises(RouteError) as err:
+            self.assertFalse(Jeu.peut_construire_route(j1,a5343)) # existe deja
+        self.assertEqual(err.exception.error_code, RouteError.ARRETE_OCCUPEE)
+        with self.assertRaises(RouteError) as err:
+            self.assertFalse(Jeu.peut_construire_route(j1,a103104)) # relie a rien
+        self.assertEqual(err.exception.error_code, RouteError.ARRETE_NON_RELIEE)
+        with self.assertRaises(RouteError) as err:
+            self.assertFalse(Jeu.peut_construire_route(j1,a4434)) # relie seulement a l'ennemi
+        self.assertEqual(err.exception.error_code, RouteError.ARRETE_NON_RELIEE)
+        with self.assertRaises(RouteError) as err:
+            self.assertFalse(Jeu.peut_construire_route(j1,a5464)) # relie seulement a l'ennemi
+        self.assertEqual(err.exception.error_code, RouteError.ARRETE_NON_RELIEE)
+        
+
         self.assertTrue(Jeu.peut_construire_route(j1,a4344))  # ok relie a une route
 
 
@@ -166,11 +182,15 @@ class TestColonieEtRoute(TestJoueur):
         a6252 = i62.lien(i52)
         Colonie(1,i62).save()
         
-        self.assertFalse(Jeu.peut_construire_route(j1,a6261)) # c'est la mer
+        with self.assertRaises(RouteError) as err:
+            self.assertFalse(Jeu.peut_construire_route(j1,a6261)) # c'est la mer
+        self.assertEqual(err.exception.error_code, RouteError.ARRETE_MARITIME)
         self.assertTrue(Jeu.peut_construire_route(j1,a6252)) # cotier
 
         j1.setCartes(self.tg,Cartes.RIEN)
-        self.assertFalse(Jeu.peut_construire_route(j1,a4333)) # manque de ressource
+        with self.assertRaises(RouteError) as err:
+            self.assertFalse(Jeu.peut_construire_route(j1,a4333)) # manque de ressource
+        self.assertEqual(err.exception.error_code, RouteError.RESSOURCES_INSUFFISANTES)
         j1.setCartes(self.tg,Tarifs.ROUTE)
 
 
@@ -196,14 +216,22 @@ class TestColonieEtRoute(TestJoueur):
         self.assertTrue(Jeu.peut_evoluer_colonie(j1,i1))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_evoluer_colonie(j1,i1))
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_evoluer_colonie(j1,i1))
+        self.assertEqual(err.exception.error_code, ColonieError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_evoluer_colonie(j1,i2)) # Colonie adverse
-        self.assertFalse(Jeu.peut_evoluer_colonie(j1,i3)) # Pas de colonie
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_evoluer_colonie(j1,i2)) # Colonie adverse
+        self.assertEqual(err.exception.error_code, ColonieError.NON_PROPRIETAIRE)
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_evoluer_colonie(j1,i3)) # Pas de colonie
+        self.assertEqual(err.exception.error_code, ColonieError.COLONIE_INEXISTANTE)
         j1.setCartes(self.tg,Cartes.RIEN)
-        self.assertFalse(Jeu.peut_evoluer_colonie(j1,i1)) # Pas assez ressource
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_evoluer_colonie(j1,i1)) # Pas assez ressource
+        self.assertEqual(err.exception.error_code, ColonieError.RESSOURCES_INSUFFISANTES)
         j1.setCartes(self.tg,Tarifs.VILLE)
         self.assertTrue(Jeu.peut_evoluer_colonie(j1,i1))
 
@@ -217,7 +245,9 @@ class TestColonieEtRoute(TestJoueur):
         self.assertEqual(len(j1.getBatiments()),k)
         self.assertEqual(j1.getCartes(self.tg),Cartes.RIEN)
         j1.setCartes(self.tg,Tarifs.VILLE)
-        self.assertFalse(Jeu.peut_evoluer_colonie(j1,i1)) # La colonie a déja evoluee
+        with self.assertRaises(ColonieError) as err:
+            self.assertFalse(Jeu.peut_evoluer_colonie(j1,i1)) # La colonie a déja evoluee
+        self.assertEqual(err.exception.error_code, ColonieError.COLONIE_DEJA_EVOLUEE)
 
 # Les joueurs recoltent leur ressources : lancement des des, autre que 7, recolte des ressources en fonction des villages et des villes, et des brigands. Recolte de l'or
     def test_recolter_ressources(self):

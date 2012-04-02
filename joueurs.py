@@ -564,17 +564,25 @@ class Jeu:
     def peut_construire_route(j, arrete, construction_route = False):
         ''' Un joueur j peut construire une route sur l'arrete si il n'est pas en ruine, si il n'existe pas déjà de route non en ruine sur cet emplacement, si cette arrete est terrestre, si il peut payer ou s'il a jouer une carte développement de construction de route, et s'il existe une colonie ou une route voiine à cette arrete.'''
         bdd = j.bdd
+        if j.getEnRuine():
+            raise RouteError(RouteError.JOUEUR_EN_RUINE)
+        if arrete.isMaritime():
+            raise RouteError(RouteError.ARRETE_MARITIME)
+        if (not construction_route and not j.peut_payer(arrete.getTerre(), Tarifs.ROUTE)):
+            raise RouteError(RouteError.RESSOURCES_INSUFFISANTES)
         rout = Route.hasRoute(arrete,bdd)
-        if not j.getEnRuine() and not rout and not arrete.isMaritime() and (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.ROUTE)):
-            jcol1 = Colonie.getColonieJoueur(arrete.int1,bdd)
-            jcol2 = Colonie.getColonieJoueur(arrete.int2,bdd)
-            if (jcol1 == j.num) or (jcol2 == j.num):
+        if rout:
+            raise RouteError(RouteError.ARRETE_OCCUPEE)
+         
+        jcol1 = Colonie.getColonieJoueur(arrete.int1,bdd)
+        jcol2 = Colonie.getColonieJoueur(arrete.int2,bdd)
+        if (jcol1 == j.num) or (jcol2 == j.num):
+            return True
+        for a in arrete.neighb():
+            jrout = Route.getRouteJoueur(a,bdd)
+            if (jrout == j.num):
                 return True
-            for a in arrete.neighb():
-                jrout = Route.getRouteJoueur(a,bdd)
-                if (jrout == j.num):
-                    return True
-        return False
+        raise RouteError(RouteError.ARRETE_NON_RELIEE)
 
     @staticmethod
     @kallable
@@ -597,10 +605,18 @@ class Jeu:
     def peut_evoluer_colonie(j, intersection):
         ''' Un joueur j peut faire evoluer une colonie si il n'est pas en ruine, si elle est a lui et si il peyt payer le cout de l'évolution'''
         bdd = j.bdd
+        if j.getEnRuine():
+            raise ColonieError(ColonieError.JOUEUR_EN_RUINE)
         colonie = Colonie.getColonie(intersection,bdd)
         if colonie == 0:
-            return False
-        return not j.getEnRuine() and not colonie.isVille and colonie.joueur == j.num and j.peut_payer(intersection.getTerre(), Tarifs.VILLE)
+            raise ColonieError(ColonieError.COLONIE_INEXISTANTE)
+        if colonie.isVille:
+            raise ColonieError(ColonieError.COLONIE_DEJA_EVOLUEE)
+        if colonie.joueur != j.num:
+            raise ColonieError(ColonieError.NON_PROPRIETAIRE)
+        if not j.peut_payer(intersection.getTerre(), Tarifs.VILLE):
+            raise ColonieError(ColonieError.RESSOURCES_INSUFFISANTES)
+        return True
 
     @staticmethod
     @kallable
