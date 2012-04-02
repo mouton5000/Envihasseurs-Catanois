@@ -22,33 +22,19 @@ class JoueurNodeInterface:
         return str(self.num)
 
     
-    def setFirstRoot(self,node):
+    def setRoot(self,node):
         REDIS.set('J'+str(self.num)+':racine',node.num)
 
-    def getFirstRoot(self):
+    def getRoot(self):
         return Node(int(REDIS.get('J'+str(self.num)+':racine')))
 
     def hasRoot(self):
         return REDIS.exists('J'+str(self.num)+':racine')
 
-    def setLastRoot(self,node):
-        REDIS.set('J'+str(self.num)+':derniereRacine',node.num)
-
-    def getLastRoot(self):
-        return Node(int(REDIS.get('J'+str(self.num)+':derniereRacine')))
-    
     def setNewRoot(self):
 
         node = Node.getNextNewNode()
-        hasRoot = self.hasRoot()
-        if hasRoot:
-            lastRoot = self.getLastRoot()
-            lastRoot.setNextRoot(node)
-            node.setPreviousRoot(lastRoot)
-        else:
-            self.setFirstRoot(node)
-            node.setPreviousRoot(NodeCst.NULL)
-        self.setLastRoot(node)
+        self.setRoot(node)
         node.setNextRoot(NodeCst.NULL)
         
         node.setPlayer(self)
@@ -63,36 +49,11 @@ class JoueurNodeInterface:
 
         return node
 
-    def setNewFirstRoot(self):
-
-        node = Node.getNextNewNode()
-        if self.hasRoot():
-            firstRoot = self.getFirstRoot()
-            node.setNextRoot(firstRoot)
-            firstRoot.setPreviousRoot(node)
-        else:
-            self.setLastRoot(node)
-            node.setNextRoot(NodeCst.NULL)
-        self.setFirstRoot(node)
-        node.setPreviousRoot(NodeCst.NULL)
-
-        node.setPlayer(self)
-        node.setRoot(node)
-        node.setFirstChild(NodeCst.NULL)
-        node.setLastChildNode(NodeCst.NULL)
-        node.setSiblingNode(NodeCst.NULL)
-        node.setPSiblingNode(NodeCst.NULL)
-        node.setFatherNode(NodeCst.NULL)
-        Node.incrNodeId()
-        
-        return node
-
-
 
 # Execution
     
     def executer(self):
-        ''' Execute l'ensemble de la foret d'action et construit une base de données à partir de toutes les actions. '''
+        ''' Execute l'ensemble de l'arbre d'action et construit une base de données à partir de toutes les actions. '''
         node = self.getFirstRoot()
         ibdd = REDIS
         b = True
@@ -109,7 +70,26 @@ class JoueurNodeInterface:
                     return ibdd
             b = self.executerNode(node, ibdd)
     
+    def executerPartiel(self, node, action):
+        ''' Renvoie la base de données telle qu'elle serait si on exécutait l'arbre d'action jusqu'au noeud node, jusqu'à l'action action.'''
+
+        listNodes = self.getRoot().getPath(node)
+        ibdd = BDD(REDIS)
+
+        c = self.executerListNodes(listNodes,ibdd)
+        if not c[0]:
+            return
+    
+        ibdd = BDD(c[1])
+        b = self.executerNodePartiel(node, action, ibdd)
+        if not b:
+            return
+        return ibdd
+        
+                   
+ 
     def executerListNodes(self,listNodes, ibdd):
+        ''' Execute linéairement l'ensemble des noeuds de la liste l. Si c'est impossible, renvoie un tuple (False,0), sinon renvoie (True, bdd) où bdd est l'interface de la base de donnée résultante de l'application des noeuds sur ibdd. ibdd n'est pas modifiée'''
         bdd = BDD(ibdd)
         for node in listNodes:
             if not self.executerNode(node,bdd):
@@ -120,8 +100,8 @@ class JoueurNodeInterface:
 
 
     def executerNode(self,node, ibdd):
-        ''' Execute l'ensemble des actions du noeud dans la base ibdd jusqu' à la dernière ou jusqu'a ce qu'une des action renvoie faux. Dans le premire cas, elle renvoie vrai et dans l'autre, vide la  base de données ibdd et renvoie faux.'''
-        actionsNum = node.getActions()
+        ''' Execute l'ensemble des actions du noeud dans la base ibdd jusqu' à la dernière ou jusqu'a ce qu'une des action renvoie faux. Dans le premire cas, elle renvoie vrai et dans l'autre, vide la  base de données ibdd et renvoie faux. ibdd est modifiée'''
+        actionsNum = node.getActionsNum()
         for actnum in actionsNum:
             action = Action.getAction(int(actnum))
             b = self.executerAction(action, ibdd)
@@ -130,8 +110,22 @@ class JoueurNodeInterface:
                 return False
         return True
 
+    def executerNodePartiel(self, node, action, ibdd):
+        '''  Execute les actions du noeud jusqu'à l'exécution de action (incluse), ou jusqu'à ce qu'une action renvoie Faux. ibdd est modifiée'''
+        actionsNum = node.getActionsNum()
+        if not str(action.num) in actionsNum:
+            return False
+        
+        for actnum in actionsNum:
+            act = Action.getAction(int(actnum))
+            b = self.executerAction(act, ibdd)
+            if not b:
+                return False
+            if int(actnum) == action.num:
+                return True
+
     def executerAction(self, action, ibdd):
-        ''' Execute l'action, avec la base de donnée ibdd '''
+        ''' Execute l'action, avec la base de donnée ibdd. ibdd est modifiée. '''
         j = Joueur(self.num, ibdd)
         func = getattr(Jeu, action.func)
         if func.peut_etre_appelee:
@@ -162,41 +156,31 @@ class JoueurNodeInterface:
             return False
 
     def testListNode(self, node):
+        ''' Renvoie vrai si le sous arbre de l'arbre de d'action contenant le plus court chemin de r à node et le sous arbre enraciné en node est cohérent. Ie, il est possible de le parcourir du début à la fin, quelque soit la feuille choisie. '''
         pathLists = node.getPathLists()
-        s = len(pathLists)
 
-        indexes = []
-        sizes = []
-
-        for i in xrange(s):
-            indexes.append(0)
-            sizes.append(len(pathLists[i]) - 1)
+        s = len(pathLists[1])
 
         ibdd = BDD(REDIS)
-        while(hasNext(indexes,sizes)):
-            for i in xrange(s):
-                c = self.executerListeNodes(pathLists[i][indexes[i]], ibdd)
-                if not c[0]:
-                    return False
-                ibdd = BDD(c[1])
-            next(indexes,sizes)
+        # On teste le chemin de root jusque node.
+        c = self.executerListNodes(pathLists[0][0], ibdd)
+        if not c[0]:
+            return False
+        for i in xrange(s):
+            # On teste le chemin de node jusque sa ie feuille.
+            c = self.executerListeNodes(pathLists[i][indexes[i]], ibdd)
+            if not c[0]:
+                return False
+        
         return True
 
 
-    def bddOfAction(self,node,action, leaves):
-        ''' Renvoie la base de données telle qu'elle serait si on exécutait l'arbre d'action jusqu'au noeud node, jusqu'à l'action action, en passant par les feuilles de la liste leaves.'''
-        pass
 
 class Node:
-    ''' Classe représentant une forêt dont les arbres sont placés les uns à la suite.
-    Chaque noeud contient un ensemble d'étiquettes qu'il enregistre. Puis un curseur
-    peut se ballader de pere en fils ou de frere en frere. Si le curseur est au bout
-    d'un arbre est qu'on souhaite voir le fils, le curseur passe à l'arbre suivant.'''
-
+    ''' Classe représentant le noeud d'un arbre, avec un lien vers le pere, frere gauche et droit, premier et dernier fils. '''
 
     def __init__(self,num):
         self.num = num
-    
     
     def __eq__(self,other):
         return self.num == other.num
@@ -254,21 +238,6 @@ class Node:
     # Interface pour les racines
    
     
-    def setNextRoot(root,node):
-        REDIS.set('N'+str(root.num)+':racineSuivante',node.num)
-
-    def getNextRoot(root):
-        return Node(int(REDIS.get('N'+str(root.num)+':racineSuivante')))
-    
-    def hasNextRoot(root):
-        return REDIS.get('N'+str(root.num)+':racineSuivante') != '-1'
-    
-    def setPreviousRoot(root,node):
-        REDIS.set('N'+str(root.num)+':racinePrecedente',node.num)
-
-    def getPreviousRoot(root):
-        return Node(int(REDIS.get('N'+str(root.num)+':racinePrecedente')))
-    
     def setRoot(node, rootNode):
         REDIS.set('N'+str(node.num)+':root',rootNode.num)
 
@@ -292,33 +261,14 @@ class Node:
 
     def getNextNode(node):
         ''' Renvoie le noeud suivant au sens de l'éxécution classique d'un arbre d'action, à savoir le premier fils, ou s'il n'en a pas le premier fils de la racine de l'arbre d'action suivant. NULL sinon.'''
-        if node.hasChild(node):
-            return node.getFirstChild()
-        else:
-            root = node.getRoot()
-            if root.hasNextRoot():
-                return root.getNextRoot().getNextNode()
-            else:
-                return NodeCst.NULL
+        return node.getFirstChild()
 
-    def getPreviousNodes(node):
+    def getPreviousNode(node):
         ''' Renvoie l'ensemble des noeuds précédents au sens de l'éxécution classique d'un arbre d'action, ie l'ensemble des noeuds dont getNextNode renvoie node'''
-        r = node.getiRoot()
-        if r == node:
-            proot = node.getPreviousRoot()
-            if proot == NodeCst.NULL:
-                return []
-            else:
-                return proot.getLeavesOf()
-        else:
-            f = node.getFatherNode()
-            if f == r:
-                return r.getPreviousNodes()
-            else:
-                return [f]
+        return node.getFatherNode()
 
     def getPath(origin,dest):
-        ''' Renvoie la liste des noeuds compris dans le chemin partant de origin jusque dest. Ces deux noeuds doivent etre dans le meme arbre.'''
+        ''' Renvoie la liste des noeuds compris dans le chemin partant de origin jusque dest'''
         path = [dest]
         node = dest
         while(node != origine):
@@ -330,7 +280,7 @@ class Node:
         return path     
 
     def getPathList(node):
-        ''' Renvoie un tableau de tableau pour chaque arbre de la foret plus un. Chaque arbre ne contenant pas le noeud renvoie l'ensemble des chemins racine-feuille, sauf l'arbre contenant node qui renvoie un tableau contenant le chemin racine node et les chemin node-feuille pour chaque feuille qu'on peut atteindre depuis node'''
+        ''' Renvoie une liste contenant deux éléments : le chemin entre la racine et node, et la liste des chemins entre node et toutes ses feuilles. '''
         root = node.getRoot()
 
         l = []
@@ -341,23 +291,6 @@ class Node:
             l1.append(node.getPath(leaf))
 
         l.append(l1)
-
-        proot = root.getPreviousRoot()
-        while proot != NodeCst.NULL:
-            l1 = []
-            for leaf in proot.getLeaves():
-                l1.append(proot.getPath(leaf))
-            l.insert(0,l1)
-            proot = proot.getPreviousRoot()
-            
-        nroot = root.getNextRoot()
-        while nroot != NodeCst.NULL:
-            l1 = []
-            for leaf in nroot.getLeaves():
-                l1.append(nroot.getPath(leaf))
-            l.append(l1)
-            nroot = nroot.getPreviousRoot()
-
         return l
 
 # Interface avec la base de donnée concernant l'ajout d'un nouveau noeud    
@@ -382,66 +315,16 @@ class Node:
 
 # Methode de travail avec des racines
 
-    def setNewNextRoot(root):
-
-        node = Node.getNextNewNode()
-        j = root.getPlayer()
-        lastRoot = j.getLastRoot()
-        if lastRoot == root:
-            j.setLastRoot(node)
-            node.setNextRoot(NodeCst.NULL)
-        nroot = root.getNextRoot()
-        node.setNextRoot(nroot)
-        if nroot != NodeCst.NULL:
-            nroot.setPreviousRoot(node)
-        root.setNextRoot(node)
-        node.setPreviousRoot(root)
-
-        node.setPlayer(j)
-        node.setRoot(node)
-        node.setFirstChild(NodeCst.NULL)
-        node.setLastChildNode(NodeCst.NULL)
-        node.setSiblingNode(NodeCst.NULL)
-        node.setPSiblingNode(NodeCst.NULL)
-        node.setFatherNode(NodeCst.NULL)
-        Node.incrNodeId()
-
-        return node
-   
-    def removeRoot(root):
-        j = root.getPlayer()
-        froot = j.getFirstRoot()
-        lroot = j.getLastRoot()
-        nroot = root.getNextRoot()
-        proot = root.getPreviousRoot()
-
-        if proot != NodeCst.NULL:
-            proot.setNextRoot(nroot) 
-        if nroot != NodeCst.NULL:
-            nroot.setPreviousRoot(proot)
-        if root == froot:
-            j.setFirstRoot(nroot)
-        if root == lroot:
-            j.setLastRoot(proot)
- 
-
-        l = Node.selectNodesFromRoot(root)
-        for n in l:
-            n.deleteNode()
-        
-        root.deleteNode()
-
-
-    def selectNodesFromRoot(root):
+    def getDescendants(node):
         l = []
 
-        if(not root.hasChild()):
+        if(not node.hasChild()):
             return l
 
-        node = root.getFirstChild()
+        node = node.getFirstChild()
         while(node != NodeCst.NULL):
             l.append(node)
-            l.extend(node.selectNodesFromRoot())
+            l.extend(node.getDescendants())
             node = node.getSiblingNode()
         return l
 
@@ -586,7 +469,7 @@ class Node:
 
 # Travail avec les actions
 
-    def getActions(node):
+    def getActionsNum(node):
         ''' Ajoute une action au noeud node, en fin de liste des actions '''
         return REDIS.lrange('N'+str(node.num)+':actions',0,-1)
 
@@ -612,7 +495,9 @@ class Node:
     def getActionIndex(node,action):
         ''' Renvoie l'indice de l'action dans le noeud'''
         key = 'N' + str(node.num) + ':actions'
-        return REDIS.lindex(key,action.num)
+        actions = REDIS.lrange(key,0,-1)
+        return actions.index(str(action.num))
+        
 
     def removeAction(node,action):
         ''' Retire l'action du noeud node '''
