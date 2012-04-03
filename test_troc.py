@@ -22,28 +22,42 @@ class TestTroc(TestJoueur):
         j1.addTerre(tg)
         j1.setCartes(tg,Cartes.RIEN)
         j1.setOr(tg,0)
-        self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE)) # On ne peut acheter sans or
+        with self.assertRaises(OrError) as err:
+            self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE)) # On ne peut acheter sans or
+        self.assertEqual(err.exception.error_code, OrError.RESSOURCES_INSUFFISANTES)
         j1.setOr(tg,1)
         self.assertTrue(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE))
 
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE))
+        with self.assertRaises(OrError) as err:
+            self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE))
+        self.assertEqual(err.exception.error_code, OrError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
 
         j1.setOr(tg,2)
-        self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,CartesRessources(1,1,0,0,0))) # On ne peut acheter plus d'une carte à la fois
+        with self.assertRaises(OrError) as err:
+            self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,CartesRessources(1,1,0,0,0))) # On ne peut acheter plus d'une carte à la fois
+        self.assertEqual(err.exception.error_code, OrError.FLUX_IMPOSSIBLE)
         j1.setOr(tg,1)
-        self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,CartesRessources(-1,2,0,0,0))) # On ne peut acheter négativement
-        self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,CartesRessources(0.5,0.5,0,0,0))) # On ne peut acheter qu'entièrement
+        with self.assertRaises(OrError) as err:
+            self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,CartesRessources(-1,2,0,0,0))) # On ne peut acheter négativement
+        self.assertEqual(err.exception.error_code, OrError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(OrError) as err:
+            self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,CartesRessources(0.5,0.5,0,0,0))) # On ne peut acheter qu'entièrement
+        self.assertEqual(err.exception.error_code, OrError.FLUX_IMPOSSIBLE)
 
         Jeu.acheter_ressource(j1,tg, Cartes.BLE)
         self.assertEqual(j1.getOr(tg),0)
         self.assertEqual(j1.getCartes(tg),Cartes.BLE)
-        self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE))
+        with self.assertRaises(OrError) as err:
+            self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE))
+        self.assertEqual(err.exception.error_code, OrError.RESSOURCES_INSUFFISANTES)
         
         j1.setOr(td,1) #(en cas de bug)
-        self.assertFalse(Jeu.peut_acheter_ressource(j1,td,Cartes.BLE)) # On ne peut acheter sur une terre non colonisée
+        with self.assertRaises(OrError) as err:
+            self.assertFalse(Jeu.peut_acheter_ressource(j1,td,Cartes.BLE)) # On ne peut acheter sur une terre non colonisée
+        self.assertEqual(err.exception.error_code, OrError.TERRE_NON_COLONISEE)
 
 
 # Les joueurs echangent entre eux.
@@ -124,20 +138,42 @@ class TestTroc(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertEqual(err.exception.error_code, CommerceError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_echanger_classique(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne Terre
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Aucun Commerce
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Aucun Commerce.
-        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.ARGILE,Cartes.BOIS)) # Pas assez de argile
-        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,cdouble,Cartes.BOIS)) # Echante non entier
-        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,ctoomuch,Cartes.BOIS)) # Trop de demande
-        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,cneg)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,cdouble)) # Echange non entier
-        self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,ctoomuch)) # Trop de demande
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_classique(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne Terre
+        self.assertEqual(err.exception.error_code, CommerceError.TERRE_NON_COLONISEE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Aucun Commerce
+        self.assertEqual(err.exception.error_code, CommerceError.COMMERCE_NON_UTILISABLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Aucun Commerce.
+        self.assertEqual(err.exception.error_code, CommerceError.COMMERCE_NON_UTILISABLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.ARGILE,Cartes.BOIS)) # Pas assez de argile
+        self.assertEqual(err.exception.error_code, CommerceError.RESSOURCES_INSUFFISANTES)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_classique(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_classique(j1,tg,cdouble,Cartes.BOIS)) # Echante non entier
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_classique(j1,tg,ctoomuch,Cartes.BOIS)) # Trop de demande
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,cneg)) # Echange negatif
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,cdouble)) # Echange non entier
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,ctoomuch)) # Trop de demande
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
         
         
        
@@ -156,21 +192,41 @@ class TestTroc(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertEqual(err.exception.error_code, CommerceError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne terre
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,cdouble,Cartes.BOIS)) # Echante non entier
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,ctoomuch,Cartes.BOIS)) # Trop de demande
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,cneg)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,cdouble)) # Echange non entier
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,ctoomuch)) # Trop de demande
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne terre
+        self.assertEqual(err.exception.error_code, CommerceError.TERRE_NON_COLONISEE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
+        self.assertEqual(err.exception.error_code, CommerceError.RESSOURCES_INSUFFISANTES)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,cdouble,Cartes.BOIS)) # Echante non entier
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,ctoomuch,Cartes.BOIS)) # Trop de demande
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,cneg)) # Echange negatif
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,cdouble)) # Echange non entier
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,ctoomuch)) # Trop de demande
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
         pr.deplacer(port)
         pr.save()
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Pirate
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Pirate
+        self.assertEqual(err.exception.error_code, CommerceError.COMMERCE_NON_UTILISABLE)
 
         br.deplacer(p.hexa(22))
         pr.deplacer(p.hexa(1))
@@ -186,21 +242,41 @@ class TestTroc(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertEqual(err.exception.error_code, CommerceError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
         
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne terre
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,cdouble,Cartes.BOIS)) # Echante non entier
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,ctoomuch,Cartes.BOIS)) # Trop de demande
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,cneg)) # Echange negatif
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,cdouble)) # Echange non entier
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,ctoomuch)) # Trop de demande
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne terre
+        self.assertEqual(err.exception.error_code, CommerceError.TERRE_NON_COLONISEE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
+        self.assertEqual(err.exception.error_code, CommerceError.RESSOURCES_INSUFFISANTES)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,cneg,Cartes.BOIS)) # Echange negatif
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,cdouble,Cartes.BOIS)) # Echante non entier
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,ctoomuch,Cartes.BOIS)) # Trop de demande
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,cneg)) # Echange negatif
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,cdouble)) # Echange non entier
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,ctoomuch)) # Trop de demande
+        self.assertEqual(err.exception.error_code, CommerceError.FLUX_IMPOSSIBLE)
         pr.deplacer(port)
         pr.save()
-        self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Pirate
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE)) # Pirate
+        self.assertEqual(err.exception.error_code, CommerceError.COMMERCE_NON_UTILISABLE)
 
         br.deplacer(p.hexa(22))
         pr.deplacer(p.hexa(1))
@@ -218,11 +294,15 @@ class TestTroc(TestJoueur):
         Colonie(2,p.it(83)).save()
         marche.commerceType = CommerceType.TOUS
         self.assertTrue(Jeu.peut_echanger_commerce_tous(j2,tg,Cartes.BOIS,Cartes.ARGILE))
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j2,tg,Cartes.ARGILE,Cartes.BLE)) ## Pas assez de ressource
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j2,tg,Cartes.ARGILE,Cartes.BLE)) ## Pas assez de ressource
+        self.assertEqual(err.exception.error_code, CommerceError.RESSOURCES_INSUFFISANTES)
 
         br.deplacer(marche)
         br.save()
-        self.assertFalse(Jeu.peut_echanger_commerce_tous(j2,tg,Cartes.BOIS,Cartes.ARGILE)) # Brigand
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j2,tg,Cartes.BOIS,Cartes.ARGILE)) # Brigand
+        self.assertEqual(err.exception.error_code, CommerceError.COMMERCE_NON_UTILISABLE)
         
         br.deplacer(p.hexa(22))
         pr.deplacer(p.hexa(1))
@@ -235,11 +315,15 @@ class TestTroc(TestJoueur):
         j2.setCartes(tg,c2)
         marche.commerceType = CommerceType.BOIS
         self.assertTrue(Jeu.peut_echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE))
-        self.assertFalse(Jeu.peut_echanger_commerce(j2,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j2,tg,Cartes.ARGILE,Cartes.BLE)) # Pas assez de ressource
+        self.assertEqual(err.exception.error_code, CommerceError.RESSOURCES_INSUFFISANTES)
 
         br.deplacer(marche)
         br.save()
-        self.assertFalse(Jeu.peut_echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE)) # Brigand
+        with self.assertRaises(CommerceError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j2,tg,Cartes.BOIS,Cartes.ARGILE)) # Brigand
+        self.assertEqual(err.exception.error_code, CommerceError.COMMERCE_NON_UTILISABLE)
         
         br.deplacer(p.hexa(22))
         pr.deplacer(p.hexa(1))

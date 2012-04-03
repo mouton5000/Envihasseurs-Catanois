@@ -635,7 +635,15 @@ class Jeu:
     @staticmethod
     def peut_acheter_ressource(j,terre,carte):
         ''' Un joueur j sur cette terre peut acheter contre un lingot d'or une carte de type carte, si il n'est pas en ruien, si il possède au moins un lingot et si carte est une carte de ressource'''
-        return not j.getEnRuine() and j.aColoniseTerre(terre) and j.getOr(terre) > 0 and carte.est_ressource() and carte.size() == 1 and carte.est_physiquement_possible()
+        if j.getEnRuine():
+            raise OrError(OrError.JOUEUR_EN_RUINE)
+        if not j.aColoniseTerre(terre):
+            raise OrError(OrError.TERRE_NON_COLONISEE)
+        if not j.getOr(terre) > 0:
+            raise OrError(OrError.RESSOURCES_INSUFFISANTES)
+        if not (carte.est_ressource() and carte.size() == 1 and carte.est_physiquement_possible()):
+            raise OrError(OrError.FLUX_IMPOSSIBLE)
+        return True
 
     @staticmethod
     @kallable
@@ -870,7 +878,15 @@ class Jeu:
     @staticmethod
     def peut_echanger_classique(j,terre,t1,t2):
         ''' Un joueur j peut effectuer un echange classique (4 cartes de t1 contre une carte de t2) sur cette terre si il n'est pas en ruine, si t1 et t2 sont des  cartes de ressources, si il a colonisé la terre et si il peut payer 4 cartes de t1'''
-        return not j.getEnRuine() and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.aColoniseTerre(terre) and j.peut_payer(terre,t1*4)
+        if j.getEnRuine():
+            raise CommerceError(CommerceError.JOUEUR_EN_RUINE)
+        if not (t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible()):
+            raise CommerceError(CommerceError.FLUX_IMPOSSIBLE)
+        if not j.aColoniseTerre(terre):
+            raise CommerceError(CommerceError.TERRE_NON_COLONISEE)
+        if not j.peut_payer(terre,t1*4):
+            raise CommerceError(CommerceError.RESSOURCES_INSUFFISANTES)
+        return True
 
     @staticmethod
     @kallable
@@ -884,7 +900,17 @@ class Jeu:
     def peut_echanger_commerce_tous(j,terre,t1,t2):
         ''' Un joueur j peut effectuer un echange de commerce '?' (3 cartes de t1 contre une carte de t2) sur cette terre si il n'est pas en ruine, si t1 et t2 sont des  cartes de ressources, si il a un commerce de type '?' et si il peut payer 3 cartes de t1'''
 
-        return not j.getEnRuine() and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and j.aColoniseTerre(terre) and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*3) and j.contient_commerce_utilisable(terre,CommerceType.TOUS)
+        if j.getEnRuine():
+            raise CommerceError(CommerceError.JOUEUR_EN_RUINE)
+        if not(t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible()):
+            raise CommerceError(CommerceError.FLUX_IMPOSSIBLE)
+        if not j.aColoniseTerre(terre):
+            raise CommerceError(CommerceError.TERRE_NON_COLONISEE)
+        if not j.peut_payer(terre,t1*3):
+            raise CommerceError(CommerceError.RESSOURCES_INSUFFISANTES)
+        if not j.contient_commerce_utilisable(terre,CommerceType.TOUS):
+            raise CommerceError(CommerceError.COMMERCE_NON_UTILISABLE)
+        return True
     
     @staticmethod
     @kallable
@@ -897,22 +923,32 @@ class Jeu:
     @staticmethod
     def peut_echanger_commerce(j,terre,t1,t2):
         ''' Un joueur j peut effectuer un echange de commerce spécialisé (2 cartes de t1 contre une carte de t2) sur cette terre si il n'est pas en ruine, si t1 et t2 sont des  cartes de ressources, si il a un commerce spécialisé en le type t1 et si il peut payer 2 cartes de t1'''
-        if not j.getEnRuine() and t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and j.aColoniseTerre(terre) and t1.est_physiquement_possible() and t2.est_physiquement_possible() and j.peut_payer(terre,t1*2):
-            if t1 == Cartes.ARGILE:
-                comType = CommerceType.ARGILE
-            elif t1 == Cartes.BOIS:
-                comType = CommerceType.BOIS
-            elif t1 == Cartes.BLE:
-                comType = CommerceType.BLE
-            elif t1 == Cartes.CAILLOU:
-                comType = CommerceType.CAILLOU
-            elif t1 == Cartes.MOUTON:
-                comType = CommerceType.MOUTON
-            else:
-                comType = 0
+        if j.getEnRuine():
+            raise CommerceError(CommerceError.JOUEUR_EN_RUINE)
+        if not(t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible()):
+            raise CommerceError(CommerceError.FLUX_IMPOSSIBLE)
+        if not j.aColoniseTerre(terre):
+            raise CommerceError(CommerceError.TERRE_NON_COLONISEE)
+        if not j.peut_payer(terre,t1*2):
+            raise CommerceError(CommerceError.RESSOURCES_INSUFFISANTES)
+
+        if t1 == Cartes.ARGILE:
+            comType = CommerceType.ARGILE
+        elif t1 == Cartes.BOIS:
+            comType = CommerceType.BOIS
+        elif t1 == Cartes.BLE:
+            comType = CommerceType.BLE
+        elif t1 == Cartes.CAILLOU:
+            comType = CommerceType.CAILLOU
+        elif t1 == Cartes.MOUTON:
+            comType = CommerceType.MOUTON
+        else:
+            comType = 0
             
-            return j.contient_commerce_utilisable(terre,comType)
-        return False
+        if not j.contient_commerce_utilisable(terre,comType):
+            raise CommerceError(CommerceError.COMMERCE_NON_UTILISABLE)
+            
+        return True
     
     @staticmethod
     @kallable

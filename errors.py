@@ -57,3 +57,26 @@ class BateauError(ActionError):
     EMPLACEMENT_INATTEIGNABLE = 15 # Survient si on essaie de coloniser une terre sur un emplacement a plus de trois hexagones du bateau.
     def __init__(self,value):
         ActionError.__init__(self,value)
+
+class CommerceError(ActionError):
+    ''' Ensemble des erreurs associées aux actions en rapport avec une route'''
+    
+    JOUEUR_EN_RUINE = 0
+    RESSOURCES_INSUFFISANTES = 1
+    FLUX_IMPOSSIBLE = 2
+    TERRE_NON_COLONISEE = 3
+    COMMERCE_NON_UTILISABLE = 4 # Survient si le joueur tente d'utiliser un commerce sur lequel il ne possède aucune colonie ou surlequel un voleur est actuellement placé
+
+    def __init__(self,value):
+        ActionError.__init__(self,value)
+
+class OrError(ActionError):
+    ''' Ensemble des erreurs associées aux actions en rapport avec une route'''
+    
+    JOUEUR_EN_RUINE = 0
+    RESSOURCES_INSUFFISANTES = 1
+    FLUX_IMPOSSIBLE = 2
+    TERRE_NON_COLONISEE = 3
+
+    def __init__(self,value):
+        ActionError.__init__(self,value)
