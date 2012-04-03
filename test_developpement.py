@@ -25,14 +25,20 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_acheter_carte_developpement(j1,tg))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_acheter_carte_developpement(j1,tg))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_acheter_carte_developpement(j1,tg))
+        self.assertEqual(err.exception.error_code, DeveloppementError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
         j1.setCartes(tg,Cartes.RIEN)
-        self.assertFalse(Jeu.peut_acheter_carte_developpement(j1,tg))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_acheter_carte_developpement(j1,tg))
+        self.assertEqual(err.exception.error_code, DeveloppementError.RESSOURCES_INSUFFISANTES)
         j1.setCartes(td,Tarifs.DEVELOPPEMENT)
-        self.assertFalse(Jeu.peut_acheter_carte_developpement(j1,td))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_acheter_carte_developpement(j1,td))
+        self.assertEqual(err.exception.error_code, DeveloppementError.TERRE_NON_COLONISEE)
         
         j1.setCartes(tg,Tarifs.DEVELOPPEMENT)
         Jeu.acheter_carte_developpement(j1,tg)
@@ -88,20 +94,23 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
+        self.assertEqual(err.exception.error_code, DeveloppementError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
-#        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,self.h32,j2))
-#        # Joueur en ruine
-#        j1.enRuine = False
-        
-        self.assertFalse(Jeu.peut_jouer_chevallier(j1,td,br,h2,2))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_chevallier(j1,td,br,h2,2))
+        self.assertEqual(err.exception.error_code, DeveloppementError.TERRE_NON_COLONISEE)
         j1.setCartes(tg,c2)
-        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
         j1.setCartes(tg,c3)
-        self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
 
         j1.setCartes(tg,c1)
         j1.set_chevalliers(tg,0)
@@ -136,7 +145,9 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_jouer_decouverte(j1,tg,d1))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
+        self.assertEqual(err.exception.error_code, DeveloppementError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
@@ -144,17 +155,35 @@ class TestDeveloppement(TestJoueur):
 #        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
 #        # Joueur en ruine
 #        j1.enRuine = False
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,td,d1))
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,dneg))
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,ddouble))
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d2))
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d3))
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d4))
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d5))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,td,d1))
+        self.assertEqual(err.exception.error_code, DeveloppementError.TERRE_NON_COLONISEE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,dneg))
+        self.assertEqual(err.exception.error_code, DeveloppementError.DECOUVERTE_FLUX_IMPOSSIBLE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,ddouble))
+        self.assertEqual(err.exception.error_code, DeveloppementError.DECOUVERTE_FLUX_IMPOSSIBLE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d2))
+        self.assertEqual(err.exception.error_code, DeveloppementError.DECOUVERTE_FLUX_IMPOSSIBLE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d3))
+        self.assertEqual(err.exception.error_code, DeveloppementError.DECOUVERTE_FLUX_IMPOSSIBLE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d4))
+        self.assertEqual(err.exception.error_code, DeveloppementError.DECOUVERTE_FLUX_IMPOSSIBLE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d5))
+        self.assertEqual(err.exception.error_code, DeveloppementError.DECOUVERTE_FLUX_IMPOSSIBLE)
         j1.setCartes(tg,c2)
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
         j1.setCartes(tg,c3)
-        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
 
         j1.setCartes(tg,c1)
         j1.setOr(tg,0)
@@ -197,31 +226,39 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+        self.assertEqual(err.exception.error_code, DeveloppementError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
-#        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
-#        # Joueur en ruine
-#        j1.enRuine = False
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a3))
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,False,a3))
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a3,False,a4))
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,False,a3,False,a4))
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,td,True,a1,True,a2))
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a1))
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,False,a4,False,a4))
+
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_construction_routes(j1,td,True,a1,True,a2))
+        self.assertEqual(err.exception.error_code, DeveloppementError.TERRE_NON_COLONISEE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a1))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CONSTRUCTION_ROUTES_IDENTIQUES)
         j1.setCartes(tg,c2)
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
         j1.setCartes(tg,c3)
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
 
         j1.addTerre(td)
         Colonie(1,p.it(59)).save()
         a5 = p.it(49).lien(p.it(59))
         j1.setCartes(tg,c1)
-        self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a5))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a5))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CONSTRUCTION_EMPLACEMENT_INCORRECT)
 
         j1.setCartes(tg,c1)
         Jeu.jouer_construction_routes(j1,tg,True,a1,True,a2)
@@ -270,6 +307,9 @@ class TestDeveloppement(TestJoueur):
 
         r = Cartes.ARGILE
         rch = Cartes.CHEVALLIER
+        rtoomuch = CartesRessources(2,0,0,0,0)
+        rdouble = CartesRessources(0.5,0.5,0,0,0)
+        rneg = CartesRessources(-1,2,0,0,0)
         
         c1 = Cartes.MONOPOLE
         c2 = Cartes.RIEN
@@ -287,7 +327,9 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
         
@@ -297,12 +339,33 @@ class TestDeveloppement(TestJoueur):
 #        j1.enRuine = False
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[2,3]))
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[2]))
-        self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[1,3,4]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4,5]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,6]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,rch,[2,3,4]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,td,rch,[2,6]))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.MONOPOLE_NBJOUEURS_TROP_FAIBLE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[1,3,4]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.MONOPOLE_AUTO_ATTAQUE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4,5]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.MONOPOLE_NBJOUEURS_TROP_ELEVE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,6]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.MONOPOLE_TERRE_NON_COLONISEE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,rch,[2,3,4]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.MONOPOLE_FLUX_IMPOSSIBLE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,rtoomuch,[2,3,4]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.MONOPOLE_FLUX_IMPOSSIBLE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,rdouble,[2,3,4]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.MONOPOLE_FLUX_IMPOSSIBLE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,rneg,[2,3,4]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.MONOPOLE_FLUX_IMPOSSIBLE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,td,rch,[2,6]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.TERRE_NON_COLONISEE)
 
         j2.setCartes(tg,c2)
         j3.setCartes(tg,c2)
@@ -310,18 +373,28 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[2,3]))
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[2]))
-        self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[]))
         
         j1.setCartes(tg,c2)
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[]))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
+        
         j1.setCartes(tg,c3)
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2]))
-        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[]))
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.CARTE_NON_POSSEDEE)
 
         j1.setCartes(tg,c1)
         j2.setCartes(tg,c5)

@@ -33,7 +33,7 @@ class RouteError(ActionError):
         ActionError.__init__(self,value)
 
 class BateauError(ActionError):
-    ''' Ensemble des erreurs associées aux actions en rapport avec une route'''
+    ''' Ensemble des erreurs associées aux actions en rapport avec un bateau'''
 
     JOUEUR_EN_RUINE = 0
     ARRETE_NON_CONSTRUCTIBLE = 1 # Survient si on essaie de construire un bateau sur la terre ou trop loin de la cote
@@ -59,7 +59,7 @@ class BateauError(ActionError):
         ActionError.__init__(self,value)
 
 class CommerceError(ActionError):
-    ''' Ensemble des erreurs associées aux actions en rapport avec une route'''
+    ''' Ensemble des erreurs associées aux actions en rapport avec un échange avec un port ou un marche'''
     
     JOUEUR_EN_RUINE = 0
     RESSOURCES_INSUFFISANTES = 1
@@ -71,12 +71,37 @@ class CommerceError(ActionError):
         ActionError.__init__(self,value)
 
 class OrError(ActionError):
-    ''' Ensemble des erreurs associées aux actions en rapport avec une route'''
+    ''' Ensemble des erreurs associées aux actions en rapport avec l'or'''
     
     JOUEUR_EN_RUINE = 0
     RESSOURCES_INSUFFISANTES = 1
     FLUX_IMPOSSIBLE = 2
     TERRE_NON_COLONISEE = 3
 
+    def __init__(self,value):
+        ActionError.__init__(self,value)
+
+class DeveloppementError(ActionError):
+    ''' Ensemble des erreurs associées aux actions en rapport avec une carte de développement'''
+
+    JOUEUR_EN_RUINE = 0
+    TERRE_NON_COLONISEE = 1
+    CARTE_NON_POSSEDEE = 2
+    RESSOURCES_INSUFFISANTES = 3
+
+    # Découverte
+    DECOUVERTE_FLUX_IMPOSSIBLE = 4 # Survient si on essaie de récupérer moins ou plus de 2 ressources ou un nombre négatif, ou un nombre non entier de ressource
+
+    # Monopole
+    MONOPOLE_FLUX_IMPOSSIBLE = 5 # Survient si le paramètre désignant la ressource est différent d'une seule carte de ressources
+    MONOPOLE_NBJOUEURS_TROP_FAIBLE = 6 # Survient si le nb de joueurs choisis est nul
+    MONOPOLE_NBJOUEURS_TROP_ELEVE = 7 # Survient si le nombre est supérieur à 4
+    MONOPOLE_AUTO_ATTAQUE = 8 # Survient si un joueur se vise lui même avec une carte monopole
+    MONOPOLE_JOUEUR_EN_RUINE = 9 # Survient si un des joueurs choisis est en ruine
+    MONOPOLE_TERRE_NON_COLONISEE = 10 # Survient si un des joueurs choisis n'a pas colonise cette terre
+
+    # Construction
+    CONSTRUCTION_ROUTES_IDENTIQUES = 11
+    CONSTRUCTION_EMPLACEMENT_INCORRECT = 12
     def __init__(self,value):
         ActionError.__init__(self,value)

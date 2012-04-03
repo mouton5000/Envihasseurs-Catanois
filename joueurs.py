@@ -801,7 +801,13 @@ class Jeu:
     @staticmethod
     def peut_acheter_carte_developpement(j,terre):
         ''' Un joueur j peut acheter une carte de développement sur la terre si il peut la payer'''
-        return not j.getEnRuine() and j.aColoniseTerre(terre) and j.peut_payer(terre,Tarifs.DEVELOPPEMENT)
+        if j.getEnRuine(): 
+            raise DeveloppementError(DeveloppementError.JOUEUR_EN_RUINE)
+        if not j.aColoniseTerre(terre):
+            raise DeveloppementError(DeveloppementError.TERRE_NON_COLONISEE)
+        if not j.peut_payer(terre,Tarifs.DEVELOPPEMENT):
+            raise DeveloppementError(DeveloppementError.RESSOURCES_INSUFFISANTES)
+        return True
    
     @staticmethod
     @kallable
@@ -961,7 +967,15 @@ class Jeu:
 
     @staticmethod
     def peut_jouer_decouverte(joueur,terre,cartes):
-        return not joueur.getEnRuine() and Cartes.DECOUVERTE <= joueur.getCartes(terre) and joueur.aColoniseTerre(terre) and cartes.size() == 2 and cartes.est_ressource() and cartes.est_physiquement_possible()
+        if joueur.getEnRuine():
+            raise DeveloppementError(DeveloppementError.JOUEUR_EN_RUINE)
+        if not joueur.aColoniseTerre(terre):
+            raise DeveloppementError(DeveloppementError.TERRE_NON_COLONISEE)
+        if not Cartes.DECOUVERTE <= joueur.getCartes(terre):
+            raise DeveloppementError(DeveloppementError.CARTE_NON_POSSEDEE)
+        if not(cartes.size() == 2 and cartes.est_ressource() and cartes.est_physiquement_possible()):
+            raise DeveloppementError(DeveloppementError.DECOUVERTE_FLUX_IMPOSSIBLE)
+        return True
 
     @staticmethod
     @kallable
@@ -973,13 +987,27 @@ class Jeu:
     @staticmethod
     def peut_jouer_monopole(joueur,terre,t1, jvols):
         if joueur.getEnRuine():
-            return False
-        b = Cartes.MONOPOLE <= joueur.getCartes(terre) and joueur.aColoniseTerre(terre) and t1.est_ressource() and t1.size() == 1 and t1.est_physiquement_possible() and len(jvols) <= 3 and not joueur.num in jvols
+            raise DeveloppementError(DeveloppementError.JOUEUR_EN_RUINE)
+        if not joueur.aColoniseTerre(terre):
+            raise DeveloppementError(DeveloppementError.TERRE_NON_COLONISEE)
+        if not Cartes.MONOPOLE <= joueur.getCartes(terre):
+            raise DeveloppementError(DeveloppementError.CARTE_NON_POSSEDEE)
+        if not (t1.est_ressource() and t1.size() == 1 and t1.est_physiquement_possible()):
+            raise DeveloppementError(DeveloppementError.MONOPOLE_FLUX_IMPOSSIBLE)
+        if not len(jvols) > 0:
+            raise DeveloppementError(DeveloppementError.MONOPOLE_NBJOUEURS_TROP_FAIBLE)
+        if not len(jvols) <= 3:
+            raise DeveloppementError(DeveloppementError.MONOPOLE_NBJOUEURS_TROP_ELEVE)
+        if joueur.num in jvols:
+            raise DeveloppementError(DeveloppementError.MONOPOLE_AUTO_ATTAQUE)
 
         for j in jvols:
             j = Joueur(j,joueur.bdd)
-            b = b and j.aColoniseTerre(terre) and not j.getEnRuine()
-        return b
+            if j.getEnRuine():
+                raise DeveloppementError(DeveloppementError.MONOPOLE_JOUEUR_EN_RUINE)
+            if not j.aColoniseTerre(terre):
+                raise DeveloppementError(DeveloppementError.MONOPOLE_TERRE_NON_COLONISEE)
+        return True
 
     @staticmethod
     @kallable
@@ -996,7 +1024,27 @@ class Jeu:
 
     @staticmethod
     def peut_jouer_construction_routes(joueur,terre,isFirstRoute,a1,isSecondRoute,a2):
-        return not joueur.getEnRuine() and a1 != a2 and Cartes.CONSTRUCTION_ROUTES <= joueur.getCartes(terre) and joueur.aColoniseTerre(terre) and (a1.getTerre() == terre or a1.int1.getTerre() == terre or a1.int2.getTerre() == terre) and (a2.getTerre() == terre or a2.int1.getTerre() == terre or a2.int2.getTerre() == terre) and ((isFirstRoute and a1.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a1,True)) or (not(isFirstRoute) and a1.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a1,True))) and ((isSecondRoute and a2.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a2,True)) or (not(isSecondRoute) and a2.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a2,True))) and ((isFirstRoute and a1.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a1,True)) or (not(isFirstRoute) and a1.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a1,True))) and ((isSecondRoute and a2.isTerrestreOuCotier() and Jeu.peut_construire_route(joueur,a2,True)) or (not(isSecondRoute) and a2.isMaritimeOuCotier() and Jeu.peut_construire_bateau(joueur,a2,True)))
+        if joueur.getEnRuine():
+            raise DeveloppementError(DeveloppementError.JOUEUR_EN_RUINE)
+        if a1 == a2 and isFirstRoute and isSecondRoute:
+            raise DeveloppementError(DeveloppementError.CONSTRUCTION_ROUTES_IDENTIQUES)
+        if not joueur.aColoniseTerre(terre):
+            raise DeveloppementError(DeveloppementError.TERRE_NON_COLONISEE)
+        if not Cartes.CONSTRUCTION_ROUTES <= joueur.getCartes(terre):
+            raise DeveloppementError(DeveloppementError.CARTE_NON_POSSEDEE)
+        if not (a1.getTerre() == terre or a1.int1.getTerre() == terre or a1.int2.getTerre() == terre):
+            raise DeveloppementError(DeveloppementError.CONSTRUCTION_EMPLACEMENT_INCORRECT)
+        if not (a2.getTerre() == terre or a2.int1.getTerre() == terre or a2.int2.getTerre() == terre):
+            raise DeveloppementError(DeveloppementError.CONSTRUCTION_EMPLACEMENT_INCORRECT)
+        if isFirstRoute:
+            b = Jeu.peut_construire_route(joueur,a1,True)
+        else:
+            b = Jeu.peut_construire_bateau(joueur,a1,True)
+        if isSecondRoute:
+            b = b and Jeu.peut_construire_route(joueur,a2,True) 
+        else:
+            b = b and Jeu.peut_construire_bateau(joueur,a2,True)
+        return b
 
     @staticmethod
     @kallable
@@ -1167,7 +1215,13 @@ class Jeu:
                 
     @staticmethod
     def peut_jouer_chevallier(joueur,terre,voleurType, hex,jvol):
-        return not joueur.getEnRuine() and Cartes.CHEVALLIER <= joueur.getCartes(terre) and joueur.aColoniseTerre(terre) and Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
+        if joueur.getEnRuine():
+            raise DeveloppementError(DeveloppementError.JOUEUR_EN_RUINE)
+        if not joueur.aColoniseTerre(terre):
+            raise DeveloppementError(DeveloppementError.TERRE_NON_COLONISEE)
+        if not Cartes.CHEVALLIER <= joueur.getCartes(terre):
+            raise DeveloppementError(DeveloppementError.CARTE_NON_POSSEDEE)
+        return Jeu.peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
 
     @staticmethod
     @kallable
