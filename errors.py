@@ -105,3 +105,16 @@ class DeveloppementError(ActionError):
     CONSTRUCTION_EMPLACEMENT_INCORRECT = 12
     def __init__(self,value):
         ActionError.__init__(self,value)
+    
+
+class VoleurError(ActionError):
+    ''' Ensemble des erreurs associées aux actions en rapport avec le voleur'''
+
+    JOUEUR_EN_RUINE = 0
+    TERRE_NON_COLONISEE = 1
+    DEPLACEMENT_INTERDIT = 2 # Survient si le joueur n'a pas le droit de déplacer le voleur
+    EMPLACEMENT_INTERDIT = 3 # Survient si le joueur tente de déplacer le voleur sur un hexagone non autorisé
+
+
+    def __init__(self,value):
+        ActionError.__init__(self,value)

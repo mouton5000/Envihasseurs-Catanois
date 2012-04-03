@@ -1150,17 +1150,28 @@ class Jeu:
     @staticmethod
     def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,chevallier = False):
         bdd = joueur.bdd
-        if not joueur.getEnRuine() and (joueur.get_deplacement_voleur(terre) or chevallier) and (hex == 0 or hex.terre == terre):
-            if voleurType == Voleur.VoleurType.BRIGAND:
-                voleur = Voleur.getBrigand(terre,bdd)
-            else:
-                voleur = Voleur.getPirate(terre,bdd)
-            if jvol == 0:
-                t = (hex, 0)
-            else:
-                t = (hex, jvol)
-            return joueur.aColoniseTerre(terre) and t in Jeu.positions_possibles_voleur(joueur,terre,voleur)
-        return False
+        if joueur.getEnRuine():
+            raise VoleurError(VoleurError.JOUEUR_EN_RUINE)
+        if not joueur.aColoniseTerre(terre):
+            raise VoleurError(VoleurError.TERRE_NON_COLONISEE)
+        if not (joueur.get_deplacement_voleur(terre) or chevallier):
+            raise VoleurError(VoleurError.DEPLACEMENT_INTERDIT) 
+        if not (hex == 0 or hex.terre == terre):
+            raise VoleurError(VoleurError.EMPLACEMENT_INTERDIT)
+
+
+        if voleurType == Voleur.VoleurType.BRIGAND:
+            voleur = Voleur.getBrigand(terre,bdd)
+        else:
+            voleur = Voleur.getPirate(terre,bdd)
+        if jvol == 0:
+            t = (hex, 0)
+        else:
+            t = (hex, jvol)
+        if not t in Jeu.positions_possibles_voleur(joueur,terre,voleur):
+            raise VoleurError(VoleurError.EMPLACEMENT_INTERDIT)
+
+        return True
 
     @staticmethod
     def voler(j1,terre,j2num):
