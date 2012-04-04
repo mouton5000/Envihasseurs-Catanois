@@ -3,6 +3,8 @@ import redis
 import copy
 
 REDIS = redis.StrictRedis()
+
+__all__ = ['BDD']
 class BDD:
 
     DELETE_TYPE = {'set' : set([]), 'list' : []}

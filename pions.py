@@ -1,7 +1,10 @@
 # *-* coding: iso-8859-1 *-*
+
+__all__ = ['Colonie', 'Route', 'Bateau', 'Voleur']
+
 from plateau import *
 from cartes import *
-from redis import *
+import redis
 import joueurs
 
 REDIS = redis.StrictRedis()

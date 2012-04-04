@@ -1,8 +1,9 @@
-# -*- coding: utf8 -*-
 import unittest
 from joueurs import *
 from pions import *
 from plateau import *
+from errors import *
+from cartes import *
 import redis
 
 REDIS = redis.StrictRedis()

@@ -1,7 +1,10 @@
 # -*- coding: utf8 -*-
 from plateau import *
 from test_joueurs import *
-from redis import *
+import redis
+from joueurs import *
+from pions import *
+from errors import *
 
 REDIS = redis.StrictRedis()
 

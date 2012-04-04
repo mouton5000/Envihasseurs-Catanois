@@ -1,6 +1,9 @@
 # *-* coding: iso-8859-1 *-*
+__all__ = ['Intersection', 'Plateau', 'Terre', 'Hexagone','HexaType', 'Arrete', 'CommerceType']
+
 import random
 import redis
+
 
 REDIS = redis.StrictRedis()
 

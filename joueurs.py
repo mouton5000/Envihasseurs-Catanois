@@ -1,8 +1,10 @@
 # -*- coding: utf8 -*-
+
+__all__ = ['Joueur', 'Tarifs', 'Jeu', 'Des']
+
 from pions import *
 from plateau import *
 from cartes import *
-from foret_action import *
 import random
 import functools
 import redis
@@ -506,13 +508,24 @@ class Jeu:
             return True
 
     @staticmethod
-    @kallable
     @protection
     def recolter_ressources(des):
         ''' Effectue pour tous les joueurs sur toutes les terres la récolte des ressources sauf s'ils sont en ruine'''
         for j in Jeu.get_all_joueurs():
             if not j.getEnRuine(): 
                 j.recolter_ressources(des)
+     
+    @staticmethod
+    def echanger(echangeNum):
+        ''' Effectue  de cartes entre les joueurs de echange sur cette terre, avec j1 donnant c1 cartes et j2 donnant c2 cartes.'''
+        e = Echange.getEchange(echangeNum)
+        j1 = echange.j1
+        j2 = echange.j2
+        terre = echange.terre
+        j1.payer(terre,echange.don)
+        j1.recevoir(terre,echange.recu)
+        j2.payer(terre,echange.recu)
+        j2.recevoir(terre,echange.don)
 
 # -----------------------------------------------------
 #    Actions dans la journee
@@ -864,22 +877,7 @@ class Jeu:
         bateau.remove(Tarifs.COLONIE + transfert)
         bateau.save(bdd)
 
-    @staticmethod
-    def peut_echanger(j1,j2num,terre,c1,c2):
-        ''' Le joueur j1 peut echanger avec le joueur j2 sur la terre, des cartes c1 du joueur j1 vers j2 et c2 du joueur j2 vers j1 si aucun joueur n'est en ruine, si sur cette terre ils peuvent payer cette somme, si c1 et c2 sont des entiers naturels, et uniquement des ressources (pas carte de développement), '''
-        j2 = Joueur(j2num,j1.bdd)
-        return not j1.getEnRuine() and not j2.getEnRuine() and j1.aColoniseTerre(terre) and j2.aColoniseTerre(terre) and j1.peut_payer(terre,c1) and j2.peut_payer(terre,c2) and c1.est_ressource() and c2.est_ressource() and c1.est_physiquement_possible() and c2.est_physiquement_possible()
 
-    @staticmethod
-    @kallable
-    @protection
-    def echanger(j1,j2num,terre,c1,c2):
-        ''' Effectue si il est possible un échange de cartes entre j1 et j2 sur cette terre, avec j1 donnant c1 cartes et j2 donnant c2 cartes.'''
-        j2 = Joueur(j2num,j1.bdd)
-        j1.payer(terre,c1)
-        j1.recevoir(terre,c2)
-        j2.payer(terre,c2)
-        j2.recevoir(terre,c1)
     
     @staticmethod
     def peut_echanger_classique(j,terre,t1,t2):

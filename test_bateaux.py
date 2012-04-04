@@ -1,7 +1,5 @@
 # -*- coding: utf8 -*-
-from plateau import *
 from test_joueurs import *
-from redis import *
 
 REDIS = redis.StrictRedis()
 

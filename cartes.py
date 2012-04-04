@@ -1,10 +1,14 @@
 # *-* coding: iso-8859-1 *-*
 
+__all__ = ['CartesGeneral','CartesRessources', 'CartesDeveloppement', 'Cartes']
+
 import operator
 import random
 import redis
 
+
 REDIS = redis.StrictRedis()
+
 
 class CartesGeneral:
     ''' Cette classe représente les cartes que les joueurs ont en main. Aussi bien les cartes de ressources que les cartes de développement. Elles sont représentées ensembles de la même façon pour la simple raison qu'elles sont manipulées de la même façon. Il s'agit d'un upplet d'entiers, chaque coordonnée correspond à un type de carte.'''
