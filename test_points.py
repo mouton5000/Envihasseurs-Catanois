@@ -8,7 +8,7 @@ class TestPoints(TestJoueur):
    
     def setUp(self):
         super(TestPoints,self).setUp()
-        self.j1 = Joueur(1)
+        self.j1 = JoueurPossible(1)
         self.tg = Plateau.getPlateau().ter(1)
         self.td = Plateau.getPlateau().ter(2)
 

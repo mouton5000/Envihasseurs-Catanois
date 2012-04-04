@@ -1,7 +1,6 @@
 # *-* coding: utf8 *-*
 import redis
 from plateau import *
-from joueurs import *
 REDIS = redis.StrictRedis()
 
 
@@ -132,7 +131,8 @@ class JoueurNodeInterface:
 
     def executerAction(self, action, ibdd):
         ''' Execute l'action, avec la base de donnée ibdd '''
-        j = Joueur(self.num, ibdd)
+        import joueurs
+        j = joueurs.JoueurPossible(self.num, ibdd)
         func = getattr(Jeu, action.func)
         if func.peut_etre_appelee:
             return Jeu.func(j,*action.params)

@@ -8,8 +8,8 @@ class TestBateaux(TestJoueur):
    
     def setUp(self):
         super(TestBateaux,self).setUp()
-        self.j1 = Joueur(1)
-        self.j2 = Joueur(2)
+        self.j1 = JoueurPossible(1)
+        self.j2 = JoueurPossible(2)
         self.tg = Plateau.getPlateau().ter(1)
         self.td = Plateau.getPlateau().ter(2)
 

@@ -1,11 +1,11 @@
 # *-* coding: iso-8859-1 *-*
 
-__all__ = ['Colonie', 'Route', 'Bateau', 'Voleur']
 
 from plateau import *
 from cartes import *
 import redis
-import joueurs
+
+__all__ = ['Colonie', 'Route', 'Bateau', 'Voleur']
 
 REDIS = redis.StrictRedis()
 
@@ -321,11 +321,12 @@ class Bateau:
 
     def en_position_echange(self, bdd = REDIS):
         ''' Vérifie que le bateau est sur un emplacement où il peut échanger avec une terre : un port ou une colonie cotière'''
+        import joueurs
         i1 = self.position.int1
         i2 = self.position.int2
         col1 = Colonie.getColonie(i1, bdd)
         col2 = Colonie.getColonie(i2, bdd)
-        j = joueurs.Joueur(self.joueur, bdd)
+        j = joueurs.JoueurPossible(self.joueur, bdd)
         return  ((col1 != 0 and col1.joueur == self.joueur) or (col2 != 0 and col2.joueur == self.joueur) or i1.isPort() or i2.isPort()) and j.aColoniseTerre(self.position.getTerre()) 
     
     def est_proche(self,terre):

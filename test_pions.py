@@ -474,7 +474,7 @@ class TestBateau(unittest.TestCase):
         a16.num = 16
         plateau.arretes = [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16]
         
-        j1 = Joueur(1)
+        j1 = JoueurPossible(1)
         b2 = Bateau(2,j1,a5,Cartes.RIEN,Bateau.BateauType.TRANSPORT,False)
        
  

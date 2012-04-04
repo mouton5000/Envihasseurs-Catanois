@@ -8,13 +8,13 @@ class TestColonieEtRoute(TestJoueur):
    
     def setUp(self):
         super(TestColonieEtRoute,self).setUp()
-        self.j1 = Joueur(1)
-        self.j2 = Joueur(2)
+        self.j1 = JoueurPossible(1)
+        self.j2 = JoueurPossible(2)
         self.tg = Plateau.getPlateau().ter(1)
         self.td = Plateau.getPlateau().ter(2)
         self.j1.set_route_la_plus_longue(self.tg,0)
         self.j2.set_route_la_plus_longue(self.tg,0)
-        Joueur.setNbJoueurs(2)
+        JoueurPossible.setNbJoueurs(2)
 
     def test_construire_colonie(self):
         p = Plateau.getPlateau()
@@ -434,8 +434,8 @@ class TestColonieEtRoute(TestJoueur):
     def test_route_la_plus_longue_global(self):
         j1 = self.j1
         j2 = self.j2
-        j3 = Joueur(3)
-        Joueur.setNbJoueurs(3)
+        j3 = JoueurPossible(3)
+        JoueurPossible.setNbJoueurs(3)
         p = Plateau.getPlateau()
 
         tg = self.tg

@@ -8,8 +8,8 @@ class TestDeveloppement(TestJoueur):
    
     def setUp(self):
         super(TestDeveloppement,self).setUp()
-        self.j1 = Joueur(1)
-        self.j2 = Joueur(2)
+        self.j1 = JoueurPossible(1)
+        self.j2 = JoueurPossible(2)
         self.tg = Plateau.getPlateau().ter(1)
         self.td = Plateau.getPlateau().ter(2)
 
@@ -287,10 +287,10 @@ class TestDeveloppement(TestJoueur):
 
         j1 = self.j1
         j2 = self.j2
-        j3 = Joueur(3)
-        j4 = Joueur(4)
-        j5 = Joueur(5)
-        j6 = Joueur(6)
+        j3 = JoueurPossible(3)
+        j4 = JoueurPossible(4)
+        j5 = JoueurPossible(5)
+        j6 = JoueurPossible(6)
 
         tg = self.tg
         td = self.td

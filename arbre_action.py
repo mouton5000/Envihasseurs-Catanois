@@ -1,7 +1,6 @@
 # *-* coding: utf8 *-*
 import redis
 from plateau import *
-from joueurs import *
 REDIS = redis.StrictRedis()
 
 
@@ -126,7 +125,8 @@ class JoueurNodeInterface:
 
     def executerAction(self, action, ibdd):
         ''' Execute l'action, avec la base de donnée ibdd. ibdd est modifiée. '''
-        j = Joueur(self.num, ibdd)
+        import joueurs
+        j = JoueurPossible(self.num, ibdd)
         func = getattr(Jeu, action.func)
         if func.peut_etre_appelee:
             return Jeu.func(j,*action.params)
@@ -175,6 +175,51 @@ class JoueurNodeInterface:
         return True
 
 
+
+    def peut_proposer_echange(j1,j2num,terre,c1,c2):
+        ''' j1 peut proposer un echange à j2 si aucun des deux n'est en ruine que les deux ont colonisé la terre, que c1 et c2 sont des flux possibles et que quelque soit le noeud de son arbre d'action il est en mesure de payer c1'''
+        j2 = JoueurNodeInterface(j2num)
+        return not j1.getEnRuine() and not j2.getEnRuine() and j1.aColoniseTerre(terre) and j2.aColoniseTerre(terre) and j1.peut_payer(terre,c1) and j2.peut_payer(terre,c2) and c1.est_ressource() and c2.est_ressource() and c1.est_physiquement_possible() and c2.est_physiquement_possible()
+
+    def peut_accepter_echange(j1,echange):
+        ''' j1 peut accepter un echange s'il est le deuxième joueur de cet échange et si quelque soit les noeuds de son arbre d'action il est en mesure de payer la somme demandée'''
+        j2 = JoueurNodeInterface(j2num)
+        return not j1.getEnRuine() and not j2.getEnRuine() and j1.aColoniseTerre(terre) and j2.aColoniseTerre(terre) and j1.peut_payer(terre,c1) and j2.peut_payer(terre,c2) and c1.est_ressource() and c2.est_ressource() and c1.est_physiquement_possible() and c2.est_physiquement_possible()
+
+    
+class Echange:
+
+    def __init__(self,num,j1,j2,terre,don,recu):
+        self.num = num
+        self.j1 = j1
+        self.j2 = j2
+        self.terre = terre
+        self.don = don
+        self.recu = recu
+
+    def save(self):
+        key = "E"+str(self.num)
+        REDIS.set(key + ':joueurProposant', self.j1.num)
+        REDIS.set(key + ':joueurAcceptant', self.j2.num)
+        REDIS.set(key + ':terre', self.terre.num)
+        self.don.setTo(key + ':don')
+        self.recu.setTo(key + ':recu')
+
+    @staticmethod
+    def getEchange(num):
+        key = "E"+str(num)
+        j1N = int(REDIS.get(key + ':joueurProposant'))
+        j2N = int(REDIS.get(key + ':joueurProposant'))
+        terreN = int(REDIS.get(key + ':joueurProposant'))
+
+        don = CartesGeneral.get(key+':don')
+        recu = CartesGeneral.get(key+':recu')
+
+        j1 = Joueur(j1N)
+        j2 = Joueur(j2N)
+        terre = Plateau.getPlateau().ter(terreN)
+
+        return Echange(num,j1,j2,terre,don,recu)
 
 class Node:
     ''' Classe représentant le noeud d'un arbre, avec un lien vers le pere, frere gauche et droit, premier et dernier fils. '''
