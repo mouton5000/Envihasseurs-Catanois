@@ -4,7 +4,7 @@ from plateau import *
 REDIS = redis.StrictRedis()
 
 
-class JoueurNodeInterface:
+class Joueur:
     ''' Classe qui représente juste l'interface entre le joueur et les noeuds'''
 
     def __init__(self,num):
@@ -213,7 +213,7 @@ class Node:
         REDIS.set('N'+str(node.num)+':joueur',j.num)
 
     def getPlayer(node):
-        return JoueurNodeInterface(int(REDIS.get('N'+str(node.num)+':joueur')))
+        return Joueur(int(REDIS.get('N'+str(node.num)+':joueur')))
 
     def setFirstChild(fatherNode,childNode):
         REDIS.set('N'+str(fatherNode.num)+':firstChild',childNode.num)

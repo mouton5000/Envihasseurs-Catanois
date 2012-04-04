@@ -64,7 +64,7 @@ class TestTroc(TestJoueur):
 
 
 # Les joueurs echangent entre eux.
-    def test_echanger_joueur(self):
+    def teest_echanger_joueur(self):
         j1 = self.j1
         j2 = self.j2
         tg = self.tg

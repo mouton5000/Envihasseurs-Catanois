@@ -4,7 +4,7 @@ from plateau import *
 REDIS = redis.StrictRedis()
 
 
-class JoueurNodeInterface:
+class Joueur:
     ''' Classe qui représente juste l'interface entre le joueur et les noeuds'''
 
     def __init__(self,num):
@@ -19,6 +19,9 @@ class JoueurNodeInterface:
     
     def __str__(self):
         return str(self.num)
+
+
+# Gestion de l'arbre d'action
 
     
     def setRoot(self,node):
@@ -49,7 +52,7 @@ class JoueurNodeInterface:
         return node
 
 
-# Execution
+# Execution de l'arbre d'action
     
     def executer(self):
         ''' Execute l'ensemble de l'arbre d'action et construit une base de données à partir de toutes les actions. '''
@@ -175,51 +178,76 @@ class JoueurNodeInterface:
         return True
 
 
+# Echanges
+
+    def isGivingCompatible(self,c):
+        ''' Vérifie que pour tout noeud, toute action, le joueur possède toujours au moins c cartes '''
+        pathLists = self.getRoot().getPathLists()
+
+        s = len(pathLists[1])
+
+        ibdd = BDD(REDIS)
+        j = Joueur(self.num, ibdd)
+        j.payer(c)
+        for i in xrange(s):
+            # On teste le chemin de node jusque sa ie feuille. Si un des chemin n'est pas bon, alors l'échange n'est pas compatible.
+            c = self.executerListeNodes(pathLists[i][indexes[i]], ibdd)
+            if not c[0]:
+                return False
+
+        return True
+
 
     def peut_proposer_echange(j1,j2num,terre,c1,c2):
         ''' j1 peut proposer un echange à j2 si aucun des deux n'est en ruine que les deux ont colonisé la terre, que c1 et c2 sont des flux possibles et que quelque soit le noeud de son arbre d'action il est en mesure de payer c1'''
-        j2 = JoueurNodeInterface(j2num)
-        return not j1.getEnRuine() and not j2.getEnRuine() and j1.aColoniseTerre(terre) and j2.aColoniseTerre(terre) and j1.peut_payer(terre,c1) and j2.peut_payer(terre,c2) and c1.est_ressource() and c2.est_ressource() and c1.est_physiquement_possible() and c2.est_physiquement_possible()
+        j2 = Joueur(j2num)
+        if j1.getEnRuine():
+            raise EchangeError(EchangeError.JOUEUR_EN_RUINE)
+        if j2.getEnRuine():
+            raise EchangeError(EchangeError.PARTENAIRE_EN_RUINE)
+        if not j1.aColoniseTerre(terre):
+            raise EchangeError(EchangeError.TERRE_NON_COLONISEE)
+        if not j2.aColoniseTerre(terre): 
+            raise EchangeError(EchangeError.TERRE_PARTENAIRE_NON_COLONISEE)
+        if not(c1.est_ressource() and c1.est_physiquement_possible()):
+            raise EchangeError(EchangeError.FLUX_IMPOSSIBLE)
+        if not(c2.est_ressource() and c2.est_physiquement_possible()):
+            raise EchangeError(EchangeError.FLUX_IMPOSSIBLE)
+        if not j1.isGivingCompatible(c1):
+            raise EchangeError(EchangeError.DON_INCOMPATIBLE)
+        return True
+
+    def proposer_echange(j1,j2num,terre,c1,c2):    
+        Echange(j1, Joueur(j2num), terre,c1,c2).save()
 
     def peut_accepter_echange(j1,echange):
         ''' j1 peut accepter un echange s'il est le deuxième joueur de cet échange et si quelque soit les noeuds de son arbre d'action il est en mesure de payer la somme demandée'''
-        j2 = JoueurNodeInterface(j2num)
-        return not j1.getEnRuine() and not j2.getEnRuine() and j1.aColoniseTerre(terre) and j2.aColoniseTerre(terre) and j1.peut_payer(terre,c1) and j2.peut_payer(terre,c2) and c1.est_ressource() and c2.est_ressource() and c1.est_physiquement_possible() and c2.est_physiquement_possible()
+        if j1 != echange.j2:
+            raise EchangeError(EchangeError.NON_PARTENAIRE) 
+        if not j1.isGivingCompatible(echange.c2):
+            raise EchangeError(EchangeError.DON_INCOMPATIBLE)
+        return True
+
+    def accepter_echange(j1,echange):
+        echange.isAccepted()
+        echange.save() 
 
     
-class Echange:
+# Ruine
 
-    def __init__(self,num,j1,j2,terre,don,recu):
-        self.num = num
-        self.j1 = j1
-        self.j2 = j2
-        self.terre = terre
-        self.don = don
-        self.recu = recu
+    def setEnRuine(self,ruine):
+        self.bdd.set('J'+str(self.num)+':ruine',ruine)
+    
+    def getEnRuine(self):
+        return self.bdd.get('J'+str(self.num)+':ruine') == 'True'
 
-    def save(self):
-        key = "E"+str(self.num)
-        REDIS.set(key + ':joueurProposant', self.j1.num)
-        REDIS.set(key + ':joueurAcceptant', self.j2.num)
-        REDIS.set(key + ':terre', self.terre.num)
-        self.don.setTo(key + ':don')
-        self.recu.setTo(key + ':recu')
-
-    @staticmethod
-    def getEchange(num):
-        key = "E"+str(num)
-        j1N = int(REDIS.get(key + ':joueurProposant'))
-        j2N = int(REDIS.get(key + ':joueurProposant'))
-        terreN = int(REDIS.get(key + ':joueurProposant'))
-
-        don = CartesGeneral.get(key+':don')
-        recu = CartesGeneral.get(key+':recu')
-
-        j1 = Joueur(j1N)
-        j2 = Joueur(j2N)
-        terre = Plateau.getPlateau().ter(terreN)
-
-        return Echange(num,j1,j2,terre,don,recu)
+    def ruiner(self):
+        self.setEnRuine(True)
+        for t in self.getTerres():
+            self.setStaticPoints(t,0)
+            Jeu.recalcul_route_la_plus_longue(t,self.bdd)
+            Jeu.recalcul_armee_la_plus_grande(t,self.bdd)
+    
 
 class Node:
     ''' Classe représentant le noeud d'un arbre, avec un lien vers le pere, frere gauche et droit, premier et dernier fils. '''
@@ -242,7 +270,7 @@ class Node:
         REDIS.set('N'+str(node.num)+':joueur',j.num)
 
     def getPlayer(node):
-        return JoueurNodeInterface(int(REDIS.get('N'+str(node.num)+':joueur')))
+        return Joueur(int(REDIS.get('N'+str(node.num)+':joueur')))
 
     def setFirstChild(fatherNode,childNode):
         REDIS.set('N'+str(fatherNode.num)+':firstChild',childNode.num)
@@ -313,8 +341,8 @@ class Node:
         return node.getFatherNode()
 
     def getPath(origin,dest):
-        ''' Renvoie la liste des noeuds compris dans le chemin partant de origin jusque dest'''
-        path = [dest]
+        ''' Renvoie la liste des noeuds compris dans le chemin partant de origin jusque dest, destination non comprise'''
+        path = []
         node = dest
         while(node != origine):
             node = node.getFatherNode()

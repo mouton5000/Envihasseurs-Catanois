@@ -81,6 +81,19 @@ class OrError(ActionError):
     def __init__(self,value):
         ActionError.__init__(self,value)
 
+class EchangeError(ActionError):
+    ''' Ensemble des erreurs associées aux actions en rapport avec l'or'''
+   
+    JOUEUR_EN_RUINE = 0
+    PARTENAIRE_EN_RUINE = 1
+    TERRE_NON_COLONISEE = 2
+    TERRE_PARTENAIRE_NON_COLONISEE = 3
+    FLUX_IMPOSSIBLE = 4
+    DON_INCOMPATIBLE = 5
+ 
+    def __init__(self,value):
+        ActionError.__init__(self,value)
+
 class DeveloppementError(ActionError):
     ''' Ensemble des erreurs associées aux actions en rapport avec une carte de développement'''
 

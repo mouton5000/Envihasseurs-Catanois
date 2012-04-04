@@ -9,7 +9,7 @@ class TestForetAction(unittest.TestCase):
 
     def setUp(self):
         REDIS.flushdb()
-        self.j1 = JoueurNodeInterface(1)
+        self.j1 = Joueur(1)
 
     def test_first_root(self):
         n =self.j1.setNewRoot()
