@@ -399,6 +399,8 @@ class TestDeveloppement(TestJoueur):
         j3.setCartes(tg,c5)
         j4.setCartes(tg,c5)
         Jeu.jouer_monopole(j1,tg,r,[2,3,4])
+        m = Monopole.getMonopole(1)
+        m.executer()
         self.assertEqual(j1.getCartes(tg),c1 + Cartes.ARGILE*6)
 
         self.assertEqual(j2.getCartes(tg).get_cartes_de_type(r), 0)

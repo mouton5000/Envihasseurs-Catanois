@@ -1,8 +1,20 @@
 # *-* coding: utf8 *-*
 import redis
 from plateau import *
+import functools
 REDIS = redis.StrictRedis()
 
+def protection(f):
+    @functools.wraps(f)
+    def helper(*args,**kwargs):
+        peut_f = Joueur.getattr('peut_' + f.__name__)
+        if peut_f(*args,**kwargs):
+            f(*args,**kwargs)
+            return True
+        else:
+            return False
+
+    return helper
 
 class Joueur:
     ''' Classe qui représente juste l'interface entre le joueur et les noeuds'''
@@ -198,9 +210,10 @@ class Joueur:
         return True
 
 
-    def peut_proposer_echange(j1,j2num,terre,c1,c2):
+    def peut_proposer_echange(joueur,j2num,terre,c1,c2):
         ''' j1 peut proposer un echange à j2 si aucun des deux n'est en ruine que les deux ont colonisé la terre, que c1 et c2 sont des flux possibles et que quelque soit le noeud de son arbre d'action il est en mesure de payer c1'''
-        j2 = Joueur(j2num)
+        j1 = JoueurPossible(joueur.num)
+        j2 = JoueurPossible(j2num)
         if j1.getEnRuine():
             raise EchangeError(EchangeError.JOUEUR_EN_RUINE)
         if j2.getEnRuine():
@@ -213,7 +226,7 @@ class Joueur:
             raise EchangeError(EchangeError.FLUX_IMPOSSIBLE)
         if not(c2.est_ressource() and c2.est_physiquement_possible()):
             raise EchangeError(EchangeError.FLUX_IMPOSSIBLE)
-        if not j1.isGivingCompatible(c1):
+        if not joueur.isGivingCompatible(c1):
             raise EchangeError(EchangeError.DON_INCOMPATIBLE)
         return True
 
@@ -232,21 +245,8 @@ class Joueur:
         echange.isAccepted()
         echange.save() 
 
-    
-# Ruine
 
-    def setEnRuine(self,ruine):
-        self.bdd.set('J'+str(self.num)+':ruine',ruine)
-    
-    def getEnRuine(self):
-        return self.bdd.get('J'+str(self.num)+':ruine') == 'True'
-
-    def ruiner(self):
-        self.setEnRuine(True)
-        for t in self.getTerres():
-            self.setStaticPoints(t,0)
-            Jeu.recalcul_route_la_plus_longue(t,self.bdd)
-            Jeu.recalcul_armee_la_plus_grande(t,self.bdd)
+        
     
 
 class Node:

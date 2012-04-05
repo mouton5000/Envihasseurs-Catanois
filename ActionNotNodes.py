@@ -46,35 +46,3 @@ class Echange:
 class DeplacementVoleur:
     pass
 
-class Monopole:
-    def __init__(self,j,jvol,terre,carte):
-        self.num = REDIS.incr("LastMonopole")
-        self.j = j
-        self.jvol = jvol
-        self.terre = terre
-        self.carte = carte
-
-    def save(self):
-        key = "M"+str(self.num)
-        REDIS.set(key + ':joueur', self.j1.num)
-        for j in self.jvol:
-            REDIS.sadd(key + ':joueurVoles', self.j.num)
-        REDIS.set(key + ':terre', self.terre.num)
-        self.carte.setTo(key + ':carte')
-
-    @staticmethod
-    def getMonopole(num):
-        key = "E"+str(num)
-        j1N = int(REDIS.get(key + ':joueur'))
-        jvol = []
-        for j in REDIS.smembers(key + ':joueurVoles'))
-            jvol.append(Joueur(int(j))
-        terreN = int(REDIS.get(key + ':terre'))
-        accepted = REDIS.get(key + ':accepte') == 'True'
-
-        carte = CartesGeneral.get(key+':carte')
-
-        j1 = Joueur(j1N)
-        terre = Plateau.getPlateau().ter(terreN)
-
-        return Monopole(num,j1,jvol,terre,carte)

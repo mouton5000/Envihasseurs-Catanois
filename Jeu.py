@@ -681,13 +681,7 @@ def peut_jouer_monopole(joueur,terre,t1, jvols):
 @kallable
 @protection
 def jouer_monopole(joueur,terre,t1,jvols):
-    i = 0
-    for j in jvols:
-        j = JoueurPossible(j,joueur.bdd)
-        r =  j.getCartes(terre).get_cartes_de_type(t1)
-        i += r
-        j.payer(terre,t1*r)
-    joueur.recevoir(terre,t1*i)
+    Monopole(0,joueur,jvols,terre,t1).save(joueur.bdd)
 
 
 
