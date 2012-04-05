@@ -1,6 +1,8 @@
 # *-* coding: utf8 *-*
 import redis
 from plateau import *
+from pions import *
+from errors import *
 import functools
 REDIS = redis.StrictRedis()
 
@@ -141,7 +143,7 @@ class Joueur:
     def executerAction(self, action, ibdd):
         ''' Execute l'action, avec la base de donnée ibdd. ibdd est modifiée. '''
         import joueurs
-        j = JoueurPossible(self.num, ibdd)
+        j = joueurs.JoueurPossible(self.num, ibdd)
         func = getattr(Jeu, action.func)
         if func.peut_etre_appelee:
             return Jeu.func(j,*action.params)
@@ -212,8 +214,9 @@ class Joueur:
 
     def peut_proposer_echange(joueur,j2num,terre,c1,c2):
         ''' j1 peut proposer un echange à j2 si aucun des deux n'est en ruine que les deux ont colonisé la terre, que c1 et c2 sont des flux possibles et que quelque soit le noeud de son arbre d'action il est en mesure de payer c1'''
-        j1 = JoueurPossible(joueur.num)
-        j2 = JoueurPossible(j2num)
+        import joueurs
+        j1 = joueurs.JoueurPossible(joueur.num)
+        j2 = joueurs.JoueurPossible(j2num)
         if j1.getEnRuine():
             raise EchangeError(EchangeError.JOUEUR_EN_RUINE)
         if j2.getEnRuine():
@@ -230,6 +233,7 @@ class Joueur:
             raise EchangeError(EchangeError.DON_INCOMPATIBLE)
         return True
 
+    @protection
     def proposer_echange(j1,j2num,terre,c1,c2):    
         Echange(j1, Joueur(j2num), terre,c1,c2).save()
 
@@ -241,12 +245,54 @@ class Joueur:
             raise EchangeError(EchangeError.DON_INCOMPATIBLE)
         return True
 
+    @protection
     def accepter_echange(j1,echange):
         echange.isAccepted()
         echange.save() 
 
 
+# Voleur
+
+    def peut_deplacer_voleur(j,terre,voleurType,hex,jvol):
+        bdd = REDIS
+        import joueurs
+        joueur = joueurs.JoueurPossible(j.num)
+        if joueur.getEnRuine():
+            raise VoleurError(VoleurError.JOUEUR_EN_RUINE)
+        if not joueur.aColoniseTerre(terre):
+            raise VoleurError(VoleurError.TERRE_NON_COLONISEE)
+        if not joueur.get_deplacement_voleur(terre):
+            raise VoleurError(VoleurError.DEPLACEMENT_INTERDIT) 
+        if not (hex == 0 or hex.terre == terre):
+            raise VoleurError(VoleurError.EMPLACEMENT_INTERDIT)
+
+        if voleurType == Voleur.VoleurType.BRIGAND:
+            voleur = Voleur.getBrigand(terre,bdd)
+        else:
+            voleur = Voleur.getPirate(terre,bdd)
+        if jvol == 0:
+            t = (hex, 0)
+        else:
+            t = (hex, jvol)
+        if not t in joueur.positions_possibles_voleur(terre,voleur):
+            raise VoleurError(VoleurError.EMPLACEMENT_INTERDIT)
+
+        return True
+
+    @protection
+    def deplacer_voleur(joueur,terre,voleurType,hex,jvol):
+        DeplacementVoleur(0,joueur,terre,voleurType,hex,jvol, False).save(REDIS)
+        joueur.set_deplacement_voleur(terre,False)
         
+
+    @staticmethod
+    def get_all_joueurs():
+        import joueurs
+        i = joueurs.JoueurPossible.getNbJoueurs()
+        js = []
+        for j in xrange(i):
+            js.append(joueurs.JoueurPossible(j+1))
+        return js
     
 
 class Node:

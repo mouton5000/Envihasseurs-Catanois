@@ -131,3 +131,13 @@ class VoleurError(ActionError):
 
     def __init__(self,value):
         ActionError.__init__(self,value)
+
+class RecolteError(ActionError):
+    ''' Ensemble des erreurs associées aux actions en rapport avec la récolte lors du lancement des dés'''
+
+    HORS_LIMITE = 0
+    SEPT = 1
+    
+       
+    def __init__(self,value):
+        ActionError.__init__(self,value)

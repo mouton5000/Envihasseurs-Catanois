@@ -32,13 +32,6 @@ def kallable(f):
     f.peut_etre_appellee = True
     return f
 
-def get_all_joueurs():
-    i = JoueurPossible.getNbJoueurs()
-    joueurs = []
-    for j in xrange(i):
-        joueurs.append(JoueurPossible(j+1))
-    return joueurs
-
 # Renvoie le joueur qui possède la route la plus longue sur la terre terre et sa longueur.
 
 def get_route_la_plus_longue(terre, bdd = REDIS):
@@ -144,58 +137,6 @@ def recalcul_armee_la_plus_grande(terre, bdd = REDIS):
         if t != 0  and (t[1] > armee or not t[0] in jmax):
             delete_armee_la_plus_grande(terre,bdd)
 
-# -----------------------------------------------------
-# Actions de la nuit
-# -----------------------------------------------------
-
-
-def designer_deplaceur_de_voleur():
-    p = Plateau.getPlateau()
-    for terre in p.terres:
-        js = terre.getJoueurs(REDIS)
-        for jn in js:
-            j = JoueurPossible(int(jn))
-            j.set_deplacement_voleur(terre,False)
-
-    des = Des.getDices()
-    origin = Des.getOrigin()
-    for terre in p.terres:
-        js = []
-        for jns in terre.getJoueurs(REDIS):
-            j = JoueurPossible(int(jns))
-            if(not j.getEnRuine()):
-                js.append(j)
-        for i in range(0,Des.NB_LANCES):
-            if des[i] == 7:
-                js[(i+origin)%len(js)].set_deplacement_voleur(terre,True)
-
-
-def peut_recolter_ressources(des):
-    ''' On peut lancer la récolte des réssources si les dés sont entre 2 et 12'''
-    if des < 2 or des == 7 or des > 12:
-        return False
-    else:
-        return True
-
-
-@protection
-def recolter_ressources(des):
-    ''' Effectue pour tous les joueurs sur toutes les terres la récolte des ressources sauf s'ils sont en ruine'''
-    for j in get_all_joueurs():
-        if not j.getEnRuine(): 
-            j.recolter_ressources(des)
- 
-
-def echanger(echangeNum):
-    ''' Effectue  de cartes entre les joueurs de echange sur cette terre, avec j1 donnant c1 cartes et j2 donnant c2 cartes.'''
-    e = Echange.getEchange(echangeNum)
-    j1 = echange.j1
-    j2 = echange.j2
-    terre = echange.terre
-    j1.payer(terre,echange.don)
-    j1.recevoir(terre,echange.recu)
-    j2.payer(terre,echange.recu)
-    j2.recevoir(terre,echange.don)
 
 # -----------------------------------------------------
 #Actions dans la journee
@@ -769,58 +710,14 @@ def defausser(joueur,terre,cartes):
         cb[0].save(bdd)
 
 
-
-def positions_possibles_voleur(joueur,terre,voleur):
-    bdd = joueur.bdd
-    if voleur == 0:
-        return []
-    b = voleur.etat == Voleur.VoleurType.PIRATE
-    if not b:
-        hexs = terre.hexagones[:]
-    else:
-        hexs = terre.espaceMarin[:]
-    if voleur.position != 0:
-        hexs.remove(voleur.position)
-    possibilite = []
-    if b:
-        for h in hexs:
-            if h.commerceType!= 0:
-                for i in h.ints:
-                    col = Colonie.getColonie(i,bdd)
-                    if (col != 0) and (col.joueur != joueur.num):
-                        possibilite.append((h,col.joueur))
-            for a in h.liens:
-                for bat in Bateau.getBateaux(a,bdd):
-                    if (bat != 0) and (bat.joueur != joueur.num):
-                        possibilite.append((h,bat.joueur))
-        if possibilite == []:
-            return [(0,0)]
-    else:
-        for h in hexs:
-            for i in h.ints:
-                col = Colonie.getColonie(i,bdd)
-                if (col != 0) and (col.joueur != joueur.num):
-                        possibilite.append((h,col.joueur))
-        if possibilite == []:
-            for h in voleur.position.terre.hexagones:
-                if h.etat == HexaType.DESERT and h.commerceType == 0:
-                    possibilite.append((h,0))
-    return possibilite 
-
-
-
-
-def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,chevallier = False):
+def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol):
     bdd = joueur.bdd
     if joueur.getEnRuine():
         raise VoleurError(VoleurError.JOUEUR_EN_RUINE)
     if not joueur.aColoniseTerre(terre):
         raise VoleurError(VoleurError.TERRE_NON_COLONISEE)
-    if not (joueur.get_deplacement_voleur(terre) or chevallier):
-        raise VoleurError(VoleurError.DEPLACEMENT_INTERDIT) 
     if not (hex == 0 or hex.terre == terre):
         raise VoleurError(VoleurError.EMPLACEMENT_INTERDIT)
-
 
     if voleurType == Voleur.VoleurType.BRIGAND:
         voleur = Voleur.getBrigand(terre,bdd)
@@ -830,62 +727,14 @@ def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,chevallier = False):
         t = (hex, 0)
     else:
         t = (hex, jvol)
-    if not t in positions_possibles_voleur(joueur,terre,voleur):
+    if not t in joueur.positions_possibles_voleur(terre,voleur):
         raise VoleurError(VoleurError.EMPLACEMENT_INTERDIT)
 
     return True
 
 
-def voler(j1,terre,j2num):
-    bdd = j1.bdd
-    j2 = JoueurPossible(j2num,bdd)
-    ressources_terrestres = j2.getCartes(terre)
-    nc = ressources_terrestres.ressources_size()
-    ressources_bateaux = []
-    s = nc
-    for bn in j2.getBateaux():
-        b = Bateau.getBateau(int(bn),bdd)
-        if b.en_position_echange(bdd) and b.position.getTerre() == terre:
-            n = b.cargaison.size()
-            ressources_bateaux.append((n,b))
-            s+=n
-    if s == 0:
-        return
-    u = random.randint(1,s)
-    if u <= nc:
-        c = ressources_terrestres.carte(u)
-        j2.payer(terre,c)
-        j1.recevoir(terre,c)
-    else:
-        u-=nc
-        for rb in ressources_bateaux:
-            if u <= rb[0]:
-                c = rb[1].cargaison.carte(u)
-                rb[1].remove(c)
-                rb[1].save(bdd)
-                j1.recevoir(terre,c)
-                return
-            else:
-                u -= rb[0]
-
-
-@kallable
-def deplacer_voleur(joueur,terre,voleurType,hex,jvol, chevallier = False):
-    bdd = joueur.bdd
-    if peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,chevallier):
-        if voleurType == Voleur.VoleurType.BRIGAND:
-            voleur = Voleur.getBrigand(terre,bdd)
-        else:
-            voleur = Voleur.getPirate(terre,bdd)
-        voleur.deplacer(hex)
-        voleur.save(bdd)
-        voler(joueur,terre,jvol)
-        if not chevallier:
-            joueur.set_deplacement_voleur(terre,False)
-        return True
-    else:
-        return False
-            
+def deplacer_voleur(joueur,terre,voleurType,hex,jvol):
+    DeplacementVoleur(0,joueur,terre,voleurType,hex,jvol,True).save(joueur.bdd) 
 
 def peut_jouer_chevallier(joueur,terre,voleurType, hex,jvol):
     if joueur.getEnRuine():
@@ -894,13 +743,13 @@ def peut_jouer_chevallier(joueur,terre,voleurType, hex,jvol):
         raise DeveloppementError(DeveloppementError.TERRE_NON_COLONISEE)
     if not Cartes.CHEVALLIER <= joueur.getCartes(terre):
         raise DeveloppementError(DeveloppementError.CARTE_NON_POSSEDEE)
-    return peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
+    return peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol)
 
 
 @kallable
 @protection
 def jouer_chevallier(joueur,terre,voleurType, hex,jvol):
-        joueur.add_chevallier(terre)
-        joueur.payer(terre,Cartes.CHEVALLIER)
-        challenge_armee_la_plus_grande(joueur,terre)
-        deplacer_voleur(joueur,terre,voleurType,hex,jvol,True)
+    joueur.add_chevallier(terre)
+    joueur.payer(terre,Cartes.CHEVALLIER)
+    challenge_armee_la_plus_grande(joueur,terre)
+    deplacer_voleur(joueur,terre,voleurType,hex,jvol)

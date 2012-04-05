@@ -8,6 +8,7 @@ from plateau import *
 from errors import *
 from cartes import *
 from ActionNight import *
+from arbre_action import *
 
 REDIS = redis.StrictRedis()
 

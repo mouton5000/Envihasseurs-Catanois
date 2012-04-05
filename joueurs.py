@@ -284,6 +284,76 @@ class JoueurPossible:
         return self.getStaticPoints(terre) + p
 
 
+    def positions_possibles_voleur(joueur,terre,voleur):
+        bdd = joueur.bdd
+        if voleur == 0:
+            return []
+        b = voleur.etat == Voleur.VoleurType.PIRATE
+        if not b:
+            hexs = terre.hexagones[:]
+        else:
+            hexs = terre.espaceMarin[:]
+        if voleur.position != 0:
+            hexs.remove(voleur.position)
+        possibilite = []
+        if b:
+            for h in hexs:
+                if h.commerceType!= 0:
+                    for i in h.ints:
+                        col = Colonie.getColonie(i,bdd)
+                        if (col != 0) and (col.joueur != joueur.num):
+                            possibilite.append((h,col.joueur))
+                for a in h.liens:
+                    for bat in Bateau.getBateaux(a,bdd):
+                        if (bat != 0) and (bat.joueur != joueur.num):
+                            possibilite.append((h,bat.joueur))
+            if possibilite == []:
+                return [(0,0)]
+        else:
+            for h in hexs:
+                for i in h.ints:
+                    col = Colonie.getColonie(i,bdd)
+                    if (col != 0) and (col.joueur != joueur.num):
+                            possibilite.append((h,col.joueur))
+            if possibilite == []:
+                for h in voleur.position.terre.hexagones:
+                    if h.etat == HexaType.DESERT and h.commerceType == 0:
+                        possibilite.append((h,0))
+        return possibilite 
+
+    def voler(j1,terre,j2num):
+        bdd = j1.bdd
+        j2 = JoueurPossible(j2num,bdd)
+        ressources_terrestres = j2.getCartes(terre)
+        nc = ressources_terrestres.ressources_size()
+        ressources_bateaux = []
+        s = nc
+        for bn in j2.getBateaux():
+            b = Bateau.getBateau(int(bn),bdd)
+            if b.en_position_echange(bdd) and b.position.getTerre() == terre:
+                n = b.cargaison.size()
+                ressources_bateaux.append((n,b))
+                s+=n
+        if s == 0:
+            return
+        u = random.randint(1,s)
+        if u <= nc:
+            c = ressources_terrestres.carte(u)
+            j2.payer(terre,c)
+            j1.recevoir(terre,c)
+        else:
+            u-=nc
+            for rb in ressources_bateaux:
+                if u <= rb[0]:
+                    c = rb[1].cargaison.carte(u)
+                    rb[1].remove(c)
+                    rb[1].save(bdd)
+                    j1.recevoir(terre,c)
+                    return
+                else:
+                    u -= rb[0]
+
+
     @staticmethod
     def setNbJoueurs(nb):
         REDIS.set('NombreJoueurs',nb)
