@@ -487,6 +487,10 @@ class TestVoleur(TestJoueur):
         j1.set_deplacement_voleur(tg, True)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(17),2))
         Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
+
+        dep = DeplacementVoleur.getDeplacementVoleur(1)
+        dep.executer()
+
         brg = Voleur.getBrigand(tg)
         self.assertEqual(brg.position,p.hexa(17))
         self.assertEqual(j2.getCartes(tg),c0)
@@ -500,7 +504,10 @@ class TestVoleur(TestJoueur):
         brg.save()
         j1.set_deplacement_voleur(tg, True)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(17),2))
+
         Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
+        dep = DeplacementVoleur.getDeplacementVoleur(2)
+        dep.executer()
 
         brg = Voleur.getBrigand(tg)
         self.assertEqual(brg.position,p.hexa(17))
@@ -514,7 +521,10 @@ class TestVoleur(TestJoueur):
         j1.setCartes(tg,c0)
         j1.set_deplacement_voleur(tg, True)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,pr,p.hexa(57),2))
+       
         Jeu.deplacer_voleur(j1,tg,pr,p.hexa(57),2)
+        dep = DeplacementVoleur.getDeplacementVoleur(3)
+        dep.executer()
 
         prg = Voleur.getPirate(tg)
         self.assertEqual(prg.position,p.hexa(57))
@@ -533,7 +543,12 @@ class TestVoleur(TestJoueur):
         b2.save()
         j1.set_deplacement_voleur(tg, True)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,pr,p.hexa(7),2))
+        
         Jeu.deplacer_voleur(j1,tg,pr,p.hexa(7),2)
+        dep = DeplacementVoleur.getDeplacementVoleur(4)
+        dep.executer()
+        
+
         prg = Voleur.getPirate(tg)
         self.assertEqual(prg.position,p.hexa(7))
         self.assertEqual(j2.getCartes(tg),c0)
@@ -552,7 +567,11 @@ class TestVoleur(TestJoueur):
         brg.save()
         j1.set_deplacement_voleur(tg, True)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(17),2))
+        
         Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
+        dep = DeplacementVoleur.getDeplacementVoleur(5)
+        dep.executer()
+        
         brg = Voleur.getBrigand(tg)
         self.assertEqual(brg.position,p.hexa(17))
         self.assertEqual(j2.getCartes(tg),c0)
@@ -571,7 +590,11 @@ class TestVoleur(TestJoueur):
         brg.save()
         j1.set_deplacement_voleur(tg, True)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(17),2))
+        
         Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
+        dep = DeplacementVoleur.getDeplacementVoleur(6)
+        dep.executer()
+        
         brg = Voleur.getBrigand(tg)
         self.assertEqual(brg.position,p.hexa(17))
         self.assertEqual(j2.getCartes(tg),c0)

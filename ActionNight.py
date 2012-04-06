@@ -6,6 +6,7 @@ from cartes import *
 from joueurs import *
 from plateau import *
 from errors import *
+from pions import *
 REDIS = redis.StrictRedis()
 
 
@@ -126,9 +127,9 @@ class DeplacementVoleur:
         key = "DV"+str(num)
         
         j = JoueurPossible(int(REDIS.get(key + ':joueur')))
-        terre = Plateau.getPlateau().terre(int(REDIS.get(key + ':terre')))
+        terre = Plateau.getPlateau().ter(int(REDIS.get(key + ':terre')))
         voleurType = REDIS.get(key + ':voleurType')
-        hex = Plateau.getPlateau.hex(REDIS.get(key + ':emplacement'))
+        hex = Plateau.getPlateau().hexa(int(REDIS.get(key + ':emplacement')))
         jvol = int(REDIS.get(key + ';jvol'))
         chevallier = REDIS.get(key + ':chevallier') == 'True'
 
@@ -141,7 +142,7 @@ class DeplacementVoleur:
             voleur = Voleur.getPirate(self.terre,REDIS)
         voleur.deplacer(self.hex)
         voleur.save(REDIS)
-        self.joueur.voler(self.terre,self.jvol)
+        self.j.voler(self.terre,self.jvol)
 
     @staticmethod 
     def designer_deplaceur_de_voleur():

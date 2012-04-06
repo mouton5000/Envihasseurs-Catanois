@@ -114,6 +114,10 @@ class TestDeveloppement(TestJoueur):
         j1.set_chevalliers(tg,0)
         self.assertTrue(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
         Jeu.jouer_chevallier(j1,tg,br,h1,2)
+        
+        dep = DeplacementVoleur.getDeplacementVoleur(1)
+        dep.executer()
+    
         brg = Voleur.getBrigand(tg)
         self.assertEqual(brg.position,h1)
         self.assertEqual(j1.get_chevalliers(tg),1)
