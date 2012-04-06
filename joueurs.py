@@ -209,12 +209,48 @@ class JoueurPossible:
         return int(self.bdd.get('J'+str(self.num)+':T'+str(terre.num)+':armee'))
    
     def set_deplacement_voleur(self,terre, dep):
-        ''' Indique que sur cette terre, le joueur doit déplacer le voleur'''
+        ''' Indique que sur cette terre, le joueur doit déplacer le voleur suite à un lancé de dés égal à 7'''
         self.bdd.set('J'+str(self.num)+':T'+str(terre.num)+':deplacement_voleur', dep)
  
     def get_deplacement_voleur(self,terre):
-        ''' Renvoie vrai si sur cette terre, le joueur doit déplacer le voleur'''
+        ''' Renvoie vrai si sur cette terre, le joueur doit déplacer le voleur suite à un 7'''
         return self.bdd.get('J'+str(self.num)+':T'+str(terre.num)+':deplacement_voleur') == 'True'
+
+    def add_lance_des_deplacement_voleur(self,terre,nb):
+        ''' Ajoute, parmi les 4, un lancé de dés faisant un 7, obligeant ce joueurs à déplacer le voleur'''
+        self.bdd.lpush('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur:lances_des', nb)
+    
+    def clear_lance_des_deplacement_voleur(self,terre):
+        ''' Efface tous les déplacements de voleur du joueur '''
+        self.bdd.delete('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur:lances_des')
+ 
+    def get_lance_des_deplacements_voleur(self,terre):
+        ''' Renvoie, parmi les 4, lesquel des lancés de dés faisant un 7, oblige ce joueurs à déplacer le voleur'''
+        return self.bdd.lrange('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur:lances_des',0,-1)
+    
+    def add_deplacement_voleur(self,terre, i, num):
+        ''' Ajoute un déplacement de voleur du au ie lance de dés si c'est un 7 à ce joueur'''
+        self.bdd.lpush('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur'+str(i), num)
+    
+    def clear_deplacement_voleur(self,terre, i):
+        ''' Efface tous les déplacements de voleur du joueur du au ie lancé de dés si c'est un 7'''
+        self.bdd.delete('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur'+str(i))
+ 
+    def get_deplacements_voleur(self,terre, i):
+        ''' Renvoie tous les identifiants du déplacement de voleur du au ie lancé de dés si c'est  un 7'''
+        return self.bdd.lrange('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur'+str(i),0,-1)
+    
+    def add_deplacement_voleur_chevallier(self,terre, num):
+        ''' Ajoute un déplacement de voleur du aux chevalliers à ce joueur'''
+        self.bdd.lpush('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur_chevallier', num)
+    
+    def clear_deplacement_voleur_chevallier(self,terre):
+        ''' Efface tous les déplacements de voleur du joueur du aux chevalliers'''
+        self.bdd.delete('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur_chevallier')
+ 
+    def get_deplacements_voleur_chevallier(self,terre):
+        ''' Renvoie tous les identifiants du déplacement de voleur dus aux chevalliers'''
+        return self.bdd.lrange('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur_chevallier',0,-1)
          
     def get_carte_armee_la_plus_grande(self,terre):
         ''' Renvoie vrai si le joueur a l'armée la plus grande sur cette terre'''

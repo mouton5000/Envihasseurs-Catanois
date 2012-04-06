@@ -106,7 +106,7 @@ class DeplacementVoleur:
             self.num = REDIS.incr("LastDeplacementVoleur")
         else:
             self.num = num
-        self.j = joueur
+        self.j = joueur.num
         self.terre = terre
         self.voleurType = voleurType
         self.hex = hex
@@ -115,12 +115,22 @@ class DeplacementVoleur:
 
     def save(self,bdd):
         key = "DV"+str(self.num)
-        bdd.set(key + ':joueur', self.j.num)
+        bdd.set(key + ':joueur', self.j)
         bdd.set(key + ':terre', self.terre.num)
         bdd.set(key + ':voleurType', self.voleurType)
         bdd.set(key + ':emplacement', self.hex.num)
         bdd.set(key + ';jvol', self.jvol)
         bdd.set(key + ':chevallier', self.chevallier)
+
+        joueur = JoueurPossible(self.j,bdd)
+        if self.chevallier:
+            j = Des.NB_LANCES+1
+            for i in joueur.get_lance_des_deplacements_voleur(self.terre):
+                j = min(j, int(i))
+            if j !=  Des.NB_LANCES+1:
+                joueur.add_deplacement_voleur(self.terre,j,self.num)
+        else:
+            joueur.add_deplacement_voleur_chevallier(self.terre, self.num)
 
     @staticmethod
     def getDeplacementVoleur(num):
@@ -136,13 +146,14 @@ class DeplacementVoleur:
         return DeplacementVoleur(num,j,terre,voleurType,hex,jvol,chevallier)
 
     def executer(self):
+        j = JoueurPossible(self.j)
         if self.voleurType == Voleur.VoleurType.BRIGAND:
             voleur = Voleur.getBrigand(self.terre,REDIS)
         else:
             voleur = Voleur.getPirate(self.terre,REDIS)
         voleur.deplacer(self.hex)
         voleur.save(REDIS)
-        self.j.voler(self.terre,self.jvol)
+        j.voler(self.terre,self.jvol)
 
     @staticmethod 
     def designer_deplaceur_de_voleur():
@@ -152,6 +163,10 @@ class DeplacementVoleur:
             for jn in js:
                 j = JoueurPossible(int(jn))
                 j.set_deplacement_voleur(terre,False)
+                j.clear_lance_des_deplacement_voleur(terre)
+                j.clear_deplacement_voleur_chevallier(terre)
+                for i in xrange(Des.NB_LANCES):
+                    j.clear_deplacement_voleur(terre,i+1)
     
         des = Des.getDices()
         origin = Des.getOrigin()
@@ -163,7 +178,9 @@ class DeplacementVoleur:
                     js.append(j)
             for i in range(0,Des.NB_LANCES):
                 if des[i] == 7:
-                    js[(i+origin)%len(js)].set_deplacement_voleur(terre,True)
+                    j = js[(i+origin)%len(js)]
+                    j.set_deplacement_voleur(terre,True)
+                    j.add_lance_des_deplacement_voleur(terre,i+1)
 
 class Echange:
 
