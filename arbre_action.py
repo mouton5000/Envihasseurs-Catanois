@@ -121,8 +121,10 @@ class Joueur:
         actionsNum = node.getActionsNum()
         for actnum in actionsNum:
             action = Action.getAction(int(actnum))
-            b = self.executerAction(action, ibdd)
-            if not b:
+            print actnum
+            try:    
+                b = self.executerAction(action, ibdd)
+            except ActionError:
                 ibdd.flushSurface()
                 return False
         return True
