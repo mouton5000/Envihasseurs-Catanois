@@ -3,6 +3,8 @@ import redis
 from plateau import *
 from pions import *
 from errors import *
+from bdd_interface import *
+import Jeu
 import functools
 REDIS = redis.StrictRedis()
 
@@ -144,9 +146,13 @@ class Joueur:
         import joueurs
         j = joueurs.JoueurPossible(self.num, ibdd)
         func = getattr(Jeu, action.func)
-        if func.peut_etre_appelee:
-            return Jeu.func(j,*action.params)
-        return False
+        translation_args = getattr(Jeu, 'translate_'+action.func)(*action.params)
+        try:
+            func.peut_etre_appelee
+        except AttributeError:
+            return False
+        return func(j,*translation_args)
+                
 
 # Vérifications en cas d'insertion et de suppression d'une action
 
@@ -729,17 +735,6 @@ class Action:
 
 class NodeCst:
     NULL = Node(-1)
-
-def hasNext(indexes, sizes):
-    return indexes != sizes
-
-def next(indexes, sizes):
-    for i in xrange(len(sizes)):
-        if indexes[i] == sizes[i]:
-            indexes[i] = 0
-        else:
-            indexes[i] += 1
-            return
 
 
 if __name__ == '__main__':
