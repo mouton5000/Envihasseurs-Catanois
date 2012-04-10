@@ -141,3 +141,20 @@ class RecolteError(ActionError):
        
     def __init__(self,value):
         ActionError.__init__(self,value)
+
+class DefausseError(ActionError):
+    ''' Ensemble des erreurs associées aux actions en rapport la defausse'''
+
+    JOUEUR_EN_RUINE = 0
+    TERRE_NON_COLONISEE = 1
+    DEFAUSSE_INTERDITE = 2
+    BATEAU_NON_DEFAUSSABLE = 3
+    FLUX_TROP_ELEVE = 4
+    DEFAUSSE_TROP_FAIBLE = 5
+    DEFAUSSE_TROP_ELEVEE = 6
+    FLUX_IMPOSSIBLE = 7
+
+     
+
+    def __init__(self,value):
+        ActionError.__init__(self,value)

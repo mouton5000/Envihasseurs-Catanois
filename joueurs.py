@@ -251,7 +251,16 @@ class JoueurPossible:
     def get_deplacements_voleur_chevallier(self,terre):
         ''' Renvoie tous les identifiants du déplacement de voleur dus aux chevalliers'''
         return self.bdd.lrange('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur_chevallier',0,-1)
-         
+
+
+    def get_defausser(self,terre):
+        ''' Renvoie le nombre de cartes que doit défausser le joueur sur sa terre '''
+        return int(self.bdd.get('J'+str(self.num)+':T'+str(terre.num)+':defausse'))
+    
+    def set_defausser(self,terre, nb):
+        ''' Réécri le nombre de cartes que doit défausser le joueur sur sa terre '''
+        return self.bdd.set('J'+str(self.num)+':T'+str(terre.num)+':defausse', nb)
+ 
     def get_carte_armee_la_plus_grande(self,terre):
         ''' Renvoie vrai si le joueur a l'armée la plus grande sur cette terre'''
         u = Jeu.get_armee_la_plus_grande(terre, self.bdd)

@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-__all__ = ['Des', 'Monopole', 'DeplacementVoleur', 'Echange', 'JeuNight'] 
+__all__ = ['Des', 'Monopole', 'DeplacementVoleur', 'Echange', 'recolter_ressources', 'peut_recolter_ressources'] 
 import redis
 from cartes import *
 from joueurs import *
@@ -169,18 +169,44 @@ class DeplacementVoleur:
                     j.clear_deplacement_voleur(terre,i+1)
     
         des = Des.getDices()
+        defausse = 7 in des 
         origin = Des.getOrigin()
-        for terre in p.terres:
+        for terre in p.terres:            
             js = []
             for jns in terre.getJoueurs(REDIS):
                 j = JoueurPossible(int(jns))
                 if(not j.getEnRuine()):
                     js.append(j)
-            for i in range(0,Des.NB_LANCES):
-                if des[i] == 7:
-                    j = js[(i+origin)%len(js)]
-                    j.set_deplacement_voleur(terre,True)
-                    j.add_lance_des_deplacement_voleur(terre,i+1)
+            for j in js:
+                
+                # Gestion de la défausse
+                if defausse:
+                    c = j.getCartes(terre)
+                    rs = c.ressources_size()
+                    bs = []
+                    for bn in j.getBateaux():
+                        b = Bateau.getBateau(int(bn),REDIS)
+                        if b.est_proche(terre):
+                            bs.append(b.num)
+                            rs += b.cargaison.ressources_size()
+                    if rs <= 7:
+                        j.set_defausser(terre, 0)
+                    else:
+                        ds = rs/2 + rs%2 # ressource arrondi au superieur
+                        rs2 = rs - ds
+
+                        while rs2 > 7:
+                            ds += rs2/2 + rs2%2 # ressource arrondi au superieur
+                            rs2 = rs - ds
+                        j.set_defausser(terre,ds)
+                else:
+                    j.set_defausser(terre, 0)
+                # Gestion du déplacemnt de voleur
+                for i in range(0,Des.NB_LANCES):
+                    if des[i] == 7:
+                        j = js[(i+origin)%len(js)]
+                        j.set_deplacement_voleur(terre,True)
+                        j.add_lance_des_deplacement_voleur(terre,i+1)
 
 class Echange:
 
@@ -235,9 +261,7 @@ class Echange:
 
 
 
-class JeuNight:
-    @staticmethod
-    def peut_recolter_ressources(des):
+def peut_recolter_ressources(des):
         ''' On peut lancer la récolte des réssources si les dés sont entre 2 et 12'''
         if des < 2 or des > 12:
             raise RecolteError(RecolteError.HORS_LIMITE)
@@ -246,15 +270,39 @@ class JeuNight:
         return True
 
 
-    @staticmethod
-    def recolter_ressources(des):
+def recolter_ressources(des):
         ''' Effectue pour tous les joueurs sur toutes les terres la récolte des ressources sauf s'ils sont en ruine'''
         import arbre_action
-        if JeuNight.peut_recolter_ressources(des):
+        if peut_recolter_ressources(des):
             for j in arbre_action.Joueur.get_all_joueurs():
                 if not j.getEnRuine(): 
                     j.recolter_ressources(des)
             return True
         return False
- 
 
+
+def getJoueursParPriorite():
+        ''' Renvoie la liste des joueurs par ordre de priorité de la journée '''
+        return REDIS.lrange('JoueursPriorite',0,-1)
+
+def setNextJoueursParPriorite():
+        ''' Remplace la liste de priorite des joueurs actuelle par la suivante '''
+        pass
+
+def action_nuit():
+        ''' Execute l'ensemble des actions du jour '''
+
+        # En premier on fait defausser les gens qui n'ont pas defaussé leurs cartes au hasard.
+        # On exécute les arbres d'actions.
+        # On effectue les echanges
+        # On deplace les voleurs et on effectue les vols
+        # On effectue les monopoles.
+        # On relance les dés
+        # On redonne la priorié des joueurs
+        # On désigne les déplaceurs de voleur
+        # On effectue les récoltes
+        # On donne les cartes de développement achetée la veille
+        
+
+        pass
+        

@@ -9,7 +9,7 @@ REDIS = redis.StrictRedis()
 def protection(f):
     @functools.wraps(f)
     def helper(*args,**kwargs):
-        peut_f = Joueur.getattr('peut_' + f.__name__)
+        peut_f = getattr(Joueur,'peut_' + f.__name__)
         if peut_f(*args,**kwargs):
             f(*args,**kwargs)
             return True
@@ -51,7 +51,6 @@ class Joueur:
 
         node = Node.getNextNewNode()
         self.setRoot(node)
-        node.setNextRoot(NodeCst.NULL)
         
         node.setPlayer(self)
         node.setRoot(node)
@@ -70,7 +69,7 @@ class Joueur:
     
     def executer(self):
         ''' Execute l'ensemble de l'arbre d'action et construit une base de données à partir de toutes les actions. '''
-        node = self.getFirstRoot()
+        node = self.getRoot()
         ibdd = REDIS
         b = True
         while True:
@@ -293,7 +292,73 @@ class Joueur:
         for j in xrange(i):
             js.append(joueurs.JoueurPossible(j+1))
         return js
-    
+   
+    def peut_defausser(j,terre,cartes):
+        import joueurs
+        joueur = joueurs.JoueurPossible(j.num)
+        if joueur.getEnRuine():
+            raise DefausseError(DefausseError.JOUEUR_EN_RUINE)
+        if not joueur.aColoniseTerre(terre):
+            raise DefausseError(DefausseError.TERRE_NON_COLONISEE)
+        if joueur.get_defausser(terre) == 0:
+            raise DefausseError(DefausseError.DEFAUSSE_INTERDITE)
+            
+        c = joueur.getCartes(terre)
+        rs = c.ressources_size()
+
+
+        bs = []
+        for bn in joueur.getBateaux():
+            b = Bateau.getBateau(int(bn),REDIS)
+            if b.est_proche(terre):
+                bs.append(b.num)
+                rs += b.cargaison.ressources_size()
+        if rs <= 7:
+            raise DefausseError(DefausseError.DEFAUSSE_INTERDITE)
+        
+        res = cartes[0]
+        cargs = cartes[1]
+
+        ds = rs/2 + rs%2 # ressource arrondi au superieur
+        rs2 = rs - ds
+
+        while rs2 > 7:
+            ds += rs2/2 + rs2%2 # ressource arrondi au superieur
+            rs2 = rs - ds
+
+        if not (res.est_ressource() and res.est_physiquement_possible()):
+            raise DefausseError(DefausseError.FLUX_IMPOSSIBLE)
+        if not res <= c:
+            raise DefausseError(DefausseError.FLUX_TROP_ELEVE)
+        ss = res.ressources_size()
+        for cb in cargs:
+            if not cb[0].num in bs:
+                raise DefausseError(DefausseError.BATEAU_NON_DEFAUSSABLE)
+            if not (cb[1].est_physiquement_possible() and cb[1].est_ressource()):
+                raise DefausseError(DefausseError.FLUX_IMPOSSIBLE)
+            if not cb[1] <= cb[0].cargaison:
+                raise DefausseError(DefausseError.FLUX_TROP_ELEVE)
+            ss += cb[1].ressources_size()
+        if ss > ds:
+            raise DefausseError(DefausseError.DEFAUSSE_TROP_ELEVEE)
+        elif ss < ds:
+            raise DefausseError(DefausseError.DEFAUSSE_TROP_FAIBLE)
+        return True
+
+
+    @protection
+    def defausser(j,terre,cartes):
+        import joueurs
+        joueur = joueurs.JoueurPossible(j.num)
+        joueur.payer(terre,cartes[0])
+        bdd = joueur.bdd
+        for cb in cartes[1]:
+            cb[0].remove(cb[1])
+            cb[0].save(bdd)
+        joueur.set_defausser(terre,0)
+
+
+     
 
 class Node:
     ''' Classe représentant le noeud d'un arbre, avec un lien vers le pere, frere gauche et droit, premier et dernier fils. '''

@@ -1,11 +1,11 @@
 # *-* coding: iso-8859-1 *-*
 import unittest
-from foret_action import *
+from arbre_action import *
 import redis
 
 REDIS = redis.StrictRedis()
 
-class TestForetAction(unittest.TestCase):
+class TestArbreAction(unittest.TestCase):
 
     def setUp(self):
         REDIS.flushdb()
@@ -13,12 +13,8 @@ class TestForetAction(unittest.TestCase):
 
     def test_first_root(self):
         n =self.j1.setNewRoot()
-        self.assertEqual(self.j1.getFirstRoot(),n)
-        self.assertEqual(self.j1.getLastRoot(),n)
         nu = NodeCst.NULL
         self.assert_node(n,nu,nu,nu,nu,nu,n,self.j1)
-        self.assertEqual(n.getNextRoot(),nu)
-        self.assertEqual(n.getPreviousRoot(),nu)
 
     def test_add_child(self):
         n =self.j1.setNewRoot()

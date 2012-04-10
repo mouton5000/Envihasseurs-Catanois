@@ -664,51 +664,6 @@ def jouer_construction_routes(joueur,terre,isFirstRoute,a1,isSecondRoute,a2):
         construire_bateau(joueur,a2,True)
 
 
-def peut_defausser(joueur,terre,cartes):
-    bdd = joueur.bdd
-    if not joueur.getEnRuine() and 7 in Des.getDices() and joueur.aColoniseTerre(terre):
-        c = joueur.getCartes(terre)
-        rs = c.ressources_size()
-
-
-        bs = []
-        for bn in joueur.getBateaux():
-            b = Bateau.getBateau(int(bn),bdd)
-            if b.est_proche(terre):
-                bs.append(b.num)
-                rs += b.cargaison.ressources_size()
-        if rs <= 7:
-            return cartes == (Cartes.RIEN,[])
-        
-        res = cartes[0]
-        cargs = cartes[1]
-
-        ds = rs/2 + rs%2 # ressource arrondi au superieur
-        rs2 = rs - ds
-
-        while rs2 > 7:
-            ds += rs2/2 + rs2%2 # ressource arrondi au superieur
-            rs2 = rs - ds
-        if res <= c and res.est_ressource() and res.est_physiquement_possible():
-            ss = res.ressources_size()
-            for cb in cargs:
-                if cb[0].num in bs and cb[1] <= cb[0].cargaison and cb[1].est_physiquement_possible() and cb[1].est_ressource():
-                    ss += cb[1].ressources_size()
-                else:
-                    return False
-            return ss == ds
-    return False
-
-
-@kallable
-@protection
-def defausser(joueur,terre,cartes):
-    joueur.payer(terre,cartes[0])
-    bdd = joueur.bdd
-    for cb in cartes[1]:
-        cb[0].remove(cb[1])
-        cb[0].save(bdd)
-
 
 def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol):
     bdd = joueur.bdd

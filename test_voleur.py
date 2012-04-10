@@ -640,30 +640,60 @@ class TestVoleur(TestJoueur):
 
         Des.save([3,6,5,1])
         j1.setCartes(tg,c1)
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[])))
+        DeplacementVoleur.designer_deplaceur_de_voleur()
+        j1c = Joueur(j1.num)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.DEFAUSSE_INTERDITE)
+
         Des.save([3,7,5,1])
-        self.assertTrue(Jeu.peut_defausser(j1,tg,(d1,[])))
+        DeplacementVoleur.designer_deplaceur_de_voleur()
+        self.assertTrue(Joueur.peut_defausser(j1c,tg,(d1,[])))
         
         j1.setEnRuine(True)
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[])))
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
 
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(dneg,[])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(ddouble,[])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d2,[])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d3,[])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d4,[])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d6,[])))
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(dneg,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(ddouble,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d2,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.DEFAUSSE_TROP_FAIBLE)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d3,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.DEFAUSSE_TROP_ELEVEE)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d4,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.FLUX_TROP_ELEVE)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d6,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.FLUX_IMPOSSIBLE)
 
         j1.setCartes(tg,c2)
-        self.assertTrue(Jeu.peut_defausser(j1,tg,(Cartes.RIEN,[])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d5,[])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d8,[])))
+        DeplacementVoleur.designer_deplaceur_de_voleur()
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(Cartes.RIEN,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.DEFAUSSE_INTERDITE)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d5,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.DEFAUSSE_INTERDITE)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d8,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.DEFAUSSE_INTERDITE)
 
         j1.setCartes(tg,c3)
-        self.assertTrue(Jeu.peut_defausser(j1,tg,(d7,[])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[])))
+        DeplacementVoleur.designer_deplaceur_de_voleur()
+        self.assertTrue(Joueur.peut_defausser(j1c,tg,(d7,[])))
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.DEFAUSSE_TROP_FAIBLE)
 
 
 
@@ -680,22 +710,41 @@ class TestVoleur(TestJoueur):
         d11 = CartesRessources(1,1,1,0,0) # Ok pour c1 si on associe avec tout le contenu du bateau
         d12 = CartesRessources(1,0,1,0,0) # Trop pour le bateau
         d13 = CartesRessources(1,2,0,1,0) # Cargaison du batea
+        DeplacementVoleur.designer_deplaceur_de_voleur()
         
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d9,[])))
-        self.assertTrue(Jeu.peut_defausser(j1,tg,(d1,[(b1,d10)])))
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d9,[])))
+        self.assertEqual(err.exception.error_code, DefausseError.FLUX_TROP_ELEVE)
+
+        self.assertTrue(Joueur.peut_defausser(j1c,tg,(d1,[(b1,d10)])))
         
 #        j1.enRuine = True
-#        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[(b1,d10)])))
+#        self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[(b1,d10)])))
 #        # Joueur en ruine
 #        j1.enRuine = False
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[(b1,dgen)])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[(b1,dgen2)])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[(b1,dneg)])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[(b1,ddouble)])))
-        self.assertTrue(Jeu.peut_defausser(j1,tg,(d11,[(b1,d13)])))
-        self.assertFalse(Jeu.peut_defausser(j1,tg,(d1,[(b1,d12)])))
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[(b1,dgen)])))
+        self.assertEqual(err.exception.error_code, DefausseError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[(b1,dgen2)])))
+        self.assertEqual(err.exception.error_code, DefausseError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[(b1,dneg)])))
+        self.assertEqual(err.exception.error_code, DefausseError.FLUX_IMPOSSIBLE)
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[(b1,ddouble)])))
+        self.assertEqual(err.exception.error_code, DefausseError.FLUX_IMPOSSIBLE)
+        self.assertTrue(Joueur.peut_defausser(j1c,tg,(d11,[(b1,d13)])))
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[(b1,d12)])))
+        self.assertEqual(err.exception.error_code, DefausseError.FLUX_TROP_ELEVE)
 
-        Jeu.defausser(j1,tg,(d1,[(b1,d10)]))
+        Joueur.defausser(j1c,tg,(d1,[(b1,d10)]))
+        with self.assertRaises(DefausseError) as err:
+            self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[(b1,d10)])))
+        self.assertEqual(err.exception.error_code, DefausseError.DEFAUSSE_INTERDITE)
+
+
         self.assertEqual(j1.getCartes(tg), c1 - d1)
 
         b2 = Bateau.getBateau(1)
