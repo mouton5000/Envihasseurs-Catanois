@@ -43,7 +43,7 @@ class BDD:
         if key in self.dict:
             return str(member) in self.dict[key]
         else:
-            return self.bdd.ismember(key,member)
+            return self.bdd.sismember(key,member)
 
     def smembers(self,key):
         if key in self.dict:
