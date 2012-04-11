@@ -70,6 +70,9 @@ class TestExecutionArbreAction(TestJoueur):
         self.act15 = Action(15, 'construire_route', self.a15.num)
         self.act16 = Action(16, 'construire_route', self.a16.num)
         self.act17 = Action(17, 'construire_route', self.a17.num)
+
+        self.ars = [self.a1, self.a2, self.a3, self.a4, self.a5, self.a6, self.a7, self.a8, self.a9, self.a10, self.a11, self.a12, self.a13, self.a14, self.a15, self.a16, self.a17]
+
         self.act1.save()
         self.act2.save()
         self.act3.save()
@@ -132,6 +135,9 @@ class TestExecutionArbreAction(TestJoueur):
         
         self.n12.addAction(self.act7)
 
+    def check_ars(self, bools, bdd):
+        for i in xrange(len(bools)):
+                self.assertEqual(Route.hasRoute(self.ars[i], bdd), bools[i])
 
     def test_parcour_feuille_1(self):
         j1 = self.j1
@@ -140,26 +146,11 @@ class TestExecutionArbreAction(TestJoueur):
         self.base_arbre()
         bdd = j1.executer()
 
-        self.assertTrue(Route.hasRoute(self.a1, bdd))
         self.assertFalse(Route.hasRoute(self.a1))
         self.assertEqual(Route.getRouteJoueur(self.a1, bdd), 1)
-        
-        self.assertTrue(Route.hasRoute(self.a2, bdd))
-        self.assertTrue(Route.hasRoute(self.a3, bdd))
-        self.assertTrue(Route.hasRoute(self.a4, bdd))
-        self.assertTrue(Route.hasRoute(self.a5, bdd))
-        self.assertFalse(Route.hasRoute(self.a6, bdd))
-        self.assertFalse(Route.hasRoute(self.a7, bdd))
-        self.assertFalse(Route.hasRoute(self.a8, bdd))
-        self.assertFalse(Route.hasRoute(self.a9, bdd))
-        self.assertFalse(Route.hasRoute(self.a10, bdd))
-        self.assertFalse(Route.hasRoute(self.a11, bdd))
-        self.assertFalse(Route.hasRoute(self.a12, bdd))
-        self.assertFalse(Route.hasRoute(self.a13, bdd))
-        self.assertFalse(Route.hasRoute(self.a14, bdd))
-        self.assertFalse(Route.hasRoute(self.a15, bdd))
-        self.assertFalse(Route.hasRoute(self.a16, bdd))
-        self.assertFalse(Route.hasRoute(self.a17, bdd))
+
+        self.check_ars([True,True,True,True,True,False,False,False,False,False,False,False,False,False,False,False,False], bdd) 
+    
 
     def test_parcour_feuille_2(self):
         j1 = self.j1
@@ -170,24 +161,8 @@ class TestExecutionArbreAction(TestJoueur):
         self.n2.addAction(self.act1)
         bdd = j1.executer()
     
-        self.assertTrue(Route.hasRoute(self.a1, bdd))
+        self.check_ars([True,False,False,False,False,False,True,True,True,True,True,False,False,False,False,False,False], bdd) 
         self.assertFalse(Route.hasRoute(self.a1)) 
-        self.assertFalse(Route.hasRoute(self.a2, bdd))
-        self.assertFalse(Route.hasRoute(self.a3, bdd))
-        self.assertFalse(Route.hasRoute(self.a4, bdd))
-        self.assertFalse(Route.hasRoute(self.a5, bdd))
-        self.assertFalse(Route.hasRoute(self.a6, bdd))
-        self.assertTrue(Route.hasRoute(self.a7, bdd))
-        self.assertTrue(Route.hasRoute(self.a8, bdd))
-        self.assertTrue(Route.hasRoute(self.a9, bdd))
-        self.assertTrue(Route.hasRoute(self.a10, bdd))
-        self.assertTrue(Route.hasRoute(self.a11, bdd))
-        self.assertFalse(Route.hasRoute(self.a12, bdd))
-        self.assertFalse(Route.hasRoute(self.a13, bdd))
-        self.assertFalse(Route.hasRoute(self.a14, bdd))
-        self.assertFalse(Route.hasRoute(self.a15, bdd))
-        self.assertFalse(Route.hasRoute(self.a16, bdd))
-        self.assertFalse(Route.hasRoute(self.a17, bdd))
     
 
     def test_parcour_feuille_3(self):
@@ -200,6 +175,7 @@ class TestExecutionArbreAction(TestJoueur):
         self.n7.addAction(self.act7)
         bdd = j1.executer()
     
+        self.check_ars([True,False,False,False,False,False,True,True,True,True,False,False,True,False,False,False,False], bdd) 
         self.assertTrue(Route.hasRoute(self.a1, bdd))
         self.assertFalse(Route.hasRoute(self.a1)) 
         self.assertFalse(Route.hasRoute(self.a2, bdd))
@@ -220,7 +196,6 @@ class TestExecutionArbreAction(TestJoueur):
         self.assertFalse(Route.hasRoute(self.a17, bdd))
 
 
-
     def test_parcour_feuille_4(self):
         j1 = self.j1
         p = Plateau.getPlateau()
@@ -231,26 +206,8 @@ class TestExecutionArbreAction(TestJoueur):
         self.n6.insertActionByIndex(1,self.act8)
         bdd = j1.executer()
     
-        self.assertTrue(Route.hasRoute(self.a1, bdd))
+        self.check_ars([True,False,False,False,False,False,True,True,False,True,True,False,True,False,False,True,True], bdd) 
         self.assertFalse(Route.hasRoute(self.a1)) 
-        self.assertFalse(Route.hasRoute(self.a2, bdd))
-        self.assertFalse(Route.hasRoute(self.a3, bdd))
-        self.assertFalse(Route.hasRoute(self.a4, bdd))
-        self.assertFalse(Route.hasRoute(self.a5, bdd))
-        self.assertFalse(Route.hasRoute(self.a6, bdd))
-        self.assertTrue(Route.hasRoute(self.a7, bdd))
-        self.assertTrue(Route.hasRoute(self.a8, bdd))
-        self.assertFalse(Route.hasRoute(self.a9, bdd))
-        self.assertTrue(Route.hasRoute(self.a10, bdd))
-        self.assertTrue(Route.hasRoute(self.a11, bdd))
-        self.assertFalse(Route.hasRoute(self.a12, bdd))
-        self.assertTrue(Route.hasRoute(self.a13, bdd))
-        self.assertFalse(Route.hasRoute(self.a14, bdd))
-        self.assertFalse(Route.hasRoute(self.a15, bdd))
-        self.assertTrue(Route.hasRoute(self.a16, bdd))
-        self.assertTrue(Route.hasRoute(self.a17, bdd))
-
-
 
     def test_parcour_feuille_5(self):
         j1 = self.j1
@@ -263,28 +220,9 @@ class TestExecutionArbreAction(TestJoueur):
         self.n10.insertActionByIndex(0,self.act17)
         bdd = j1.executer()
     
-        self.assertTrue(Route.hasRoute(self.a1, bdd))
+        self.check_ars([True,False,False,False,False,False,True,True,False,True,True,False,True,True,True,False,False], bdd) 
         self.assertFalse(Route.hasRoute(self.a1)) 
-        self.assertFalse(Route.hasRoute(self.a2, bdd))
-        self.assertFalse(Route.hasRoute(self.a3, bdd))
-        self.assertFalse(Route.hasRoute(self.a4, bdd))
-        self.assertFalse(Route.hasRoute(self.a5, bdd))
-        self.assertFalse(Route.hasRoute(self.a6, bdd))
-        self.assertTrue(Route.hasRoute(self.a7, bdd))
-        self.assertTrue(Route.hasRoute(self.a8, bdd))
-        self.assertFalse(Route.hasRoute(self.a9, bdd))
-        self.assertTrue(Route.hasRoute(self.a10, bdd))
-        self.assertTrue(Route.hasRoute(self.a11, bdd))
-        self.assertFalse(Route.hasRoute(self.a12, bdd))
-        self.assertTrue(Route.hasRoute(self.a13, bdd))
-        self.assertTrue(Route.hasRoute(self.a14, bdd))
-        self.assertTrue(Route.hasRoute(self.a15, bdd))
-        self.assertFalse(Route.hasRoute(self.a16, bdd))
-        self.assertFalse(Route.hasRoute(self.a17, bdd))
-
-
-
-    
+ 
     def test_parcour_feuille_6(self):
         j1 = self.j1
         p = Plateau.getPlateau()
@@ -295,27 +233,95 @@ class TestExecutionArbreAction(TestJoueur):
         self.n5.addAction(self.act1)
         bdd = j1.executer()
     
-        self.assertFalse(Route.hasRoute(self.a1, bdd))
+        self.check_ars([False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False], bdd) 
         self.assertFalse(Route.hasRoute(self.a1)) 
-        self.assertFalse(Route.hasRoute(self.a2, bdd))
-        self.assertFalse(Route.hasRoute(self.a3, bdd))
-        self.assertFalse(Route.hasRoute(self.a4, bdd))
-        self.assertFalse(Route.hasRoute(self.a5, bdd))
-        self.assertFalse(Route.hasRoute(self.a6, bdd))
-        self.assertTrue(Route.hasRoute(self.a7, bdd))
-        self.assertFalse(Route.hasRoute(self.a8, bdd))
-        self.assertFalse(Route.hasRoute(self.a9, bdd))
-        self.assertFalse(Route.hasRoute(self.a10, bdd))
-        self.assertFalse(Route.hasRoute(self.a11, bdd))
-        self.assertFalse(Route.hasRoute(self.a12, bdd))
-        self.assertFalse(Route.hasRoute(self.a13, bdd))
-        self.assertFalse(Route.hasRoute(self.a14, bdd))
-        self.assertFalse(Route.hasRoute(self.a15, bdd))
-        self.assertFalse(Route.hasRoute(self.a16, bdd))
-        self.assertFalse(Route.hasRoute(self.a17, bdd))
+
+
+    def test_sortie_1(self):
+        j1 = self.j1
+        p = Plateau.getPlateau()
+
+        self.base_arbre()
+
+        self.n4.addAction(self.act2)
+        bdd = j1.executer()
+        self.check_ars([True,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False], bdd) 
+
+    def test_sortie_2(self):
+        j1 = self.j1
+        p = Plateau.getPlateau()
+
+        self.base_arbre()
+
+        self.n2.addAction(self.act2)
+        self.n7.addAction(self.act10)
+        self.n8.addAction(self.act7)
+        bdd = j1.executer()
+        self.check_ars([True,False,False,False,False,False,True,True,True,True,False,False,False,False,False,False,False], bdd) 
+    
+
+    
+    def test_sortie_3(self):
+        j1 = self.j1
+        p = Plateau.getPlateau()
+
+        self.base_arbre()
+
+        self.n2.addAction(self.act2)
+        self.n6.addAction(self.act10)
+        self.n9.addAction(self.act1)
+        bdd = j1.executer()
+        self.check_ars([True,False,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False], bdd) 
+    
+
+    def test_sortie_4(self):
+        j1 = self.j1
+        p = Plateau.getPlateau()
+
+        self.base_arbre()
+
+        self.n2.addAction(self.act2)
+        self.n6.addAction(self.act10)
+        self.n10.addAction(self.act16)
+        self.n11.addAction(self.act13)
+        bdd = j1.executer()
+        self.check_ars([True,False,False,False,False,False,True,True,False,True,True,False,True,False,False,False,False], bdd) 
+    
 
 
 
+    def test_sortie_5(self):
+        j1 = self.j1
+        p = Plateau.getPlateau()
+
+        self.base_arbre()
+
+        self.n2.addAction(self.act2)
+        self.n5.addAction(self.act1)
+        self.n12.addAction(self.act7)
+        bdd = j1.executer()
+        self.check_ars([False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False], bdd) 
+    
+
+    def test_insertion_action(self):
+        # 3 possibilite : l'insertion se passe bien et renvoie True, elle ne se passe pas bien car elle est inconsistante avec une autre action, soit dans le même noeud, soit un noued ancetre, soit un noeud descendant, enfin elle ne se passe pas bien car l'action elle même n'est pas valide.
+
+        j1 = self.j1
+        p = Plateau.getPlateau()
+
+        self.base_arbre()
+
+        b1 = j1.insererAction(self.act2, self.n6,2) # ok
+        b2 = j1.insererAction(self.act9, self.n6,2) # Non valide, autre action du meme noeud située avant
+        b3 = j1.insererAction(self.act10, self.n6,1) # Non valide, autre action du meme noeud située après
+        b4 = j1.insererAction(self.act7, self.n6,2) # Non valide, autre action d'un ancetre n5
+        b5 = j1.insererAction(self.act11, self.n6,2) # Non valide, autre action d'un descendant (1) n7
+        b6 = j1.insererAction(self.act13, self.n6,2) # Non valide, autre action d'un descendant (2) n8
+        b7 = j1.insererAction(self.act17, self.n5,2) # Non valide, autre action d'un descendant (3) n10
+        b9 = j1.insererAction(self.act14, self.n5,2) # Non valide, autre action d'un descendant (4) n11
+
+
+        self.assertTrue(b1)
 
 if __name__ == '__main__':
     unittest.main()

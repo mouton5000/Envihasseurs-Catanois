@@ -158,3 +158,9 @@ class DefausseError(ActionError):
 
     def __init__(self,value):
         ActionError.__init__(self,value)
+
+class ActionInsertionError:
+    def __init__(self,node, action, actionError):
+        self.node = node
+        self.action = action
+        self.actionError = actionError

@@ -121,7 +121,6 @@ class Joueur:
         actionsNum = node.getActionsNum()
         for actnum in actionsNum:
             action = Action.getAction(int(actnum))
-            print actnum
             try:    
                 b = self.executerAction(action, ibdd)
             except ActionError:
@@ -162,11 +161,12 @@ class Joueur:
         ''' Renvoie vrai si en ajoutant l'action n au noeud node en position index, toutes les exécutions de foret d'action qui suivent peuvent etre exécutées. Sinon n'ajoute pas l'action et renvoie faux'''
         node.insertActionByIndex(index, action)
         
-        if self.testListNode(node):
+        try:
+            self.testListNode(node)
             return True
-        else:
+        except ActionInsertionError as err:
             node.removeAction(action)
-            return False
+            return err
     
     def retirerAction(self,action, node):
         ''' Renvoie vrai si en retirant l'action n au noeud node en position index, toutes les exécutions de foret d'action qui suivent peuvent etre exécutées. Sinon n'ajoute pas l'action et renvoie faux'''
@@ -181,7 +181,7 @@ class Joueur:
 
     def testListNode(self, node):
         ''' Renvoie vrai si le sous arbre de l'arbre de d'action contenant le plus court chemin de r à node et le sous arbre enraciné en node est cohérent. Ie, il est possible de le parcourir du début à la fin, quelque soit la feuille choisie. '''
-        pathLists = node.getPathLists()
+        pathLists = node.getPathList()
 
         s = len(pathLists[1])
 
@@ -192,7 +192,7 @@ class Joueur:
             return False
         for i in xrange(s):
             # On teste le chemin de node jusque sa ie feuille.
-            c = self.executerListeNodes(pathLists[i][indexes[i]], ibdd)
+            c = self.executerListNodes(pathLists[i][indexes[i]], ibdd)
             if not c[0]:
                 return False
         
@@ -203,7 +203,7 @@ class Joueur:
 
     def isGivingCompatible(self,c):
         ''' Vérifie que pour tout noeud, toute action, le joueur possède toujours au moins c cartes '''
-        pathLists = self.getRoot().getPathLists()
+        pathLists = self.getRoot().getPathList()
 
         s = len(pathLists[1])
 
@@ -463,7 +463,7 @@ class Node:
         ''' Renvoie la liste des noeuds compris dans le chemin partant de origin jusque dest, destination non comprise'''
         path = []
         node = dest
-        while(node != origine):
+        while(node != origin):
             node = node.getFatherNode()
             if node == NodeCst.NULL:
                 return []
@@ -479,7 +479,7 @@ class Node:
         l.append([root.getPath(node)])
 
         l1 = []
-        for leaf in node.getLeaves():
+        for leaf in node.getLeavesOf():
             l1.append(node.getPath(leaf))
 
         l.append(l1)
