@@ -347,7 +347,7 @@ class TestExecutionArbreAction(TestJoueur):
 
         act1 = Action(2001, 'construire_route', 'yahoo')
         act1.save()
-        act2 = Action(2002, 'construire_rouuuuute', 'yahoo')
+        act2 = Action(2002, 'construire_rouuuuute', self.a1.num)
         act2.save()
         act3 = Action(2003, 'construire_route', 'print bdd')
         act3.save()
@@ -428,34 +428,59 @@ class TestExecutionArbreAction(TestJoueur):
         self.assertEqual(exc.action, act18)
         self.assertEqual(exc.actionError.error_code, RouteError.ARRETE_OCCUPEE)
         self.assertNotIn(str(act118.num), self.n5.getActionsNum())
-        
-        act1 = Action(2001, 'construire_route', 'yahoo')
-        act1.save()
-        act2 = Action(2002, 'construire_rouuuuute', 'yahoo')
-        act2.save()
+       
+        for i in xrange(2000):
+            Action.incrActionId() 
         with(self.assertRaises(NodeError)) as err:
-            j1.insererAction(act1, self.n5,2) # Non valide, autre action d'un descendant (4) n11
+            j1.insererNouvelleAction(self.n5,2,'construire_route', 'yahoo') # Non valide, action invalide
         exc = err.exception
         self.assertEqual(exc.node, self.n5)
-        self.assertEqual(exc.action, act1)
+        self.assertEqual(exc.action, Action.getAction(2000))
         self.assertEqual(exc.actionError.error_code, ActionError.MAUVAIS_PARAMETRES)
-        self.assertNotIn(str(act1.num), self.n5.getActionsNum())
+        self.assertNotIn(str(2000), self.n5.getActionsNum())
 
         with(self.assertRaises(NodeError)) as err:
-            j1.insererAction(act2, self.n5,2) # Non valide, autre action d'un descendant (4) n11
+            j1.insererNouvelleAction(self.n5, 2, 'construire_rouuuuute', self.a1.num) # Non valide, action invalide
         exc = err.exception
         self.assertEqual(exc.node, self.n5)
-        self.assertEqual(exc.action, act2)
+        self.assertEqual(exc.action, Action.getAction(2001))
         self.assertEqual(exc.actionError.error_code, ActionError.MAUVAIS_PARAMETRES)
-        self.assertNotIn(str(act2.num), self.n5.getActionsNum())
+        self.assertNotIn(str(2001), self.n5.getActionsNum())
+        
+
+        self.assertTrue(j1.insererNouvelleAction(self.n2,2, 'construire_route', p.it(52).lien(p.it(42)).num)) # ok
+        self.assertIn(str(2002), self.n2.getActionsNum())
 
     def test_retirer_action(self):
-        # 3 possibilite : retirer l'action se passe bien et renvoie True, elle ne se passe pas bien car elle est inconsistante avec une autre action, soit dans le même noeud, soit un noeud descendant, enfin elle ne se passe pas bien car l'action elle même n'est pas valide.
+        # 3 possibilite : retirer l'action se passe bien et renvoie True, elle ne se passe pas bien car elle est inconsistante avec une autre action, soit dans le même noeud, soit un noeud descendant, enfin elle ne se passe pas bien car l'action elle même n'est pas dans le noeud.
 
         j1 = self.j1
         p = Plateau.getPlateau()
         self.base_arbre()
 
+
+        self.assertFalse(j1.retirerAction(self.act1, self.n3)) # Cette action n'est pas dans ce noeud
+        self.assertFalse(j1.retirerAction(self.act3, self.n2)) # Cette action n'est pas dans ce noeud
+        self.assertFalse(j1.retirerAction(self.act14,self.n5)) # Cette action n'est pas dans ce noeud
+        
+
+        
+        with(self.assertRaises(NodeError)) as err:
+            j1.retirerAction(self.act1, self.n2) # La suppression de l'action a une répercussion sur une autre action de l'arbre.
+        exc = err.exception
+        self.assertEqual(exc.node, self.n2)
+        self.assertEqual(exc.action, self.act2)
+        self.assertEqual(exc.actionError.error_code, RouteError.ARRETE_NON_RELIEE)
+        self.assertIn(str(self.act1.num), self.n2.getActionsNum())
+      
+  
+        with(self.assertRaises(NodeError)) as err:
+            j1.retirerAction(self.act2, self.n2) # La suppression de l'action a une répercussion sur une autre action d'un des descendant
+        exc = err.exception
+        self.assertEqual(exc.node, self.n4)
+        self.assertEqual(exc.action, self.act3)
+        self.assertEqual(exc.actionError.error_code, RouteError.ARRETE_NON_RELIEE)
+        self.assertIn(str(self.act2.num), self.n2.getActionsNum())
 
 if __name__ == '__main__':
     unittest.main()

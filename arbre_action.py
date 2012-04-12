@@ -159,6 +159,14 @@ class Joueur:
                 
 
 # Vérifications en cas d'insertion et de suppression d'une action
+    
+    def insererNouvelleAction(self, node, index, func, *params):
+        ''' Crée une nouvelle action avec les parametres func et params et l'ajoute a node en position index'''
+        num = Action.getNextActionId()
+        Action.incrActionId()
+        a = Action(num, func, *params)
+        a.save()
+        return self.insererAction(a,node,index)
 
     def insererAction(self,action, node, index):
         ''' Renvoie vrai si en ajoutant l'action n au noeud node en position index, toutes les exécutions de foret d'action qui suivent peuvent etre exécutées. Sinon n'ajoute pas l'action et renvoie faux'''
@@ -171,15 +179,18 @@ class Joueur:
             raise err
     
     def retirerAction(self,action, node):
-        ''' Renvoie vrai si en retirant l'action n au noeud node en position index, toutes les exécutions de foret d'action qui suivent peuvent etre exécutées. Sinon n'ajoute pas l'action et renvoie faux'''
+        ''' Renvoie vrai si en retirant l'action n au noeud node en position index, toutes les exécutions de foret d'action qui suivent peuvent etre exécutées. Sinon ne retire pas l'action et renvoie faux'''
         index = node.getActionIndex(action)
-        node.removeAction(action)
-        
-        if self.testListNode(node):
-            return True
-        else:
-            node.insertActionByIndex(index, action)
-            return False
+        if index != -1:
+            node.removeAction(action)
+            try:
+                self.testListNode(node)
+                Action.delAction(action.num)
+                return True
+            except NodeError as err:
+                node.insertActionByIndex(index, action)
+                raise err
+        return False
 
     def testListNode(self, node):
         ''' Renvoie vrai si le sous arbre de l'arbre de d'action contenant le plus court chemin de r à node et le sous arbre enraciné en node est cohérent. Ie, il est possible de le parcourir du début à la fin, quelque soit la feuille choisie. '''
@@ -690,13 +701,15 @@ class Node:
         ''' Renvoie l'indice de l'action dans le noeud'''
         key = 'N' + str(node.num) + ':actions'
         actions = REDIS.lrange(key,0,-1)
-        return actions.index(str(action.num))
+        try:
+            return actions.index(str(action.num))
+        except ValueError:
+            return -1
         
 
     def removeAction(node,action):
         ''' Retire l'action du noeud node '''
         REDIS.lrem('N'+str(node.num)+':actions',0,action.num)
-        Action.delAction(action.num)
 
         
 
