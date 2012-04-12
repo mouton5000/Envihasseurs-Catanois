@@ -85,7 +85,11 @@ class Joueur:
                 node = node.getSiblingNode()
                 if node == NodeCst.NULL:
                     return ibdd
-            b = self.executerNode(node, ibdd)
+            try:
+                self.executerNode(node, ibdd)
+                b = True
+            except NodeError:
+                b = False
     
     def executerPartiel(self, node, action):
         ''' Renvoie la base de données telle qu'elle serait si on exécutait l'arbre d'action jusqu'au noeud node, jusqu'à l'action action.'''
@@ -109,10 +113,9 @@ class Joueur:
         ''' Execute linéairement l'ensemble des noeuds de la liste l. Si c'est impossible, renvoie un tuple (False,0), sinon renvoie (True, bdd) où bdd est l'interface de la base de donnée résultante de l'application des noeuds sur ibdd. ibdd n'est pas modifiée'''
         bdd = BDD(ibdd)
         for node in listNodes:
-            if not self.executerNode(node,bdd):
-                return (False,0)
+            self.executerNode(node,bdd)
             bdd = BDD(bdd)
-        return (True,bdd)
+        return bdd
             
 
 
@@ -123,9 +126,9 @@ class Joueur:
             action = Action.getAction(int(actnum))
             try:    
                 b = self.executerAction(action, ibdd)
-            except ActionError:
+            except ActionError as err:
                 ibdd.flushSurface()
-                return False
+                raise NodeError(node,action, err)
         return True
 
     def executerNodePartiel(self, node, action, ibdd):
@@ -160,13 +163,12 @@ class Joueur:
     def insererAction(self,action, node, index):
         ''' Renvoie vrai si en ajoutant l'action n au noeud node en position index, toutes les exécutions de foret d'action qui suivent peuvent etre exécutées. Sinon n'ajoute pas l'action et renvoie faux'''
         node.insertActionByIndex(index, action)
-        
         try:
             self.testListNode(node)
             return True
-        except ActionInsertionError as err:
+        except NodeError as err:
             node.removeAction(action)
-            return err
+            raise err
     
     def retirerAction(self,action, node):
         ''' Renvoie vrai si en retirant l'action n au noeud node en position index, toutes les exécutions de foret d'action qui suivent peuvent etre exécutées. Sinon n'ajoute pas l'action et renvoie faux'''
@@ -187,14 +189,10 @@ class Joueur:
 
         ibdd = BDD(REDIS)
         # On teste le chemin de root jusque node.
-        c = self.executerListNodes(pathLists[0][0], ibdd)
-        if not c[0]:
-            return False
+        ibdd = self.executerListNodes(pathLists[0], ibdd)
         for i in xrange(s):
-            # On teste le chemin de node jusque sa ie feuille.
-            c = self.executerListNodes(pathLists[i][indexes[i]], ibdd)
-            if not c[0]:
-                return False
+            # On teste le chemin de node jusque sa ie feuille, en repartant de la base de données fournie par le chemin de la racine jusque node.
+            self.executerListNodes(pathLists[1][i], ibdd)
         
         return True
 
@@ -476,12 +474,13 @@ class Node:
         root = node.getRoot()
 
         l = []
-        l.append([root.getPath(node)])
-
+        l.append(root.getPath(node))
+        l[0].append(node)
         l1 = []
         for leaf in node.getLeavesOf():
-            l1.append(node.getPath(leaf))
-
+            path = node.getPath(leaf)
+            path.append(leaf)
+            l1.append(path[1:])
         l.append(l1)
         return l
 
@@ -681,8 +680,11 @@ class Node:
     def insertActionByIndex(node,index,action):
         ''' Ajoute une action au noeud node juste après l'action située à l'indice index '''
         key = 'N' + str(node.num) + ':actions'
-        beforeAction = REDIS.lindex(key,index)
-        Node.insertAction(node,beforeAction,action)
+        if index == 0:
+            return node.lPushAction(action)
+        else:
+            beforeAction = REDIS.lindex(key,index-1)
+            node.insertAction(beforeAction,action)
 
     def getActionIndex(node,action):
         ''' Renvoie l'indice de l'action dans le noeud'''
@@ -704,6 +706,9 @@ class Action:
         self.num = num
         self.func = func
         self.params = list(params)
+
+    def __eq__(self,other):
+        return self.num == other.num
 
     def save(self):
         key = 'Act'+str(self.num)
@@ -741,12 +746,4 @@ class NodeCst:
 
 if __name__ == '__main__':
     
-    REDIS.flushdb()
-    indexes = [0,0,0]
-    sizes = [0,3,2]
-
-    print indexes
-    while(hasNext(indexes,sizes)):
-        next(indexes,sizes)
-        print indexes
-        
+    REDIS.flushdb() 

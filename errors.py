@@ -1,6 +1,9 @@
 # *-* coding: utf8 *-*
 
 class ActionError(Exception):
+
+    MAUVAIS_PARAMETRES = -1
+
     def __init__(self,value):
         self.error_code = value
 
@@ -159,7 +162,7 @@ class DefausseError(ActionError):
     def __init__(self,value):
         ActionError.__init__(self,value)
 
-class ActionInsertionError:
+class NodeError:
     def __init__(self,node, action, actionError):
         self.node = node
         self.action = action

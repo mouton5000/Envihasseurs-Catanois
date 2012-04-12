@@ -185,7 +185,12 @@ def construire_colonie(j, intersection):
     recalcul_route_la_plus_longue(terre,bdd)
 
 def translate_construire_route(arrete_num_str, construction_route_str = 'False'):
-    return [Plateau.getPlateau().ar(int(arrete_num_str)), construction_route_str == 'True']
+    try:
+        num = int(arrete_num_str)
+        ar = Plateau.getPlateau().ar(num)
+    except ValueError, IndexError:
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [ar, construction_route_str == 'True']
 
 def peut_construire_route(j, arrete, construction_route = False):
     ''' Un joueur j peut construire une route sur l'arrete si il n'est pas en ruine, si il n'existe pas déjà de route non en ruine sur cet emplacement, si cette arrete est terrestre, si il peut payer ou s'il a jouer une carte développement de construction de route, et s'il existe une colonie ou une route voiine à cette arrete.'''
