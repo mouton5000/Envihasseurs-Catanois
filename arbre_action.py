@@ -149,12 +149,12 @@ class Joueur:
         ''' Execute l'action, avec la base de donnée ibdd. ibdd est modifiée. '''
         import joueurs
         j = joueurs.JoueurPossible(self.num, ibdd)
-        func = getattr(Jeu, action.func)
-        translation_args = getattr(Jeu, 'translate_'+action.func)(*action.params)
         try:
+            func = getattr(Jeu, action.func)
+            translation_args = getattr(Jeu, 'translate_'+action.func)(*action.params)
             func.peut_etre_appelee
         except AttributeError:
-            return False
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
         return func(j,*translation_args)
                 
 

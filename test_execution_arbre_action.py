@@ -347,9 +347,9 @@ class TestExecutionArbreAction(TestJoueur):
 
         act1 = Action(2001, 'construire_route', 'yahoo')
         act1.save()
-        act2 = Action(2002, 'construire_route', 'yahoo')
+        act2 = Action(2002, 'construire_rouuuuute', 'yahoo')
         act2.save()
-        act3 = Action(2003, 'construire_route', 'yahoo')
+        act3 = Action(2003, 'construire_route', 'print bdd')
         act3.save()
         self.n2.addAction(act1)
         self.n5.addAction(act2)
@@ -429,15 +429,25 @@ class TestExecutionArbreAction(TestJoueur):
         self.assertEqual(exc.actionError.error_code, RouteError.ARRETE_OCCUPEE)
         self.assertNotIn(str(act118.num), self.n5.getActionsNum())
         
-        act = Action(2000, 'construire_route', 'yahoo')
-        act.save()
+        act1 = Action(2001, 'construire_route', 'yahoo')
+        act1.save()
+        act2 = Action(2002, 'construire_rouuuuute', 'yahoo')
+        act2.save()
         with(self.assertRaises(NodeError)) as err:
-            j1.insererAction(act, self.n5,2) # Non valide, autre action d'un descendant (4) n11
+            j1.insererAction(act1, self.n5,2) # Non valide, autre action d'un descendant (4) n11
         exc = err.exception
         self.assertEqual(exc.node, self.n5)
-        self.assertEqual(exc.action, act)
+        self.assertEqual(exc.action, act1)
         self.assertEqual(exc.actionError.error_code, ActionError.MAUVAIS_PARAMETRES)
-        self.assertNotIn(str(act.num), self.n5.getActionsNum())
+        self.assertNotIn(str(act1.num), self.n5.getActionsNum())
+
+        with(self.assertRaises(NodeError)) as err:
+            j1.insererAction(act2, self.n5,2) # Non valide, autre action d'un descendant (4) n11
+        exc = err.exception
+        self.assertEqual(exc.node, self.n5)
+        self.assertEqual(exc.action, act2)
+        self.assertEqual(exc.actionError.error_code, ActionError.MAUVAIS_PARAMETRES)
+        self.assertNotIn(str(act2.num), self.n5.getActionsNum())
 
     def test_retirer_action(self):
         # 3 possibilite : retirer l'action se passe bien et renvoie True, elle ne se passe pas bien car elle est inconsistante avec une autre action, soit dans le même noeud, soit un noeud descendant, enfin elle ne se passe pas bien car l'action elle même n'est pas valide.
