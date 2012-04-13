@@ -28,9 +28,13 @@ class Joueur:
     
     
     def __eq__(self,other):
+        if other is None:
+            return False
         return self.num == other.num
     
     def __ne__(self,other):
+        if other is None:
+            return False
         return self.num != other.num
     
     def __str__(self):
@@ -53,7 +57,7 @@ class Joueur:
 
         node = Node.getNextNewNode()
         self.setRoot(node)
-        
+       
         node.setPlayer(self)
         node.setRoot(node)
         node.setFirstChild(NodeCst.NULL)
@@ -95,16 +99,16 @@ class Joueur:
         ''' Renvoie la base de données telle qu'elle serait si on exécutait l'arbre d'action jusqu'au noeud node, jusqu'à l'action action.'''
 
         listNodes = self.getRoot().getPath(node)
+        if listNodes is None :
+            return
+
         ibdd = BDD(REDIS)
 
         c = self.executerListNodes(listNodes,ibdd)
-        if not c[0]:
-            return
-    
-        ibdd = BDD(c[1])
-        b = self.executerNodePartiel(node, action, ibdd)
-        if not b:
-            return
+        ibdd = BDD(c)
+        if action != 0:
+            if not self.executerNodePartiel(node, action, ibdd):
+                return
         return ibdd
         
                    
@@ -170,6 +174,8 @@ class Joueur:
 
     def insererAction(self,action, node, index):
         ''' Renvoie vrai si en ajoutant l'action n au noeud node en position index, toutes les exécutions de foret d'action qui suivent peuvent etre exécutées. Sinon n'ajoute pas l'action et renvoie faux'''
+        if node.getPlayer() is None or node.getPlayer() != self:
+            return False
         node.insertActionByIndex(index, action)
         try:
             self.testListNode(node)
@@ -181,6 +187,8 @@ class Joueur:
     def retirerAction(self,action, node):
         ''' Renvoie vrai si en retirant l'action n au noeud node en position index, toutes les exécutions de foret d'action qui suivent peuvent etre exécutées. Sinon ne retire pas l'action et renvoie faux'''
         index = node.getActionIndex(action)
+        if node.getPlayer() is None or node.getPlayer() != self:
+            return False
         if index != -1:
             node.removeAction(action)
             try:
@@ -195,6 +203,9 @@ class Joueur:
     def testListNode(self, node):
         ''' Renvoie vrai si le sous arbre de l'arbre de d'action contenant le plus court chemin de r à node et le sous arbre enraciné en node est cohérent. Ie, il est possible de le parcourir du début à la fin, quelque soit la feuille choisie. '''
         pathLists = node.getPathList()
+
+        if pathLists is None:
+            return False
 
         s = len(pathLists[1])
 
@@ -375,7 +386,15 @@ class Joueur:
         joueur.set_defausser(terre,0)
 
 
-     
+   
+def protectTypeAttributeError(f):
+    @functools.wraps(f)
+    def helper(*args,**kwargs):
+        try:
+            return f(*args,**kwargs)
+        except TypeError, AttributeError:
+            return
+    return helper
 
 class Node:
     ''' Classe représentant le noeud d'un arbre, avec un lien vers le pere, frere gauche et droit, premier et dernier fils. '''
@@ -384,64 +403,83 @@ class Node:
         self.num = num
     
     def __eq__(self,other):
+        if other is None:
+            return False
         return self.num == other.num
     
     def __ne__(self,other):
+        if other is None:
+            return False
         return self.num != other.num
     
     def __str__(self):
         return str(self.num)
 
 # Interface avec la base de données
-    
+
+    @protectTypeAttributeError 
     def setPlayer(node, j):
         REDIS.set('N'+str(node.num)+':joueur',j.num)
 
+    @protectTypeAttributeError 
     def getPlayer(node):
         return Joueur(int(REDIS.get('N'+str(node.num)+':joueur')))
 
+    @protectTypeAttributeError 
     def setFirstChild(fatherNode,childNode):
         REDIS.set('N'+str(fatherNode.num)+':firstChild',childNode.num)
 
+    @protectTypeAttributeError 
     def getFirstChild(fatherNode):
         return Node(int(REDIS.get('N'+str(fatherNode.num)+':firstChild')))
 
+    @protectTypeAttributeError 
     def hasChild(fatherNode):
         return REDIS.get('N'+str(fatherNode.num)+':lastChild') != '-1'
 
+    @protectTypeAttributeError 
     def setFatherNode(childNode,fatherNode):
         REDIS.set('N'+str(childNode.num)+':father',fatherNode.num)
 
+    @protectTypeAttributeError 
     def getFatherNode(childNode):
         return Node(int(REDIS.get('N'+str(childNode.num)+':father')))
 
+    @protectTypeAttributeError 
     def setSiblingNode(node,siblingNode):
         REDIS.set('N'+str(node.num)+':sibling',siblingNode.num)
 
+    @protectTypeAttributeError 
     def getSiblingNode(node):
         return Node(int(REDIS.get('N'+str(node.num)+':sibling')))
 
+    @protectTypeAttributeError 
     def hasSiblingNode(node):
         return REDIS.get('N'+str(node.num)+':sibling') != '-1'
 
+    @protectTypeAttributeError 
     def setPSiblingNode(node,pSiblingNode):
         REDIS.set('N'+str(node.num)+':psibling',pSiblingNode.num)
 
+    @protectTypeAttributeError 
     def getPSiblingNode(node):
         return Node(int(REDIS.get('N'+str(node.num)+':psibling')))
     
+    @protectTypeAttributeError 
     def setLastChildNode(fatherNode,lastChildNode):
         REDIS.set('N'+str(fatherNode.num)+':lastChild',lastChildNode.num)
  
+    @protectTypeAttributeError 
     def getLastChildNode(fatherNode):
         return Node(int(REDIS.get('N'+str(fatherNode.num)+':lastChild')))
 
-    # Interface pour les racines
-   
+    # Interface pour les racines 
     
+    @protectTypeAttributeError 
     def setRoot(node, rootNode):
         REDIS.set('N'+str(node.num)+':root',rootNode.num)
 
+    @protectTypeAttributeError 
     def getRoot(node):
         return Node(int(REDIS.get('N'+str(node.num)+':root')))
 
@@ -474,6 +512,8 @@ class Node:
         node = dest
         while(node != origin):
             node = node.getFatherNode()
+            if node is None:
+                return
             if node == NodeCst.NULL:
                 return []
             path.append(node)
@@ -482,7 +522,11 @@ class Node:
 
     def getPathList(node):
         ''' Renvoie une liste contenant deux éléments : le chemin entre la racine et node, et la liste des chemins entre node et toutes ses feuilles. '''
+        
         root = node.getRoot()
+        if root is None:
+            return 
+
 
         l = []
         l.append(root.getPath(node))

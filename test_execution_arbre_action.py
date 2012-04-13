@@ -1,4 +1,4 @@
-# *-* coding: iso-8859-1 *-*
+# *-* coding: utf8 *-*
 import unittest
 from arbre_action import *
 from test_joueurs import *
@@ -23,6 +23,7 @@ class TestExecutionArbreAction(TestJoueur):
         self.n10 = self.n9.addChild()
         self.n11 = self.n9.addChild()
         self.n12 = self.n1.addChild()
+
 
 
         p = Plateau.getPlateau()
@@ -130,6 +131,8 @@ class TestExecutionArbreAction(TestJoueur):
 
         j1.set_route_la_plus_longue(self.tg,0)
         
+        self.n13 = Node(13)
+        self.n13.addAction(self.act1)
 
 
 
@@ -368,6 +371,8 @@ class TestExecutionArbreAction(TestJoueur):
         self.assertTrue(j1.insererAction(self.act102, self.n6,2)) # ok
         self.assertIn(str(self.act102.num), self.n6.getActionsNum())
         
+        self.assertFalse(j1.insererAction(self.act2, self.n13,1)) # Ce noeud qui n'appartient pas à j1
+        
         with(self.assertRaises(NodeError)) as err:
             j1.insererAction(self.act109, self.n6,2) # Non valide, autre action du meme noeud située avant
         exc = err.exception
@@ -462,6 +467,7 @@ class TestExecutionArbreAction(TestJoueur):
         self.assertFalse(j1.retirerAction(self.act1, self.n3)) # Cette action n'est pas dans ce noeud
         self.assertFalse(j1.retirerAction(self.act3, self.n2)) # Cette action n'est pas dans ce noeud
         self.assertFalse(j1.retirerAction(self.act14,self.n5)) # Cette action n'est pas dans ce noeud
+        self.assertFalse(j1.retirerAction(self.act1, self.n13)) # Ce noeud qui n'appartient pas à j1
         
 
         
@@ -482,5 +488,45 @@ class TestExecutionArbreAction(TestJoueur):
         self.assertEqual(exc.actionError.error_code, RouteError.ARRETE_NON_RELIEE)
         self.assertIn(str(self.act2.num), self.n2.getActionsNum())
 
+        self.assertTrue(j1.retirerAction(self.act11,self.n9))
+        self.assertNotIn(str(self.act11.num), self.n9.getActionsNum())
+
+        
+
+
+    def test_execution_partielle(self):
+        j1 = self.j1
+        p = Plateau.getPlateau()
+        self.base_arbre()
+
+        bdd = j1.executerPartiel(self.n2, 0)
+        self.assertEqual(len(bdd.keys()), len(REDIS.keys()))
+        
+
+        bdd = j1.executerPartiel(self.n2, self.act1)
+        self.assertTrue(Route.hasRoute(self.a1,bdd))
+        self.assertFalse(Route.hasRoute(self.a1))
+        
+
+        bdd = j1.executerPartiel(self.n2, self.act1)
+        self.check_ars([True,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False], bdd) 
+        
+
+        bdd = j1.executerPartiel(self.n4, self.act4)
+        self.check_ars([True,True,True,True,False,False,False,False,False,False,False,False,False,False,False,False,False], bdd) 
+        
+
+        bdd = j1.executerPartiel(self.n9, self.act17) # Cette action n'est pas dans le noeud, on ne renvoie alors rien.
+        self.assertEqual(bdd, None)
+        
+
+        bdd = j1.executerPartiel(self.n9, self.act17) # Cette action n'est pas dans le noeud, on ne renvoie alors rien.
+        self.assertEqual(bdd, None)
+        
+        bdd = j1.executerPartiel(self.n13, self.act1) # Ce noeud n'appartient pas à j1 donc on ne renvoie rien.
+        self.assertEqual(bdd, None)
+
+
 if __name__ == '__main__':
+    
     unittest.main()
