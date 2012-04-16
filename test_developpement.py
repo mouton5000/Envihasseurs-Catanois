@@ -12,6 +12,7 @@ class TestDeveloppement(TestJoueur):
         self.j2 = JoueurPossible(2)
         self.tg = Plateau.getPlateau().ter(1)
         self.td = Plateau.getPlateau().ter(2)
+        JoueurPossible.setNbJoueurs(10)        
 
     def test_acheter_developpement(self):
         j1 = self.j1
@@ -398,6 +399,14 @@ class TestDeveloppement(TestJoueur):
         with self.assertRaises(DeveloppementError) as err:
             self.assertFalse(Jeu.peut_jouer_monopole(j1,td,rch,[2,6]))
         self.assertEqual(err.exception.error_code, DeveloppementError.TERRE_NON_COLONISEE)
+        
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,11]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.MONOPOLE_JOUEUR_INEXISTANT)
+        
+        with self.assertRaises(DeveloppementError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,0]))
+        self.assertEqual(err.exception.error_code, DeveloppementError.MONOPOLE_JOUEUR_INEXISTANT)
 
         j2.setCartes(tg,c2)
         j3.setCartes(tg,c2)

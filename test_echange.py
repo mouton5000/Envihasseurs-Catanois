@@ -84,6 +84,7 @@ class TestEchange(TestJoueur):
         self.tg = Plateau.getPlateau().ter(1)
         self.td = Plateau.getPlateau().ter(2)
 
+        JoueurPossible.setNbJoueurs(5)        
 
     def base_arbres(self):
         self.n2.addAction(self.act1)
@@ -136,7 +137,7 @@ class TestEchange(TestJoueur):
         self.j1p.recevoir(self.tg, c1)
         self.j2p.recevoir(self.tg, c2)
         self.j2p.recevoir(self.td, c2)
-        
+
 
         self.j1p.setEnRuine(True)
         with self.assertRaises(ActionNightError) as err:
@@ -158,6 +159,13 @@ class TestEchange(TestJoueur):
         # Joueur en ruine
         self.j2p.setEnRuine(False)
 
+        with self.assertRaises(EchangeError) as err:
+            self.j1.peut_proposer_echange(6, self.tg, c1,c2)
+        self.assertEqual(err.exception.error_code, EchangeError.PARTENAIRE_INEXISTANT)
+        
+        with self.assertRaises(EchangeError) as err:
+            self.j1.peut_proposer_echange(-1, self.tg, c1,c2)
+        self.assertEqual(err.exception.error_code, EchangeError.PARTENAIRE_INEXISTANT)
 
         with self.assertRaises(EchangeError) as err:
             self.j1.peut_proposer_echange(2, self.td, c1,c2)

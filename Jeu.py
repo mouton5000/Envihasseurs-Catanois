@@ -806,8 +806,10 @@ def peut_jouer_monopole(joueur,terre,t1, jvols):
     if joueur.num in jvols:
         raise DeveloppementError(DeveloppementError.MONOPOLE_AUTO_ATTAQUE)
 
-    for j in jvols:
-        j = JoueurPossible(j,joueur.bdd)
+    for jnum in jvols:
+        if jnum > JoueurPossible.getNbJoueurs() or jnum < 1:
+            raise DeveloppementError(DeveloppementError.MONOPOLE_JOUEUR_INEXISTANT)
+        j = JoueurPossible(jnum,joueur.bdd)
         if j.getEnRuine():
             raise DeveloppementError(DeveloppementError.MONOPOLE_JOUEUR_EN_RUINE)
         if not j.aColoniseTerre(terre):
@@ -880,6 +882,8 @@ def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol):
         raise VoleurError(VoleurError.TERRE_NON_COLONISEE)
     if not (hex == 0 or hex.terre == terre):
         raise VoleurError(VoleurError.EMPLACEMENT_INTERDIT)
+    if jvol > JoueurPossible.getNbJoueurs() or jvol < 0: # jvol = 0 est toléré pour les îles où le voleur n'est pas déplaceable.
+        raise VoleurError(VoleurError.JOUEUR_VOLE_INEXISTANT)
 
     if voleurType == Voleur.VoleurType.BRIGAND:
         voleur = Voleur.getBrigand(terre,bdd)

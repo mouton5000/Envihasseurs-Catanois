@@ -99,10 +99,11 @@ class DeveloppementError(ActionError):
     MONOPOLE_AUTO_ATTAQUE = 8 # Survient si un joueur se vise lui même avec une carte monopole
     MONOPOLE_JOUEUR_EN_RUINE = 9 # Survient si un des joueurs choisis est en ruine
     MONOPOLE_TERRE_NON_COLONISEE = 10 # Survient si un des joueurs choisis n'a pas colonise cette terre
+    MONOPOLE_JOUEUR_INEXISTANT = 11 # Survient si un des joueurs choisis n'existe pas
 
     # Construction
-    CONSTRUCTION_ROUTES_IDENTIQUES = 11
-    CONSTRUCTION_EMPLACEMENT_INCORRECT = 12
+    CONSTRUCTION_ROUTES_IDENTIQUES = 12
+    CONSTRUCTION_EMPLACEMENT_INCORRECT = 13
     def __init__(self,value):
         ActionError.__init__(self,value)
 
@@ -112,7 +113,7 @@ class VoleurError(ActionError):
     TERRE_NON_COLONISEE = 1
     DEPLACEMENT_INTERDIT = 2 # Survient si le joueur n'a pas le droit de déplacer le voleur
     EMPLACEMENT_INTERDIT = 3 # Survient si le joueur tente de déplacer le voleur sur un hexagone non autorisé
-
+    JOUEUR_VOLE_INEXISTANT = 4 # Survient si le joueur tente de voler un joueur inexistant.
 
     def __init__(self,value):
         ActionError.__init__(self,value)
@@ -138,6 +139,7 @@ class EchangeError(ActionNightError):
 
     NON_PARTENAIRE = 6 # Intervient quand le joueur essaie d'accepter un ehcnage qui ne lui est pas destiné
     DEJA_ACCEPTE = 7
+    PARTENAIRE_INEXISTANT = 8
  
     def __init__(self,value):
         ActionNightError.__init__(self,value)
@@ -149,6 +151,7 @@ class VoleurNightError(ActionNightError):
     TERRE_NON_COLONISEE = 1
     DEPLACEMENT_INTERDIT = 2 # Survient si le joueur n'a pas le droit de déplacer le voleur
     EMPLACEMENT_INTERDIT = 3 # Survient si le joueur tente de déplacer le voleur sur un hexagone non autorisé
+    JOUEUR_VOLE_INEXISTANT = 4 # Survient si le joueur tente de voler un joueur inexistant.
 
 
     def __init__(self,value):

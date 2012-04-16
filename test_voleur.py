@@ -12,6 +12,8 @@ class TestVoleur(TestJoueur):
         self.tg = Plateau.getPlateau().ter(1)
         self.td = Plateau.getPlateau().ter(2)
 
+        JoueurPossible.setNbJoueurs(10)
+
     def test_designer_deplaceur_voleur(self):
         j1 = self.j1
         j2 = self.j2
@@ -458,6 +460,10 @@ class TestVoleur(TestJoueur):
         prg.save()
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,pr,p.hexa(57),2))
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,pr,p.hexa(41),2))
+        
+        with self.assertRaises(VoleurError) as err: 
+            self.assertFalse(Joueur.peut_deplacer_voleur(j1r,tg,pr,p.hexa(57),11))
+        self.assertEqual(err.exception.error_code, VoleurError.JOUEUR_VOLE_INEXISTANT)
   
         with self.assertRaises(VoleurError) as err: 
             self.assertFalse(Joueur.peut_deplacer_voleur(j1r,tg,pr,p.hexa(21),1)) # Le joueur 1 ne peut s'attaquer a lui meme

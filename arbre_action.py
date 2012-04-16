@@ -273,6 +273,8 @@ class Joueur:
         ''' j1 peut proposer un echange à j2 si aucun des deux n'est en ruine que les deux ont colonisé la terre, que c1 et c2 sont des flux possibles et que quelque soit le noeud de son arbre d'action il est en mesure de payer c1'''
         import joueurs
         j1 = joueurs.JoueurPossible(joueur.num)
+        if j2num > joueurs.JoueurPossible.getNbJoueurs() or j2num < 1:
+            raise EchangeError(EchangeError.PARTENAIRE_INEXISTANT)
         j2 = joueurs.JoueurPossible(j2num)
         if j2.getEnRuine():
             raise EchangeError(EchangeError.PARTENAIRE_EN_RUINE)
@@ -348,6 +350,8 @@ class Joueur:
             raise VoleurError(VoleurError.DEPLACEMENT_INTERDIT) 
         if not (hex == 0 or hex.terre == terre):
             raise VoleurError(VoleurError.EMPLACEMENT_INTERDIT)
+        if jvol > joueurs.JoueurPossible.getNbJoueurs() or jvol < 0: # jvol == 0 est toléré là où les voleurs nes sont pas déplaceables
+            raise VoleurError(VoleurError.JOUEUR_VOLE_INEXISTANT)
 
         if voleurType == Voleur.VoleurType.BRIGAND:
             voleur = Voleur.getBrigand(terre,bdd)
