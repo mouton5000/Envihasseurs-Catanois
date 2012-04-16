@@ -22,6 +22,8 @@ class TestColonieEtRoute(TestJoueur):
         j1 = self.j1
         j2 = self.j2
 
+        j1.addTerre(self.tg)
+
         i72 = p.it(72) 
         i73 = p.it(73)
         i83 = p.it(83)
@@ -42,11 +44,16 @@ class TestColonieEtRoute(TestJoueur):
         self.assertTrue(Jeu.peut_construire_colonie(j1,i83)) # Ok
 
         j1.setEnRuine(True)
-        with self.assertRaises(ColonieError) as err:
+        with self.assertRaises(ActionError) as err:
             Jeu.peut_construire_colonie(j1,i83) # En ruine
-        self.assertEqual(err.exception.error_code, ColonieError.JOUEUR_EN_RUINE)
-
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            Jeu.peut_construire_colonie(j1,i83)
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
 
         with self.assertRaises(ColonieError) as err:
             self.assertFalse(Jeu.peut_construire_colonie(j1,i72))# Il y a deja une colonie
@@ -112,6 +119,8 @@ class TestColonieEtRoute(TestJoueur):
         j1 = self.j1
         j2 = self.j2
 
+        j1.addTerre(self.tg)
+
         p = Plateau.getPlateau()
         i43 = p.it(43)
         i33 = p.it(33)
@@ -149,15 +158,27 @@ class TestColonieEtRoute(TestJoueur):
         
         j1.setEnRuine(True)
         
-        with self.assertRaises(RouteError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_construire_route(j1,a4333))
-        self.assertEqual(err.exception.error_code, RouteError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         
-        with self.assertRaises(RouteError) as err:
+        
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_construire_route(j1,a5363))
-        self.assertEqual(err.exception.error_code, RouteError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_construire_route(j1,a4333))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER) 
+        
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_construire_route(j1,a5363))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
         
         with self.assertRaises(RouteError) as err:
             self.assertFalse(Jeu.peut_construire_route(j1,a5343)) # existe deja
@@ -202,6 +223,9 @@ class TestColonieEtRoute(TestJoueur):
     def test_evoluer_colonie(self):
         p = Plateau.getPlateau()
         j1 = self.j1
+
+        j1.addTerre(self.tg)
+
         i1 = p.it(53)
         Colonie(1,i1).save()
         j2 = self.j2
@@ -214,11 +238,17 @@ class TestColonieEtRoute(TestJoueur):
         self.assertTrue(Jeu.peut_evoluer_colonie(j1,i1))
         
         j1.setEnRuine(True)
-        with self.assertRaises(ColonieError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_evoluer_colonie(j1,i1))
-        self.assertEqual(err.exception.error_code, ColonieError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_evoluer_colonie(j1,i1))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
         
         with self.assertRaises(ColonieError) as err:
             self.assertFalse(Jeu.peut_evoluer_colonie(j1,i2)) # Colonie adverse

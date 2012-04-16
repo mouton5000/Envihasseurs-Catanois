@@ -23,11 +23,17 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_acheter_carte_developpement(j1,tg))
         
         j1.setEnRuine(True)
-        with self.assertRaises(DeveloppementError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_acheter_carte_developpement(j1,tg))
-        self.assertEqual(err.exception.error_code, DeveloppementError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_acheter_carte_developpement(j1,tg))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
         
         j1.setCartes(tg,Cartes.RIEN)
         with self.assertRaises(DeveloppementError) as err:
@@ -92,11 +98,17 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
         
         j1.setEnRuine(True)
-        with self.assertRaises(DeveloppementError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
-        self.assertEqual(err.exception.error_code, DeveloppementError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_jouer_chevallier(j1,tg,br,h1,2))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
         
         with self.assertRaises(DeveloppementError) as err:
             self.assertFalse(Jeu.peut_jouer_chevallier(j1,td,br,h2,2))
@@ -147,11 +159,17 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_jouer_decouverte(j1,tg,d1))
         
         j1.setEnRuine(True)
-        with self.assertRaises(DeveloppementError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
-        self.assertEqual(err.exception.error_code, DeveloppementError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+
+        j1.set_defausser(self.tg, 1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg, 0)
         
 #        j1.enRuine = True
 #        self.assertFalse(Jeu.peut_jouer_decouverte(j1,tg,d1))
@@ -228,11 +246,17 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
         
         j1.setEnRuine(True)
-        with self.assertRaises(DeveloppementError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
-        self.assertEqual(err.exception.error_code, DeveloppementError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg, 1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a2))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg, 0)
         
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,True,a3))
         self.assertTrue(Jeu.peut_jouer_construction_routes(j1,tg,True,a1,False,a3))
@@ -329,11 +353,17 @@ class TestDeveloppement(TestJoueur):
         self.assertTrue(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
         
         j1.setEnRuine(True)
-        with self.assertRaises(DeveloppementError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
-        self.assertEqual(err.exception.error_code, DeveloppementError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg, 1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[2,3,4]))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg, 0)
         
 #        j1.enRuine = True
 #        self.assertFalse(Jeu.peut_jouer_monopole(j1,tg,r,[j2,j3,j4]))

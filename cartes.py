@@ -37,10 +37,14 @@ class CartesGeneral:
 
     def __eq__(self,other):
         ''' Renvoie vrai si les deux mains sont identiques'''
+        if other == 0:
+            return False
         return self._comparison(other, operator.eq)
     
     def __ne__(self,other):
         ''' Renvoie vrai si les deux mains sont identiques'''
+        if other == 0:
+            return True
         return not(self == other)
 
     def __add__(self,other):
@@ -173,8 +177,38 @@ class CartesGeneral:
             for value in values:
                 valuesInt.append(int(value))
             return CartesGeneral(*valuesInt)
-        return Cartes.RIEN
+        return 0
+    
+    @staticmethod
+    def delete(key, bdd = REDIS):
+        for att in CartesGeneral.attributs:
+            bdd.delete(key+':'+att)
 
+    @staticmethod
+    def getFromName(carte_name):
+        if carte_name == Cartes.ARGILE_NAME:
+            return Cartes.ARGILE
+        elif carte_name == Cartes.BLE_NAME:
+            return Cartes.BLE
+        elif carte_name == Cartes.BOIS_NAME:
+            return Cartes.BOIS
+        elif carte_name == Cartes.CAILLOU_NAME:
+            return Cartes.CAILLOU
+        elif carte_name == Cartes.MOUTON_NAME:
+            return Cartes.MOUTON
+        elif carte_name == Cartes.CHEVALLIER_NAME:
+            return Cartes.CHEVALLIER
+        elif carte_name == Cartes.MONOPOLE_NAME:
+            return Cartes.MONOPOLE
+        elif carte_name == Cartes.DECOUVERTE_NAME:
+            return Cartes.DECOUVERTE
+        elif carte_name == Cartes.CONSTRUCTION_ROUTES_NAME:
+            return Cartes.CONSTRUCTION_ROUTES
+        elif carte_name == Cartes.POINT_VICTOIRE_NAME:
+            return Cartes.POINT_VICTOIRE
+        else:
+            return 0
+        
 
 class CartesRessources(CartesGeneral):
     ''' Permet une petite facilité quand on ne travaille qu'avec des ressources'''
@@ -223,3 +257,14 @@ class Cartes:
     POINT_VICTOIRE = CartesDeveloppement(0,0,1,0,0)
     DECOUVERTE = CartesDeveloppement(0,0,0,1,0)
     CONSTRUCTION_ROUTES = CartesDeveloppement(0,0,0,0,1)
+    
+    ARGILE_NAME = 'argile'
+    BLE_NAME = 'ble'
+    BOIS_NAME = 'bois'
+    CAILLOU_NAME = 'caillou'
+    MOUTON_NAME = 'mouton'
+    CHEVALLIER_NAME = 'chevallier'
+    MONOPOLE_NAME = 'monopole'
+    POINT_VICTOIRE_NAME = 'point_victoire'
+    DECOUVERTE_NAME = 'decouverte'
+    CONSTRUCTION_ROUTES_NAME = 'construction_routes'

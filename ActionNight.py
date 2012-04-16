@@ -210,8 +210,11 @@ class DeplacementVoleur:
 
 class Echange:
 
-    def __init__(self,j1,j2,terre,don,recu, accepted = False):
-        self.num = REDIS.incr("LastEchange")
+    def __init__(self,num,j1,j2,terre,don,recu, accepted = False):
+        if num == 0:
+            self.num = REDIS.incr("LastEchange")
+        else:
+            self.num = num
         self.j1 = j1
         self.j2 = j2
         self.terre = terre
@@ -219,8 +222,8 @@ class Echange:
         self.recu = recu
         self.accepted = accepted
 
-    def isAccepted():
-        self.accepted = accepted
+    def isAccepted(self):
+        self.accepted = True
 
     def save(self):
         key = "E"+str(self.num)
@@ -234,30 +237,46 @@ class Echange:
     @staticmethod
     def getEchange(num):
         key = "E"+str(num)
-        j1N = int(REDIS.get(key + ':joueurProposant'))
-        j2N = int(REDIS.get(key + ':joueurAcceptant'))
-        terreN = int(REDIS.get(key + ':terre'))
-        accepted = REDIS.get(key + ':accepte') == 'True'
+        if REDIS.get(key+':joueurProposant'):
+            j1N = int(REDIS.get(key + ':joueurProposant'))
+            j2N = int(REDIS.get(key + ':joueurAcceptant'))
+            terreN = int(REDIS.get(key + ':terre'))
+            accepted = REDIS.get(key + ':accepte') == 'True'
 
-        don = CartesGeneral.get(key+':don')
-        recu = CartesGeneral.get(key+':recu')
+            don = CartesGeneral.get(key+':don')
+            recu = CartesGeneral.get(key+':recu')
 
-        j1 = JoueurPossible(j1N)
-        j2 = JoueurPossible(j2N)
-        terre = Plateau.getPlateau().ter(terreN)
+            j1 = JoueurPossible(j1N)
+            j2 = JoueurPossible(j2N)
+            terre = Plateau.getPlateau().ter(terreN)
 
-        return Echange(num,j1,j2,terre,don,recui, accepted)
+            return Echange(num,j1,j2,terre,don,recu, accepted)
+        else:
+            return 0
+
+    def delete(echange):
+        key = "E"+str(echange.num)
+        REDIS.delete(key + ':joueurProposant')
+        REDIS.delete(key + ':joueurAcceptant')
+        REDIS.delete(key + ':terre')
+        REDIS.delete(key + ':accepte')
+
+        CartesGeneral.delete(key+':don')
+        CartesGeneral.delete(key+':recu')
+        
 
     def executer(echange):
         ''' Effectue  de cartes entre les joueurs de echange sur cette terre, avec j1 donnant c1 cartes et j2 donnant c2 cartes.'''
         j1 = echange.j1
-        j2 = echange.j2
         terre = echange.terre
-        j1.payer(terre,echange.don)
-        j1.recevoir(terre,echange.recu)
-        j2.payer(terre,echange.recu)
-        j2.recevoir(terre,echange.don)
-
+        if echange.accepted:
+            j2 = echange.j2
+            # Le paiement a déjà été fait lors de l'acceptation et la propsoition de l'échange
+            j1.recevoir(terre,echange.recu)
+            j2.recevoir(terre,echange.don)
+        else:
+            j1.recevoir(terre,echange.don)
+        echange.delete()
 
 
 
@@ -291,6 +310,7 @@ def setNextJoueursParPriorite():
 
 def action_nuit():
         ''' Execute l'ensemble des actions du jour '''
+        import arbre_action
 
         # En premier on fait defausser les gens qui n'ont pas defaussé leurs cartes au hasard.
         # On exécute les arbres d'actions.
@@ -303,6 +323,10 @@ def action_nuit():
         # On effectue les récoltes
         # On donne les cartes de développement achetée la veille
         
-
+        for j in arbre_action.Joueur.get_all_joueurs():
+            jp = JoueurPossible(j.num)
+            for terre in jp.getTerres():
+                if jp.doit_defausser(terre):
+                    Defausse.defausse_aleatoire(jp, terre)
         pass
         

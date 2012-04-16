@@ -19,6 +19,8 @@ class TestBateaux(TestJoueur):
         j1 = self.j1
         j2 = self.j2
 
+        j1.addTerre(self.tg)
+
         i1 = p.it(32)#
         i2 = p.it(65)#
         i3 = p.it(72)#
@@ -43,14 +45,23 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_construire_bateau(j1,a3)) # ok
         
         j1.setEnRuine(True)
-        with self.assertRaises(BateauError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_construire_bateau(j1,a2))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
-        with self.assertRaises(BateauError) as err:
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_construire_bateau(j1,a3))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg, 1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_construire_bateau(j1,a2))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_construire_bateau(j1,a3))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg, 0)
 
         Colonie(2,i2).save()
         with self.assertRaises(BateauError) as err:
@@ -86,7 +97,9 @@ class TestBateaux(TestJoueur):
         
         j1 = self.j1
         j2 = self.j2
-        
+       
+        j1.addTerre(self.tg)
+ 
         p = Plateau.getPlateau()
 
         a0 = p.it(52).lien(p.it(62))
@@ -111,14 +124,23 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_deplacer_bateau(j1,b1,a7)) # ok
         
         j1.setEnRuine(True)
-        with self.assertRaises(BateauError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a6))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
-        with self.assertRaises(BateauError) as err:
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a7))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+
+        j1.set_defausser(self.tg, 1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a6))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_deplacer_bateau(j1,b1,a7))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg, 0)
         
 
         with self.assertRaises(BateauError) as err:
@@ -231,14 +253,23 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_evoluer_bateau(j1,b5)) # Ok touche un port
         
         j1.setEnRuine(True)
-        with self.assertRaises(BateauError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
-        with self.assertRaises(BateauError) as err:
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg, 1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg, 0)
         
         with self.assertRaises(BateauError) as err:
             self.assertFalse(Jeu.peut_evoluer_bateau(j1,b2)) # En pleine mer
@@ -278,14 +309,23 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
         
         j1.setEnRuine(True)
-        with self.assertRaises(BateauError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
-        with self.assertRaises(BateauError) as err:
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg, 1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg, 0)
         
         with self.assertRaises(BateauError) as err:
             self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
@@ -368,14 +408,23 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_evoluer_bateau(j1,b1)) # OK touche une colonie
         
         j1.setEnRuine(True)
-        with self.assertRaises(BateauError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
-        with self.assertRaises(BateauError) as err:
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg, 1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b1))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_evoluer_bateau(j1,b5))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg, 0)
         
         with self.assertRaises(BateauError) as err:
             self.assertFalse(Jeu.peut_evoluer_bateau(j1,b2)) # En pleine mer
@@ -416,14 +465,23 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb)) # Ok touche un port
         
         j1.setEnRuine(True)
-        with self.assertRaises(BateauError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
-        with self.assertRaises(BateauError) as err:
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
         
         with self.assertRaises(BateauError) as err:
             self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
@@ -518,14 +576,23 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb)) # Ok touche un port
         
         j1.setEnRuine(True)
-        with self.assertRaises(BateauError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
-        with self.assertRaises(BateauError) as err:
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechb))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_echanger_bateau(j1,b5,cecht,cechb))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
         
         with self.assertRaises(BateauError) as err:
             self.assertFalse(Jeu.peut_echanger_bateau(j1,b2,cecht,cechb)) # En pleine mer
@@ -564,6 +631,12 @@ class TestBateaux(TestJoueur):
             self.assertFalse(Jeu.peut_echanger_bateau(j1,b1,cecht,cechbdouble)) # Echange non entier
         self.assertEqual(err.exception.error_code, BateauError.FLUX_IMPOSSIBLE)
 
+
+#        j1.enRuine = True
+#        self.assertFalse(Jeu.peut_evoluer_bateau(j1,ab1))
+#        # Joueur en ruine
+#        j1.enRuine = False
+        
         j1.setCartes(tg,cartes)
         Jeu.echanger_bateau(j1,b1,cecht,cechb)
         self.assertEqual(j1.getCartes(tg),cartes - cecht + cechb)
@@ -572,6 +645,7 @@ class TestBateaux(TestJoueur):
         self.assertEqual(b8.cargaison,c + cecht - cechb)
         j1.recevoir(tg,cecht - cechb)
         b1.append(cechb - cecht)
+
         
 
 # Les joueurs colonisent d'autres terres
@@ -633,14 +707,23 @@ class TestBateaux(TestJoueur):
         self.assertTrue(Jeu.peut_coloniser(j1,b1,i5,Cartes.RIEN))
         
         j1.setEnRuine(True)
-        with self.assertRaises(BateauError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,Cartes.RIEN))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
-        with self.assertRaises(BateauError) as err:
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_coloniser(j1,b1,i5,Cartes.RIEN))
-        self.assertEqual(err.exception.error_code, BateauError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # En ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg, 1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i1,Cartes.RIEN))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_coloniser(j1,b1,i5,Cartes.RIEN))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg, 0)
         
         with self.assertRaises(BateauError) as err:
             self.assertFalse(Jeu.peut_coloniser(j1,b1,i2,Cartes.RIEN)) # Trop loin

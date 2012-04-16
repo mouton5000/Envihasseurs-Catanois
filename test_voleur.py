@@ -272,9 +272,9 @@ class TestVoleur(TestJoueur):
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,desg,0))
 
         j1.setEnRuine(True)
-        with self.assertRaises(VoleurError) as err:
+        with self.assertRaises(ActionNightError) as err:
             self.assertFalse(Joueur.peut_deplacer_voleur(j1r,tg,br,desg,0))
-        self.assertEqual(err.exception.error_code, VoleurError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionNightError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
 
@@ -651,9 +651,9 @@ class TestVoleur(TestJoueur):
         self.assertTrue(Joueur.peut_defausser(j1c,tg,(d1,[])))
         
         j1.setEnRuine(True)
-        with self.assertRaises(DefausseError) as err:
+        with self.assertRaises(ActionNightError) as err:
             self.assertFalse(Joueur.peut_defausser(j1c,tg,(d1,[])))
-        self.assertEqual(err.exception.error_code, DefausseError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionNightError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
 

@@ -42,7 +42,10 @@ class JoueurPossible:
     
     def payer(self,terre, cartes):
         ''' Déduis de la main du joueur sur cette terre les cartes données en paramètre'''
-        self.setCartes(terre,self.getCartes(terre) - cartes)
+        actCartes = self.getCartes(terre)
+        if actCartes == 0:
+            actCartes = Cartes.RIEN
+        self.setCartes(terre,actCartes - cartes)
 
     def recevoir(self,terre,cartes):
         ''' Ajoute à la main du joeuur sur cette terre les cartes données en paramètre'''
@@ -62,7 +65,10 @@ class JoueurPossible:
     
     def recevoirEnSommeil(self,terre,cartes):
         ''' Ajoute à la main du joeuur sur cette terre les cartes données en paramètre'''
-        self.setCartesEnSommeil(terre,self.getCartesEnSommeil(terre) + cartes)
+        actCartes = self.getCartesEnSommeil(terre)
+        if actCartes == 0:
+            actCartes = Cartes.RIEN
+        self.setCartesEnSommeil(terre,actCartes + cartes)
     
     def ressource_aleatoire(self,terre):
         ''' Ajoute à la main du joueur sur cette terre une carte de ressource aléatoire'''
@@ -260,6 +266,21 @@ class JoueurPossible:
     def set_defausser(self,terre, nb):
         ''' Réécri le nombre de cartes que doit défausser le joueur sur sa terre '''
         return self.bdd.set('J'+str(self.num)+':T'+str(terre.num)+':defausse', nb)
+
+    def doit_defausser(self,terre):
+        ''' Renvoie vrai si le nombre de carte qu'il doit défausser est non nul '''
+        try:
+            n = self.get_defausser(terre)
+            return not n is None and n != 0 
+        except TypeError:
+            return False
+
+    def doit_defausser_general(self):
+        ''' Renvoie vrai si ce joueur doit défausser sur une des terres '''
+        for terre in self.getTerres():
+            if self.doit_defausser(terre):
+                return True
+        return False
  
     def get_carte_armee_la_plus_grande(self,terre):
         ''' Renvoie vrai si le joueur a l'armée la plus grande sur cette terre'''

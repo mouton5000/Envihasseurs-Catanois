@@ -32,11 +32,17 @@ class TestTroc(TestJoueur):
         self.assertTrue(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE))
 
         j1.setEnRuine(True)
-        with self.assertRaises(OrError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE))
-        self.assertEqual(err.exception.error_code, OrError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
+
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_acheter_ressource(j1,tg,Cartes.BLE))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
 
         j1.setOr(tg,2)
         with self.assertRaises(OrError) as err:
@@ -141,11 +147,17 @@ class TestTroc(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
         
         j1.setEnRuine(True)
-        with self.assertRaises(CommerceError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
-        self.assertEqual(err.exception.error_code, CommerceError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_echanger_classique(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
         
         with self.assertRaises(CommerceError) as err:
             self.assertFalse(Jeu.peut_echanger_classique(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne Terre
@@ -195,11 +207,17 @@ class TestTroc(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
         
         j1.setEnRuine(True)
-        with self.assertRaises(CommerceError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
-        self.assertEqual(err.exception.error_code, CommerceError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
         
         with self.assertRaises(CommerceError) as err:
             self.assertFalse(Jeu.peut_echanger_commerce_tous(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne terre
@@ -245,11 +263,17 @@ class TestTroc(TestJoueur):
         self.assertTrue(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
         
         j1.setEnRuine(True)
-        with self.assertRaises(CommerceError) as err:
+        with self.assertRaises(ActionError) as err:
             self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
-        self.assertEqual(err.exception.error_code, CommerceError.JOUEUR_EN_RUINE)
+        self.assertEqual(err.exception.error_code, ActionError.JOUEUR_EN_RUINE)
         # Joueur en ruine
         j1.setEnRuine(False)
+        
+        j1.set_defausser(self.tg,1)
+        with self.assertRaises(ActionError) as err:
+            self.assertFalse(Jeu.peut_echanger_commerce(j1,tg,Cartes.BOIS,Cartes.ARGILE))
+        self.assertEqual(err.exception.error_code, ActionError.DOIT_DEFAUSSER)
+        j1.set_defausser(self.tg,0)
         
         with self.assertRaises(CommerceError) as err:
             self.assertFalse(Jeu.peut_echanger_commerce(j1,td,Cartes.BOIS,Cartes.ARGILE)) # Pas la bonne terre

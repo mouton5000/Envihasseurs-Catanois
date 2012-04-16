@@ -2,7 +2,9 @@
 
 class ActionError(Exception):
 
+    DOIT_DEFAUSSER = -2
     MAUVAIS_PARAMETRES = -1
+    JOUEUR_EN_RUINE = 0
 
     def __init__(self,value):
         self.error_code = value
@@ -10,7 +12,6 @@ class ActionError(Exception):
 class ColonieError(ActionError):
     ''' Ensemble des erreurs associées aux actions en rapport avec une colonie ou une ville'''
 
-    JOUEUR_EN_RUINE = 0
     EMPLACEMENT_OCCUPE = 1
     EMPLACEMENT_MARITIME = 2
     RESSOURCES_INSUFFISANTES = 3
@@ -26,7 +27,6 @@ class ColonieError(ActionError):
 
 class RouteError(ActionError):
     ''' Ensemble des erreurs associées aux actions en rapport avec une route'''
-    JOUEUR_EN_RUINE = 0
     ARRETE_OCCUPEE = 1
     ARRETE_MARITIME = 2
     RESSOURCES_INSUFFISANTES = 3
@@ -38,7 +38,6 @@ class RouteError(ActionError):
 class BateauError(ActionError):
     ''' Ensemble des erreurs associées aux actions en rapport avec un bateau'''
 
-    JOUEUR_EN_RUINE = 0
     ARRETE_NON_CONSTRUCTIBLE = 1 # Survient si on essaie de construire un bateau sur la terre ou trop loin de la cote
     RESSOURCES_INSUFFISANTES = 2
     ARRETE_NON_RELIEE = 3 # Survient si on essaie de construire un bateau la où aucune colonie n'est presente
@@ -64,7 +63,6 @@ class BateauError(ActionError):
 class CommerceError(ActionError):
     ''' Ensemble des erreurs associées aux actions en rapport avec un échange avec un port ou un marche'''
     
-    JOUEUR_EN_RUINE = 0
     RESSOURCES_INSUFFISANTES = 1
     FLUX_IMPOSSIBLE = 2
     TERRE_NON_COLONISEE = 3
@@ -76,7 +74,6 @@ class CommerceError(ActionError):
 class OrError(ActionError):
     ''' Ensemble des erreurs associées aux actions en rapport avec l'or'''
     
-    JOUEUR_EN_RUINE = 0
     RESSOURCES_INSUFFISANTES = 1
     FLUX_IMPOSSIBLE = 2
     TERRE_NON_COLONISEE = 3
@@ -84,23 +81,10 @@ class OrError(ActionError):
     def __init__(self,value):
         ActionError.__init__(self,value)
 
-class EchangeError(ActionError):
-    ''' Ensemble des erreurs associées aux actions en rapport avec l'or'''
-   
-    JOUEUR_EN_RUINE = 0
-    PARTENAIRE_EN_RUINE = 1
-    TERRE_NON_COLONISEE = 2
-    TERRE_PARTENAIRE_NON_COLONISEE = 3
-    FLUX_IMPOSSIBLE = 4
-    DON_INCOMPATIBLE = 5
- 
-    def __init__(self,value):
-        ActionError.__init__(self,value)
 
 class DeveloppementError(ActionError):
     ''' Ensemble des erreurs associées aux actions en rapport avec une carte de développement'''
 
-    JOUEUR_EN_RUINE = 0
     TERRE_NON_COLONISEE = 1
     CARTE_NON_POSSEDEE = 2
     RESSOURCES_INSUFFISANTES = 3
@@ -121,12 +105,10 @@ class DeveloppementError(ActionError):
     CONSTRUCTION_EMPLACEMENT_INCORRECT = 12
     def __init__(self,value):
         ActionError.__init__(self,value)
-    
 
 class VoleurError(ActionError):
     ''' Ensemble des erreurs associées aux actions en rapport avec le voleur'''
 
-    JOUEUR_EN_RUINE = 0
     TERRE_NON_COLONISEE = 1
     DEPLACEMENT_INTERDIT = 2 # Survient si le joueur n'a pas le droit de déplacer le voleur
     EMPLACEMENT_INTERDIT = 3 # Survient si le joueur tente de déplacer le voleur sur un hexagone non autorisé
@@ -135,20 +117,46 @@ class VoleurError(ActionError):
     def __init__(self,value):
         ActionError.__init__(self,value)
 
-class RecolteError(ActionError):
-    ''' Ensemble des erreurs associées aux actions en rapport avec la récolte lors du lancement des dés'''
 
-    HORS_LIMITE = 0
-    SEPT = 1
-    
-       
+class ActionNightError(Exception):
+
+    DOIT_DEFAUSSER = -2
+    MAUVAIS_PARAMETRES = -1
+    JOUEUR_EN_RUINE = 0
+
     def __init__(self,value):
-        ActionError.__init__(self,value)
+        self.error_code = value
+    
+class EchangeError(ActionNightError):
+    ''' Ensemble des erreurs associées aux actions en rapport avec l'or'''
+   
+    PARTENAIRE_EN_RUINE = 1
+    TERRE_NON_COLONISEE = 2
+    TERRE_PARTENAIRE_NON_COLONISEE = 3
+    FLUX_IMPOSSIBLE = 4
+    DON_INCOMPATIBLE = 5
 
-class DefausseError(ActionError):
+    NON_PARTENAIRE = 6 # Intervient quand le joueur essaie d'accepter un ehcnage qui ne lui est pas destiné
+    DEJA_ACCEPTE = 7
+ 
+    def __init__(self,value):
+        ActionNightError.__init__(self,value)
+
+
+class VoleurNightError(ActionNightError):
+    ''' Ensemble des erreurs associées aux actions en rapport avec le voleur'''
+
+    TERRE_NON_COLONISEE = 1
+    DEPLACEMENT_INTERDIT = 2 # Survient si le joueur n'a pas le droit de déplacer le voleur
+    EMPLACEMENT_INTERDIT = 3 # Survient si le joueur tente de déplacer le voleur sur un hexagone non autorisé
+
+
+    def __init__(self,value):
+        ActionNightError.__init__(self,value)
+
+class DefausseError(ActionNightError):
     ''' Ensemble des erreurs associées aux actions en rapport la defausse'''
 
-    JOUEUR_EN_RUINE = 0
     TERRE_NON_COLONISEE = 1
     DEFAUSSE_INTERDITE = 2
     BATEAU_NON_DEFAUSSABLE = 3
@@ -157,13 +165,21 @@ class DefausseError(ActionError):
     DEFAUSSE_TROP_ELEVEE = 6
     FLUX_IMPOSSIBLE = 7
 
-     
-
     def __init__(self,value):
-        ActionError.__init__(self,value)
+        ActionNightError.__init__(self,value)
 
 class NodeError:
     def __init__(self,node, action, actionError):
         self.node = node
         self.action = action
         self.actionError = actionError
+
+class RecolteError(Exception):
+    ''' Ensemble des erreurs associées aux actions en rapport avec la récolte lors du lancement des dés'''
+
+    HORS_LIMITE = 1
+    SEPT = 2
+    
+       
+    def __init__(self,value):
+        self.error_code = value

@@ -6,7 +6,36 @@ from errors import *
 from bdd_interface import *
 import Jeu
 import functools
+from ActionNight import *
 REDIS = redis.StrictRedis()
+
+def predefausse(f):
+    @functools.wraps(f)
+    def helper(*args,**kwargs):
+        import joueurs
+        j = joueurs.JoueurPossible(args[0].num)
+        if not j.doit_defausser_general():
+            f(*args,**kwargs)
+            return True
+        else:
+            raise ActionNightError(ActionNightError.DOIT_DEFAUSSER)
+
+    return helper
+
+
+def preruine(f):
+    @functools.wraps(f)
+    def helper(*args,**kwargs):
+        import joueurs
+        j = joueurs.JoueurPossible(args[0].num)
+        if not j.getEnRuine():
+            f(*args,**kwargs)
+            return True
+        else:
+            raise ActionNightError(ActionNightError.JOUEUR_EN_RUINE)
+
+    return helper
+
 
 def protection(f):
     @functools.wraps(f)
@@ -155,9 +184,9 @@ class Joueur:
         j = joueurs.JoueurPossible(self.num, ibdd)
         try:
             func = getattr(Jeu, action.func)
-            translation_args = getattr(Jeu, 'translate_'+action.func)(*action.params)
+            translation_args = getattr(Jeu, 'translate_'+action.func)(j, *action.params)
             func.peut_etre_appelee
-        except AttributeError:
+        except (AttributeError, TypeError):
             raise ActionError(ActionError.MAUVAIS_PARAMETRES)
         return func(j,*translation_args)
                 
@@ -221,31 +250,30 @@ class Joueur:
 
 # Echanges
 
-    def isGivingCompatible(self,c):
+    def isGivingCompatible(self,terre,c):
         ''' Vérifie que pour tout noeud, toute action, le joueur possède toujours au moins c cartes '''
-        pathLists = self.getRoot().getPathList()
+        import joueurs
+        j = joueurs.JoueurPossible(self.num)
+        if not j.peut_payer(terre, c):
+            return False
+        j.payer(terre,c)
+        
+        try:
+            self.testListNode(self.getRoot())
+            j.recevoir(terre,c)
+            return True
+        except NodeError as err:
+            j.recevoir(terre,c)
+            raise err
 
-        s = len(pathLists[1])
 
-        ibdd = BDD(REDIS)
-        j = Joueur(self.num, ibdd)
-        j.payer(c)
-        for i in xrange(s):
-            # On teste le chemin de node jusque sa ie feuille. Si un des chemin n'est pas bon, alors l'échange n'est pas compatible.
-            c = self.executerListeNodes(pathLists[i][indexes[i]], ibdd)
-            if not c[0]:
-                return False
-
-        return True
-
-
+    @preruine
+    @predefausse
     def peut_proposer_echange(joueur,j2num,terre,c1,c2):
         ''' j1 peut proposer un echange à j2 si aucun des deux n'est en ruine que les deux ont colonisé la terre, que c1 et c2 sont des flux possibles et que quelque soit le noeud de son arbre d'action il est en mesure de payer c1'''
         import joueurs
         j1 = joueurs.JoueurPossible(joueur.num)
         j2 = joueurs.JoueurPossible(j2num)
-        if j1.getEnRuine():
-            raise EchangeError(EchangeError.JOUEUR_EN_RUINE)
         if j2.getEnRuine():
             raise EchangeError(EchangeError.PARTENAIRE_EN_RUINE)
         if not j1.aColoniseTerre(terre):
@@ -256,36 +284,64 @@ class Joueur:
             raise EchangeError(EchangeError.FLUX_IMPOSSIBLE)
         if not(c2.est_ressource() and c2.est_physiquement_possible()):
             raise EchangeError(EchangeError.FLUX_IMPOSSIBLE)
-        if not joueur.isGivingCompatible(c1):
+        if not joueur.isGivingCompatible(terre,c1):
             raise EchangeError(EchangeError.DON_INCOMPATIBLE)
+            # Renvoei un node error si le joueur ne peut effectuer son echange à cause d'une action de l'arbre d'action.
         return True
 
     @protection
-    def proposer_echange(j1,j2num,terre,c1,c2):    
-        Echange(j1, Joueur(j2num), terre,c1,c2).save()
+    def proposer_echange(joueur,j2num,terre,c1,c2):
+        import joueurs
+        j1 = joueurs.JoueurPossible(joueur.num)
+        j1.payer(terre,c1)
+        Echange(0,j1, Joueur(j2num), terre,c1,c2).save()
 
-    def peut_accepter_echange(j1,echange):
+    @preruine
+    @predefausse
+    def peut_accepter_echange(joueur,echange):
         ''' j1 peut accepter un echange s'il est le deuxième joueur de cet échange et si quelque soit les noeuds de son arbre d'action il est en mesure de payer la somme demandée'''
-        if j1 != echange.j2:
-            raise EchangeError(EchangeError.NON_PARTENAIRE) 
-        if not j1.isGivingCompatible(echange.c2):
+        if echange.accepted:
+            raise EchangeError(EchangeError.DEJA_ACCEPTE)
+        if joueur != echange.j2:
+            raise EchangeError(EchangeError.NON_PARTENAIRE)
+        if not joueur.isGivingCompatible(echange.terre,echange.recu):
             raise EchangeError(EchangeError.DON_INCOMPATIBLE)
         return True
 
     @protection
-    def accepter_echange(j1,echange):
+    def accepter_echange(joueur,echange):
+        import joueurs
         echange.isAccepted()
+        j1 = joueurs.JoueurPossible(joueur.num)
+        j1.payer(echange.terre,echange.recu)
         echange.save() 
 
+    @preruine
+    @predefausse
+    def peut_annuler_echange(joueur,echange):
+        if joueur != echange.j2 and joueur != echange.j1:
+            raise EchangeError(EchangeError.NON_PARTENAIRE)
+        return True
+            
 
+    @protection
+    def annuler_echange(joueur,echange):
+        import joueurs
+        j1 = joueurs.JoueurPossible(echange.j1.num)
+        j2 = joueurs.JoueurPossible(echange.j2.num)
+        j1.recevoir(echange.terre, echange.don)
+        if echange.accepted:
+            j2.recevoir(echange.terre,echange.recu)
+        echange.delete()
+        
 # Voleur
 
+    @preruine
+    @predefausse
     def peut_deplacer_voleur(j,terre,voleurType,hex,jvol):
         bdd = REDIS
         import joueurs
         joueur = joueurs.JoueurPossible(j.num)
-        if joueur.getEnRuine():
-            raise VoleurError(VoleurError.JOUEUR_EN_RUINE)
         if not joueur.aColoniseTerre(terre):
             raise VoleurError(VoleurError.TERRE_NON_COLONISEE)
         if not joueur.get_deplacement_voleur(terre):
@@ -321,14 +377,13 @@ class Joueur:
             js.append(joueurs.JoueurPossible(j+1))
         return js
    
+    @preruine
     def peut_defausser(j,terre,cartes):
         import joueurs
         joueur = joueurs.JoueurPossible(j.num)
-        if joueur.getEnRuine():
-            raise DefausseError(DefausseError.JOUEUR_EN_RUINE)
         if not joueur.aColoniseTerre(terre):
             raise DefausseError(DefausseError.TERRE_NON_COLONISEE)
-        if joueur.get_defausser(terre) == 0:
+        if not joueur.doit_defausser(terre):
             raise DefausseError(DefausseError.DEFAUSSE_INTERDITE)
             
         c = joueur.getCartes(terre)
@@ -392,7 +447,7 @@ def protectTypeAttributeError(f):
     def helper(*args,**kwargs):
         try:
             return f(*args,**kwargs)
-        except TypeError, AttributeError:
+        except (TypeError, AttributeError):
             return
     return helper
 
@@ -770,7 +825,8 @@ class Action:
     def save(self):
         key = 'Act'+str(self.num)
         REDIS.set(key+':fonction',self.func)
-        REDIS.rpush(key+':params',*self.params)
+        if len(self.params) != 0:
+            REDIS.rpush(key+':params',*self.params)
 
     @staticmethod
     def getAction(num):

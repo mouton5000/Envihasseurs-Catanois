@@ -16,6 +16,32 @@ REDIS = redis.StrictRedis()
 
 
 
+def predefausse(f):
+    @functools.wraps(f)
+    def helper(*args,**kwargs):
+        j = args[0]
+        if not j.doit_defausser_general():
+            f(*args,**kwargs)
+            return True
+        else:
+            raise ActionError(ActionError.DOIT_DEFAUSSER)
+
+    return helper
+
+
+def preruine(f):
+    @functools.wraps(f)
+    def helper(*args,**kwargs):
+        import joueurs
+        j = joueurs.JoueurPossible(args[0].num)
+        if not j.getEnRuine():
+            f(*args,**kwargs)
+            return True
+        else:
+            raise ActionError(ActionError.JOUEUR_EN_RUINE)
+
+    return helper
+
 def protection(f):
     @functools.wraps(f)
     def helper(*args,**kwargs):
@@ -142,12 +168,20 @@ def recalcul_armee_la_plus_grande(terre, bdd = REDIS):
 #Actions dans la journee
 # -----------------------------------------------------
 
+def translate_construire_colonie(j, intersection_num_str):
+    ''' L'action comporte pour parametre le numéro d'une intersection. '''
+    try:
+        num = int(intersection_num_str)
+        it = Plateau.getPlateau().it(num)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [it]
 
+@preruine
+@predefausse
 def peut_construire_colonie(j,intersection):
     ''' Un joueur peut construire une colonie si il n'est aps en ruine, si il ne la construit pas a un emplacement voisin d'une autre colonie, si il la construit sur un emplacement voisin d'une de ses routes, si cet emplacement est sur terre et si il peut payer la construiction.'''
     bdd = j.bdd
-    if j.getEnRuine():
-        raise ColonieError(ColonieError.JOUEUR_EN_RUINE)
     if intersection.isMaritime():
         raise ColonieError(ColonieError.EMPLACEMENT_MARITIME)
     if not j.peut_payer(intersection.getTerre(), Tarifs.COLONIE):
@@ -184,19 +218,20 @@ def construire_colonie(j, intersection):
             JoueurPossible(jrout,bdd).recalcul_route_la_plus_longue(terre)
     recalcul_route_la_plus_longue(terre,bdd)
 
-def translate_construire_route(arrete_num_str, construction_route_str = 'False'):
+def translate_construire_route(j,arrete_num_str):
+    ''' L'action comporte pour parametre le numéro d'une arrete, et. '''
     try:
         num = int(arrete_num_str)
         ar = Plateau.getPlateau().ar(num)
-    except ValueError, IndexError:
+    except (ValueError, IndexError):
         raise ActionError(ActionError.MAUVAIS_PARAMETRES)
-    return [ar, construction_route_str == 'True']
+    return [ar]
 
+@preruine
+@predefausse
 def peut_construire_route(j, arrete, construction_route = False):
     ''' Un joueur j peut construire une route sur l'arrete si il n'est pas en ruine, si il n'existe pas déjà de route non en ruine sur cet emplacement, si cette arrete est terrestre, si il peut payer ou s'il a jouer une carte développement de construction de route, et s'il existe une colonie ou une route voiine à cette arrete.'''
     bdd = j.bdd
-    if j.getEnRuine():
-        raise RouteError(RouteError.JOUEUR_EN_RUINE)
     if arrete.isMaritime():
         raise RouteError(RouteError.ARRETE_MARITIME)
     if (not construction_route and not j.peut_payer(arrete.getTerre(), Tarifs.ROUTE)):
@@ -232,12 +267,20 @@ def construire_route(j,arrete, construction_route = False):
     else:
         return False
 
+def translate_evoluer_colonie(j,intersection_num_str):
+    ''' L'action comporte pour parametre le numéro d'une intersection. '''
+    try:
+        num = int(intersection_num_str)
+        it = Plateau.getPlateau().it(num)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [it]
 
+@preruine
+@predefausse
 def peut_evoluer_colonie(j, intersection):
     ''' Un joueur j peut faire evoluer une colonie si il n'est pas en ruine, si elle est a lui et si il peyt payer le cout de l'évolution'''
     bdd = j.bdd
-    if j.getEnRuine():
-        raise ColonieError(ColonieError.JOUEUR_EN_RUINE)
     colonie = Colonie.getColonie(intersection,bdd)
     if colonie == 0:
         raise ColonieError(ColonieError.COLONIE_INEXISTANTE)
@@ -262,12 +305,23 @@ def evoluer_colonie(j,intersection):
     j.addStaticPoints(terre,1)
     colonie.save(bdd)
 
+def translate_acheter_ressource(j,terre_num_str, carte_name):
+    try:
+        num = int(terre_num_str)
+        terre = Plateau.getPlateau().ter(num)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
 
+    carte = CartesGeneral.getFromName(carte_name)
+    if carte == 0:
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
 
+    return [terre, carte]
+
+@preruine
+@predefausse
 def peut_acheter_ressource(j,terre,carte):
-    ''' Un joueur j sur cette terre peut acheter contre un lingot d'or une carte de type carte, si il n'est pas en ruien, si il possède au moins un lingot et si carte est une carte de ressource'''
-    if j.getEnRuine():
-        raise OrError(OrError.JOUEUR_EN_RUINE)
+    ''' Un joueur j sur cette terre peut acheter contre un lingot d'or une carte de type carte, si il n'est pas en ruine, si il possède au moins un lingot et si carte est une carte de ressource'''
     if not j.aColoniseTerre(terre):
         raise OrError(OrError.TERRE_NON_COLONISEE)
     if not j.getOr(terre) > 0:
@@ -286,6 +340,17 @@ def acheter_ressource(j,terre, carte):
 
 # On suppose que chaque ile est separee d'au moins 2 arrete. Ca evite des ambiguites au niveau de la terre de construction.
 
+def translate_construire_bateau(j,arrete_num_str):
+    try:
+        num = int(arrete_num_str)
+        arrete = Plateau.getPlateau().ar(num)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+
+    return [arrete]
+
+@preruine
+@predefausse
 def peut_construire_bateau(j,arrete,construction_route = False):
     ''' Le joueur j peut poser un bateau sur l'arrete si il n'est pas en ruine, et s'il l'arrete est maritime et s'il peyt payer ou s'il a joué une carte de développement construction de route, et si il existe une colonie cotiere voisine de l'arrete.'''
     bdd = j.bdd
@@ -293,8 +358,6 @@ def peut_construire_bateau(j,arrete,construction_route = False):
     # Si l'arrete n'a pas de terre, elle n'est surement pas reliée à la terre
     if terre == 0:
         raise BateauError(BateauError.ARRETE_NON_RELIEE)
-    if j.getEnRuine():
-        raise BateauError(BateauError.JOUEUR_EN_RUINE)
     if not arrete.isMaritimeOuCotier():
         raise BateauError(BateauError.ARRETE_NON_CONSTRUCTIBLE)
     if not (construction_route or j.peut_payer(arrete.getTerre(), Tarifs.BATEAU_TRANSPORT)):
@@ -327,14 +390,26 @@ def construire_bateau(j,arrete, construction_route = False):
         return False
 
 
+def translate_deplacer_bateau(j,bateau_num_str, arrete_num_str):
+    try:
+        num = int(bateau_num_str)
+        bateau = Bateau.getBateau(num, j.bdd)
+        if bateau == 0:
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+        num = int(arrete_num_str)
+        arrete = Plateau.getPlateau().ar(num)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
 
+    return [bateau, arrete]
+
+@preruine
+@predefausse
 def peut_deplacer_bateau(j,bateau,arrete):
     ''' Le joueur j peut déplacer un bateau sur une arrete, si il n'est pas en ruine, si le bateau appartient à ce joueur, si le bateau n'est pas abordé par un bateau pirate, si il souhaite se déplacer sur une arrete maritime, si cette arrete est voisine de la position actuelle du bateau ou a 2 déplacements pour un voillier, et si ce bateau n'a pas déjà bougé'''
     bdd = j.bdd
     if bateau == 0:
         raise BateauError(BateauError.BATEAU_INEXISTANT)
-    if j.getEnRuine():
-        raise BateauError(BateauError.JOUEUR_EN_RUINE)
     if bateau.joueur != j.num:
         raise BateauError(BateauError.NON_PROPRIETAIRE)
     if Voleur.est_pirate(bateau.position,bdd):
@@ -357,12 +432,26 @@ def deplacer_bateau(j,bateau,arrete):
     bateau.aBouge = True
     bateau.save(bdd)
 
+def translate_echanger_bateau(j,bateau_num_str, key_ct, key_cb):
+    try:
+        bdd = j.bdd
+        num = int(bateau_num_str)
+        bateau = Bateau.getBateau(num, bdd)
+        if bateau == 0:
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+        ct = Cartes.get(key_ct, bdd)
+        cb = Cartes.get(key_cb, bdd)
+        if ct == 0 or cb == 0:
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [bateau, ct, cb]
 
+@preruine
+@predefausse
 def peut_echanger_bateau(j,bateau,ct,cb):
     ''' Le joueur j peut échanger avec ce bateau ct cartes de la terre où se trouve le bataeu vers le bateau et cb cartes du bateau vers la terre si il n'est pas en ruine, si le bateau appartient au joueur, si le bateau est sur une zone d'échange (colonie cotiere ou port), si il a assez de ressource sur la terre et dans le bateau et si les échanges sont des nombres entiers naturels.'''
     bdd = j.bdd
-    if j.getEnRuine():
-        raise BateauError(BateauError.JOUEUR_EN_RUINE)
     if j.num != bateau.joueur:
         raise BateauError(BateauError.NON_PROPRIETAIRE)
     if not bateau.en_position_echange(bdd):
@@ -390,12 +479,22 @@ def echanger_bateau(j,bateau,ct,cb):
     bateau.append(ct)
     bateau.save(bdd)
 
+def translate_evoluer_bateau(j,bateau_num_str):
+    try:
+        bdd = j.bdd
+        num = int(bateau_num_str)
+        bateau = Bateau.getBateau(num, bdd)
+        if bateau == 0:
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [bateau]
 
+@preruine
+@predefausse
 def peut_evoluer_bateau(j,bateau):
     ''' Le joueur j peut faire evoluer le bateau si il n'est pas en ruine, si le bateau est a lui, si le bateau est en zone d'échange, si le bateau n'est pas un voilier et si il peut payer l'évolution.'''
     bdd = j.bdd
-    if j.getEnRuine():
-        raise BateauError(BateauError.JOUEUR_EN_RUINE)
     if j.num != bateau.joueur:
         raise BateauError(BateauError.NON_PROPRIETAIRE)
     if not bateau.en_position_echange(bdd):
@@ -429,11 +528,19 @@ def evoluer_bateau(j,bateau):
     else:
         return False
 
+def translate_acheter_carte_developpement(j, terre_num_str):
+    try:
+        num = int(terre_num_str)
+        terre = Plateau.getPlateau().ter(num)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [terre]
 
+
+@preruine
+@predefausse
 def peut_acheter_carte_developpement(j,terre):
     ''' Un joueur j peut acheter une carte de développement sur la terre si il peut la payer'''
-    if j.getEnRuine(): 
-        raise DeveloppementError(DeveloppementError.JOUEUR_EN_RUINE)
     if not j.aColoniseTerre(terre):
         raise DeveloppementError(DeveloppementError.TERRE_NON_COLONISEE)
     if not j.peut_payer(terre,Tarifs.DEVELOPPEMENT):
@@ -448,11 +555,25 @@ def acheter_carte_developpement(j,terre):
     j.payer(terre,Tarifs.DEVELOPPEMENT)
     return j.piocher_developpement(terre)
 
+def translate_coloniser(j,bateau_num_str, it_num_str, key_transfert):
+    try:
+        bdd = j.bdd
+        num = int(bateau_num_str)
+        bateau = Bateau.getBateau(num, bdd)
+        transfert = Cartes.getTransfert(key_transfert, bdd)
 
+        if bateau == 0 or transfert == 0:
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+        num = int(it_num_str)
+        position = Plateau.getPlateau().it(num)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [bateau, position, transfert]
+
+@preruine
+@predefausse
 def peut_coloniser(j,bateau,position,transfert):
     bdd = j.bdd
-    if j.getEnRuine():
-        raise BateauError(BateauError.JOUEUR_EN_RUINE)
     if j.num != bateau.joueur:
         raise BateauError(BateauError.NON_PROPRIETAIRE)
     if not transfert.est_physiquement_possible():
@@ -496,12 +617,24 @@ def coloniser(j,bateau,position,transfert):
     bateau.save(bdd)
 
 
+def translate_echanger_classique(j,terre_num_str, carte_name1, carte_name2):
+    try:
+        bdd = j.bdd
+        num = int(terre_num_str)
+        terre = Plateau.getPlateau().ter(num)
+        c1 = Cartes.getFromName(carte_name1)
+        c2 = Cartes.getFromName(carte_name2)
+        if c1 == 0 or c2 == 0:
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [terre,c1,c2]
 
 
+@preruine
+@predefausse
 def peut_echanger_classique(j,terre,t1,t2):
     ''' Un joueur j peut effectuer un echange classique (4 cartes de t1 contre une carte de t2) sur cette terre si il n'est pas en ruine, si t1 et t2 sont des  cartes de ressources, si il a colonisé la terre et si il peut payer 4 cartes de t1'''
-    if j.getEnRuine():
-        raise CommerceError(CommerceError.JOUEUR_EN_RUINE)
     if not (t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible()):
         raise CommerceError(CommerceError.FLUX_IMPOSSIBLE)
     if not j.aColoniseTerre(terre):
@@ -519,11 +652,25 @@ def echanger_classique(j,terre,t1,t2):
     j.recevoir(terre,t2)
 
 
+def translate_echanger_commerce_tous(j,terre_num_str, carte_name1, carte_name2):
+    try:
+        bdd = j.bdd
+        num = int(terre_num_str)
+        terre = Plateau.getPlateau().ter(num)
+        c1 = Cartes.getFromName(carte_name1)
+        c2 = Cartes.getFromName(carte_name2)
+        if c1 == 0 or c2 == 0:
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [terre,c1,c2]
+
+
+@preruine
+@predefausse
 def peut_echanger_commerce_tous(j,terre,t1,t2):
     ''' Un joueur j peut effectuer un echange de commerce '?' (3 cartes de t1 contre une carte de t2) sur cette terre si il n'est pas en ruine, si t1 et t2 sont des  cartes de ressources, si il a un commerce de type '?' et si il peut payer 3 cartes de t1'''
 
-    if j.getEnRuine():
-        raise CommerceError(CommerceError.JOUEUR_EN_RUINE)
     if not(t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible()):
         raise CommerceError(CommerceError.FLUX_IMPOSSIBLE)
     if not j.aColoniseTerre(terre):
@@ -543,10 +690,24 @@ def echanger_commerce_tous(j,terre,t1,t2):
     j.recevoir(terre,t2)
 
 
+def translate_echanger_commerce(j,terre_num_str, carte_name1, carte_name2):
+    try:
+        bdd = j.bdd
+        num = int(terre_num_str)
+        terre = Plateau.getPlateau().ter(num)
+        c1 = Cartes.getFromName(carte_name1)
+        c2 = Cartes.getFromName(carte_name2)
+        if c1 == 0 or c2 == 0:
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [terre,c1,c2]
+
+
+@preruine
+@predefausse
 def peut_echanger_commerce(j,terre,t1,t2):
     ''' Un joueur j peut effectuer un echange de commerce spécialisé (2 cartes de t1 contre une carte de t2) sur cette terre si il n'est pas en ruine, si t1 et t2 sont des  cartes de ressources, si il a un commerce spécialisé en le type t1 et si il peut payer 2 cartes de t1'''
-    if j.getEnRuine():
-        raise CommerceError(CommerceError.JOUEUR_EN_RUINE)
     if not(t1.est_ressource() and t2.est_ressource() and t1.size() == 1 and t2.size() == 1 and t1.est_physiquement_possible() and t2.est_physiquement_possible()):
         raise CommerceError(CommerceError.FLUX_IMPOSSIBLE)
     if not j.aColoniseTerre(terre):
@@ -581,10 +742,22 @@ def echanger_commerce(j,terre,t1,t2):
     j.recevoir(terre,t2)
 
 
+def translate_jouer_decouverte(j,terre_num_str, key_cartes):
+    try:
+        bdd = j.bdd
+        num = int(terre_num_str)
+        terre = Plateau.getPlateau().ter(num)
+        cartes = Cartes.get(key_cartes)
+        if cartes == 0:
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [terre,cartes]
 
+
+@preruine
+@predefausse
 def peut_jouer_decouverte(joueur,terre,cartes):
-    if joueur.getEnRuine():
-        raise DeveloppementError(DeveloppementError.JOUEUR_EN_RUINE)
     if not joueur.aColoniseTerre(terre):
         raise DeveloppementError(DeveloppementError.TERRE_NON_COLONISEE)
     if not Cartes.DECOUVERTE <= joueur.getCartes(terre):
@@ -601,9 +774,25 @@ def jouer_decouverte(joueur,terre,cartes):
         joueur.payer(terre,Cartes.DECOUVERTE)
 
 
+def translate_jouer_monopole(j,terre_num_str, carte_name, *jnums_str):
+    try:
+        bdd = j.bdd
+        num = int(terre_num_str)
+        terre = Plateau.getPlateau().ter(num)
+        c = Cartes.getFromName(carte_name)
+        if c == 0:
+            raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+        jnums = []
+        for jnum_str in jnums_str:
+            jnums.add(int(jnum_str))
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [terre,c] + jnums
+
+
+@preruine
+@predefausse
 def peut_jouer_monopole(joueur,terre,t1, jvols):
-    if joueur.getEnRuine():
-        raise DeveloppementError(DeveloppementError.JOUEUR_EN_RUINE)
     if not joueur.aColoniseTerre(terre):
         raise DeveloppementError(DeveloppementError.TERRE_NON_COLONISEE)
     if not Cartes.MONOPOLE <= joueur.getCartes(terre):
@@ -632,10 +821,22 @@ def jouer_monopole(joueur,terre,t1,jvols):
     Monopole(0,joueur,jvols,terre,t1).save(joueur.bdd)
 
 
+def translate_jouer_construction_routes(j,terre_num_str, isFirstRoute_str, a1_num_str, isSecondRoute_str, a2_num_str):
+    try:
+        bdd = j.bdd
+        num = int(terre_num_str)
+        terre = Plateau.getPlateau().ter(num)
+        num = int(a1_num_str)
+        a1 = Plateau.getPlateau().ter(num)
+        num = int(a2_num_str)
+        a2 = Plateau.getPlateau().ter(num)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [terre,isFirstRoute_str == 'True', a1, isSecondRoute_str == 'False', a2]
 
+@preruine
+@predefausse
 def peut_jouer_construction_routes(joueur,terre,isFirstRoute,a1,isSecondRoute,a2):
-    if joueur.getEnRuine():
-        raise DeveloppementError(DeveloppementError.JOUEUR_EN_RUINE)
     if a1 == a2 and isFirstRoute and isSecondRoute:
         raise DeveloppementError(DeveloppementError.CONSTRUCTION_ROUTES_IDENTIQUES)
     if not joueur.aColoniseTerre(terre):
@@ -671,11 +872,10 @@ def jouer_construction_routes(joueur,terre,isFirstRoute,a1,isSecondRoute,a2):
         construire_bateau(joueur,a2,True)
 
 
-
+@preruine
+@predefausse
 def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol):
     bdd = joueur.bdd
-    if joueur.getEnRuine():
-        raise VoleurError(VoleurError.JOUEUR_EN_RUINE)
     if not joueur.aColoniseTerre(terre):
         raise VoleurError(VoleurError.TERRE_NON_COLONISEE)
     if not (hex == 0 or hex.terre == terre):
@@ -698,9 +898,24 @@ def peut_deplacer_voleur(joueur,terre,voleurType,hex,jvol):
 def deplacer_voleur(joueur,terre,voleurType,hex,jvol):
     DeplacementVoleur(0,joueur,terre,voleurType,hex,jvol,True).save(joueur.bdd) 
 
+
+def translate_jouer_chevallier(j,terre_num_str, voleur_type, hex_num_str, jnum_str):
+    try:
+        bdd = j.bdd
+        num = int(terre_num_str)
+        terre = Plateau.getPlateau().ter(num)
+        num = int(hex_num_str)
+        hex = Plateau.getPlateau().hexa(num)
+        jnum = int(jnum_str)
+    except (ValueError, IndexError):
+        raise ActionError(ActionError.MAUVAIS_PARAMETRES)
+    return [terre,voleur_type, hex, jnum]
+
+
+
+@preruine
+@predefausse
 def peut_jouer_chevallier(joueur,terre,voleurType, hex,jvol):
-    if joueur.getEnRuine():
-        raise DeveloppementError(DeveloppementError.JOUEUR_EN_RUINE)
     if not joueur.aColoniseTerre(terre):
         raise DeveloppementError(DeveloppementError.TERRE_NON_COLONISEE)
     if not Cartes.CHEVALLIER <= joueur.getCartes(terre):

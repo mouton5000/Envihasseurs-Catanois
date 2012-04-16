@@ -348,11 +348,30 @@ class TestExecutionArbreAction(TestJoueur):
 
         self.base_arbre()
 
-        act1 = Action(2001, 'construire_route', 'yahoo')
+        act1 = Action(2001, 'construire_route', 2045)
         act1.save()
         act2 = Action(2002, 'construire_rouuuuute', self.a1.num)
         act2.save()
-        act3 = Action(2003, 'construire_route', 'print bdd')
+        act3 = Action(2003, 'construire_route', self.a1.num, self.a2.num)
+        act3.save()
+        self.n2.addAction(act1)
+        self.n5.addAction(act2)
+        self.n12.addAction(act3)
+        bdd = j1.executer()
+        self.check_ars([False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False], bdd) 
+    
+    def test_sortie_5_3(self):
+        ''' Sortie de l'arbre à causes d'action non valides'''
+        j1 = self.j1
+        p = Plateau.getPlateau()
+
+        self.base_arbre()
+
+        act1 = Action(2001, 'construire_route', 'yahoo')
+        act1.save()
+        act2 = Action(2002, 'construire_rouuuuute')
+        act2.save()
+        act3 = Action(2003, 'construire_route', self.a1.num, self.a2.num)
         act3.save()
         self.n2.addAction(act1)
         self.n5.addAction(act2)
