@@ -439,8 +439,8 @@ def translate_echanger_bateau(j,bateau_num_str, key_ct, key_cb):
         bateau = Bateau.getBateau(num, bdd)
         if bateau == 0:
             raise ActionError(ActionError.MAUVAIS_PARAMETRES)
-        ct = Cartes.get(key_ct, bdd)
-        cb = Cartes.get(key_cb, bdd)
+        ct = Cartes.get(key_ct)
+        cb = Cartes.get(key_cb)
         if ct == 0 or cb == 0:
             raise ActionError(ActionError.MAUVAIS_PARAMETRES)
     except (ValueError, IndexError):
@@ -560,7 +560,7 @@ def translate_coloniser(j,bateau_num_str, it_num_str, key_transfert):
         bdd = j.bdd
         num = int(bateau_num_str)
         bateau = Bateau.getBateau(num, bdd)
-        transfert = Cartes.getTransfert(key_transfert, bdd)
+        transfert = Cartes.getTransfert(key_transfert)
 
         if bateau == 0 or transfert == 0:
             raise ActionError(ActionError.MAUVAIS_PARAMETRES)
