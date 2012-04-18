@@ -7,6 +7,7 @@ from joueurs import *
 from plateau import *
 from errors import *
 from pions import *
+import random
 REDIS = redis.StrictRedis()
 
 
@@ -70,6 +71,15 @@ class Monopole:
         bdd.set(key + ':terre', self.terre.num)
         self.carte.setTo(key + ':carte')
 
+        bdd.sadd('Monopoles', self.num)
+
+    @staticmethod
+    def getAllMonopolesNums(bdd = REDIS):
+        nums = []
+        for num_str in bdd.smembers('Monopoles'):
+            nums.append(int(num_str))
+        return nums
+
     @staticmethod
     def getMonopole(num):
         key = "M"+str(num)
@@ -123,7 +133,7 @@ class DeplacementVoleur:
         bdd.set(key + ':chevallier', self.chevallier)
 
         joueur = JoueurPossible(self.j,bdd)
-        if self.chevallier:
+        if not self.chevallier:
             j = Des.NB_LANCES+1
             for i in joueur.get_lance_des_deplacements_voleur(self.terre):
                 j = min(j, int(i))
@@ -234,6 +244,8 @@ class Echange:
         self.recu.setTo(key + ':recu')
         REDIS.set(key + ':accepte', self.accepted)
 
+        REDIS.sadd('Echanges', self.num)
+
     @staticmethod
     def getEchange(num):
         key = "E"+str(num)
@@ -253,6 +265,13 @@ class Echange:
             return Echange(num,j1,j2,terre,don,recu, accepted)
         else:
             return 0
+
+    @staticmethod
+    def getAllEchangesNums():
+        nums = []
+        for num_str in REDIS.smembers('Echanges'):
+            nums.append(int(num_str))
+        return nums
 
     def delete(echange):
         key = "E"+str(echange.num)
@@ -306,27 +325,142 @@ def getJoueursParPriorite():
 
 def setNextJoueursParPriorite():
         ''' Remplace la liste de priorite des joueurs actuelle par la suivante '''
-        pass
+        j = getJoueursParPriorite()
+        nbJ = len(j)
+        nl = []
+        for i in xrange(nbJ):
+            nb.append(0)
+        impair = j%2 == 1
+
+        # On fait un cycle où, sauf exceptions :
+        # on rapproche le joueur du centre de la liste, puis on le place sur son emplacement symétrique par rapport à ce centre.
+
+        if impair:
+            for i in xrange(nbJ):
+                if i == nbJ/2:
+                    nl[0] = j[i]
+                else  if(i < n/2):
+                    nl[n-i-1] = j[i]
+                else if(i > n/2-1):
+                    nl[n-i] = j[i]
+        else:
+            divImpair = (j/2)%2 == 1
+            if divImpair:
+                for i in xrange(nbJ):
+                    if i == nbJ/2:
+                        nl[0] = j[i]
+                    elif i == nbJ/2-1:
+                        nl[n-1] = j[i]
+                    else  if(i < n/2):
+                       nl[n-i-2] = j[i]
+                    else if(i > n/2-1):
+                        nl[n-i] = j[i]
+            else:
+                for i in xrange(nbJ):
+                    if i == nbJ/2:
+                        nl[n-1] = j[i]
+                    elif i == nbJ/2-1:
+                        nl[0] = j[i]
+                    else  if(i < n/2):
+                       nl[n-i-2] = j[i]
+                    else if(i > n/2-1):
+                        nl[n-i] = j[i]
+
+            # Puis on fait des échanges aléatoires et indépendants.
+
+        for j1 in xrange(nbJ):
+            for j2 in xrange(i+1,nbJ):
+                i1 = j.index(j1)
+                i2 = j.index(j2) 
+                boolean b = random.random() < 0.3
+                if b:
+                    nl[ind1] = j2
+                    nl[ind2] = j1
+        
+        REDIS.delete('JoueursPriorite')
+        REDIS.rpush('JoueursPriorite', *nl)
 
 def action_nuit():
         ''' Execute l'ensemble des actions du jour '''
         import arbre_action
 
         # En premier on fait defausser les gens qui n'ont pas defaussé leurs cartes au hasard.
-        # On exécute les arbres d'actions.
-        # On effectue les echanges
-        # On deplace les voleurs et on effectue les vols
-        # On effectue les monopoles.
-        # On relance les dés
-        # On redonne la priorié des joueurs
-        # On désigne les déplaceurs de voleur
-        # On effectue les récoltes
-        # On donne les cartes de développement achetée la veille
-        
-        for j in arbre_action.Joueur.get_all_joueurs():
+        joueurs = getJoueursParPriorite()
+        for j in joueurs:
             jp = JoueurPossible(j.num)
             for terre in jp.getTerres():
                 if jp.doit_defausser(terre):
-                    Defausse.defausse_aleatoire(jp, terre)
-        pass
+                    jp.defausse_aleatoire(terre)
         
+        # On exécute les arbres d'actions.
+        
+        for j in joueurs:
+            bdd = j.executer()
+            bdd.save_all()
+            j.clear_arbre()
+        arbre_action.Node.clearNodes()
+
+        # On effectue les echanges
+            
+        echs_nums = Echange.getAllEchangesNums()
+        for num in echs_nums:
+            ech = Echange.getEchange(num)
+            ech.executer()
+        Echange.clearEchanges()
+
+        # On deplace les voleurs et on effectue les vols
+
+        for i in xrange(Des.NB_LANCES):
+            for j in joueurs:
+                jp = JoueurPossible(j.num)
+                for terre in jp.getTerres():
+                    deps_nums = jp.get_deplacements_voleur(terre, i)
+                    if len(deps_num) == 0 and str(i) in jp.get_lance_des_deplacements_voleur(terre):
+                        DeplacementVoleur.deplacementAleatoire(jp,terre)
+                    else:
+                        for num in deps_nums:
+                            dep = DeplacementVoleur.getDeplacementVoleur(num)
+                            dep.executer()
+
+        for j in joueurs:
+            jp = JoueurPossible(j.num)
+            for terre in jp.getTerres():
+                deps_nums = jp.get_deplacements_voleur_chevallier(terre)
+                for num in deps_nums:
+                    dep = DeplacementVoleur.getDeplacementVoleur(num)
+                    dep.executer()
+
+        DeplacementVoleur.clearDeplacementsVoleurs()
+
+        # On effectue les monopoles.
+
+        mons_nums = Monopole.getAllMonopolesNums()
+        for num in mons_nums:
+            monopole = Monopole.getMonopole(num)
+            monopole.executer()
+        Monopole.clearMonopole()
+
+        # On relance les dés
+
+        des.roll()
+
+        # On redonne la priorié des joueurs
+        
+        setNextJoueursParPriorite()
+
+        # On désigne les déplaceurs de voleur
+
+        DeplacementVoleur.designer_deplaceur_de_voleur()
+
+        # On effectue les récoltes
+
+        for lance in Des.getDices():
+            recolter_ressources(lance)
+ 
+        # On donne les cartes de développement achetée la veille
+
+        for j in joueurs:
+            jp = JoueurPossible(j.num)
+            for terre in jp.getTerres():
+                jp.recevoir(terre, jp.getCartesEnSommeil(terre))
+                jp.setCartesEnSommeil(terre,Cartes.RIEN)
