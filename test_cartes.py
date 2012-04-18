@@ -112,6 +112,22 @@ class TestCartesGeneral(unittest.TestCase):
         self.assertFalse(self.c4<= self.c6)
         self.assertFalse(self.c5<= self.c8)
         self.assertFalse(self.c6<= self.c10)
+
+    def test_carte(self):
+        c = CartesRessources(1,2,1,3,1)
+        c1 = c.carte(1)
+        c2 = c.carte(4)
+        c3 = c.carte(6)
+        c4 = c.carte(8)
+        c5 = c.carte(9)
+        c6 = c.carte(0)
        
+        self.assertEqual(c1, Cartes.ARGILE)
+        self.assertEqual(c2, Cartes.BOIS)
+        self.assertEqual(c3, Cartes.CAILLOU)
+        self.assertEqual(c4, Cartes.MOUTON)
+        self.assertEqual(c5, 0)
+        self.assertEqual(c6, 0)
+
 if __name__ == '__main__':
     unittest.main()

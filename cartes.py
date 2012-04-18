@@ -107,7 +107,7 @@ class CartesGeneral:
 
     def carte(self,nb):
         ''' Renvoie la cartes numéro nb de la main, si elles sont classées dans l'ordre des attributs.'''
-        if 0 >= nb > self.ressources_size():
+        if 0 >= nb or nb > self.ressources_size():
             return 0
 
         if nb <= self.argile:
