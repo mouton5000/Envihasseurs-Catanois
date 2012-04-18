@@ -184,13 +184,20 @@ class JoueurPossible:
         ''' Renvoie les bateaux du joueur, tout type confondu'''
         return self.getBateauxTransportPositions().union(self.getCargosPositions()).union(self.getVoiliersPositions())
 
-    def getBateauxProchesNum(self,terre):
+    def getBateauxProches(self,terre):
         bs = []
         for bn in self.getBateaux():
             b = Bateau.getBateau(int(bn),REDIS)
             if b.est_proche(terre):
-                bs.append(b.num)
+                bs.append(b)
         return bs
+    
+    def getBateauxProchesNum(self,terre):
+        bs = self.getBateauxProches(terre)
+        bnums = []
+        for b in bs:
+            bnums.append(b.num)
+        return bnums
 
     def getColonies(self):
         ''' Renvoie tous les intersection où se trouvent les colonies du joueur'''
@@ -288,6 +295,37 @@ class JoueurPossible:
             ds += rs2/2 + rs2%2 # ressource arrondi au superieur
             rs2 = rs - ds
         return ds
+
+    def defausse_aleatoire(self, terre):
+        bs = self.getBateauxProches(terre)
+        n = self.get_defausser(terre)
+       
+        c = self.getCartes(terre)
+        total = c.ressources_size()
+        for b in bs:
+            total += b.cargaison.ressources_size()
+ 
+        for i in xrange(n):
+            r = random.randint(1,total)
+            total -= 1
+            c = self.getCartes(terre)
+            s = c.ressources_size()
+            if s >= r:
+                c1 = c.carte(r)
+                self.payer(terre, c1)
+            else:
+                r -= s
+                for b in bs:
+                    s = b.cargaison.ressources_size()
+                    if s >= r:
+                        c1 = b.cargaison.carte(r)
+                        b.remove(c1)
+                        break
+                    else:
+                        r -= s
+                
+        for b in bs:
+            b.save(self.bdd)
 
     def get_defausser(self,terre):
         ''' Renvoie le nombre de cartes que doit défausser le joueur sur sa terre '''

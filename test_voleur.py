@@ -755,3 +755,38 @@ class TestVoleur(TestJoueur):
 
         b2 = Bateau.getBateau(1)
         self.assertEqual(b2.cargaison, CartesGeneral(0,1,0,1,0,0,0,1,0,0))
+        
+
+        
+
+    def test_defausse_aleatoire(self):
+        p = Plateau.getPlateau()
+        j1 = self.j1
+        tg = self.tg
+        j1.addTerre(tg)
+         
+        c1 = CartesGeneral(2,2,2,0,3,1,2,1,0,0) # Defausser
+        j1.setCartes(tg,c1)
+
+        n = 3
+        j1.set_defausser(tg, n)
+        r = c1.ressources_size()
+        j1.defausse_aleatoire(tg)
+        self.assertEqual(j1.getCartes(tg).ressources_size(), r-n)
+        
+
+        b1 = Bateau(1,1,p.it(5).lien(p.it(6)), Cartes.RIEN,Bateau.BateauType.TRANSPORT, False)
+        b1.cargaison = CartesGeneral(1,2,0,1,0,0,0,1,0,0)
+        b1.save()
+       
+
+        for i in xrange(20):
+            n = 4
+            j1.setCartes(tg,c1)
+            j1.set_defausser(tg, n)
+            b1.cargaison = CartesGeneral(1,2,0,1,0,0,0,1,0,0)
+            b1.save()
+            r = c1.ressources_size() + b1.cargaison.ressources_size()
+            j1.defausse_aleatoire(tg)
+            b1 = Bateau.getBateau(1)
+            self.assertEqual(j1.getCartes(tg).ressources_size() + b1.cargaison.ressources_size(), r-n)

@@ -106,7 +106,7 @@ class CartesGeneral:
         return self >= Cartes.RIEN and self.est_entier()
 
     def carte(self,nb):
-        ''' Renvoie la cartes numéro nb de la main, si elles sont classées dans l'ordre des attributs.'''
+        ''' Renvoie la carte de ressource numéro nb de la main, si elles sont classées dans l'ordre des attributs.'''
         if 0 >= nb or nb > self.ressources_size():
             return 0
 
