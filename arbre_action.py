@@ -390,32 +390,17 @@ class Joueur:
         if not joueur.doit_defausser(terre):
             raise DefausseError(DefausseError.DEFAUSSE_INTERDITE)
             
-        c = joueur.getCartes(terre)
-        rs = c.ressources_size()
-
-
-        bs = []
-        for bn in joueur.getBateaux():
-            b = Bateau.getBateau(int(bn),REDIS)
-            if b.est_proche(terre):
-                bs.append(b.num)
-                rs += b.cargaison.ressources_size()
-        if rs <= 7:
+        bs = joueur.getBateauxProchesNum(terre)
+        ds = joueur.get_defausser(terre)
+        if ds == 0:
             raise DefausseError(DefausseError.DEFAUSSE_INTERDITE)
         
         res = cartes[0]
         cargs = cartes[1]
 
-        ds = rs/2 + rs%2 # ressource arrondi au superieur
-        rs2 = rs - ds
-
-        while rs2 > 7:
-            ds += rs2/2 + rs2%2 # ressource arrondi au superieur
-            rs2 = rs - ds
-
         if not (res.est_ressource() and res.est_physiquement_possible()):
             raise DefausseError(DefausseError.FLUX_IMPOSSIBLE)
-        if not res <= c:
+        if not res <= joueur.getCartes(terre):
             raise DefausseError(DefausseError.FLUX_TROP_ELEVE)
         ss = res.ressources_size()
         for cb in cargs:

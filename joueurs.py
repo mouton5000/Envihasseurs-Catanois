@@ -184,6 +184,14 @@ class JoueurPossible:
         ''' Renvoie les bateaux du joueur, tout type confondu'''
         return self.getBateauxTransportPositions().union(self.getCargosPositions()).union(self.getVoiliersPositions())
 
+    def getBateauxProchesNum(self,terre):
+        bs = []
+        for bn in self.getBateaux():
+            b = Bateau.getBateau(int(bn),REDIS)
+            if b.est_proche(terre):
+                bs.append(b.num)
+        return bs
+
     def getColonies(self):
         ''' Renvoie tous les intersection où se trouvent les colonies du joueur'''
         return self.bdd.smembers('J'+str(self.num)+':colonies')
@@ -258,6 +266,28 @@ class JoueurPossible:
         ''' Renvoie tous les identifiants du déplacement de voleur dus aux chevalliers'''
         return self.bdd.lrange('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur_chevallier',0,-1)
 
+    def informations_defausse(self,terre):
+        ''' Calcule le nombre de cartes que doit défausser le joueur'''
+        c = self.getCartes(terre)
+        rs = c.ressources_size()
+
+        bs = []
+        for bn in self.getBateaux():
+            b = Bateau.getBateau(int(bn),REDIS)
+            if b.est_proche(terre):
+                bs.append(b.num)
+                rs += b.cargaison.ressources_size()
+       
+        if rs < 7:
+            return 0
+        
+        ds = rs/2 + rs%2 # ressource arrondi au superieur
+        rs2 = rs - ds
+
+        while rs2 > 7:
+            ds += rs2/2 + rs2%2 # ressource arrondi au superieur
+            rs2 = rs - ds
+        return ds
 
     def get_defausser(self,terre):
         ''' Renvoie le nombre de cartes que doit défausser le joueur sur sa terre '''
