@@ -370,7 +370,24 @@ class Joueur:
     def deplacer_voleur(joueur,terre,voleurType,hex,jvol):
         DeplacementVoleur(0,joueur,terre,voleurType,hex,jvol, False).save(REDIS)
         joueur.set_deplacement_voleur(terre,False)
+    
+    def deplacement_aleatoire(joueur, terre):
+        r = random.randint(1,2)
+        if r == 1:
+            vT = Voleur.VoleurType.BRIGAND 
+        else:    
+            vT = Voleur.VoleurType.PIRATE
         
+        import joueurs
+        joueur = joueurs.JoueurPossible(j.num)
+
+        voleur = Voleur.gePirate(terre, REDIS)
+        ppv = joueur.positions_possibles_voleur(terre,voleur)
+        
+        r = random.randint(0, len(ppv)-1)
+        c = ppv[r]
+
+        return DeplacementVoleur(0, joueur, terre, vT, c[0], c[1], False)
 
     @staticmethod
     def get_all_joueurs():

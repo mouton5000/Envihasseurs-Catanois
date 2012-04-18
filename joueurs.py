@@ -251,15 +251,15 @@ class JoueurPossible:
     
     def add_deplacement_voleur(self,terre, i, num):
         ''' Ajoute un déplacement de voleur du au ie lance de dés si c'est un 7 à ce joueur'''
-        self.bdd.lpush('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur'+str(i), num)
+        self.bdd.set('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur'+str(i), num)
     
     def clear_deplacement_voleur(self,terre, i):
         ''' Efface tous les déplacements de voleur du joueur du au ie lancé de dés si c'est un 7'''
         self.bdd.delete('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur'+str(i))
  
-    def get_deplacements_voleur(self,terre, i):
+    def get_deplacement_voleur_of(self,terre, i):
         ''' Renvoie tous les identifiants du déplacement de voleur du au ie lancé de dés si c'est  un 7'''
-        return self.bdd.lrange('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur'+str(i),0,-1)
+        return self.bdd.get('J'+str(self.num)+':T'+str(terre.num)+':deplacements_voleur'+str(i))
     
     def add_deplacement_voleur_chevallier(self,terre, num):
         ''' Ajoute un déplacement de voleur du aux chevalliers à ce joueur'''

@@ -136,9 +136,9 @@ class DeplacementVoleur:
         if not self.chevallier:
             j = Des.NB_LANCES+1
             for i in joueur.get_lance_des_deplacements_voleur(self.terre):
-                j = min(j, int(i))
-            if j !=  Des.NB_LANCES+1:
-                joueur.add_deplacement_voleur(self.terre,j,self.num)
+                if not joueur.get_deplacement_voleur_of(terre,i) is None:
+                    joueur.add_deplacement_voleur(self.terre,j,self.num)
+                    break
         else:
             joueur.add_deplacement_voleur_chevallier(self.terre, self.num)
 
@@ -397,13 +397,12 @@ def action_nuit():
             for j in joueurs:
                 jp = JoueurPossible(j.num)
                 for terre in jp.getTerres():
-                    deps_nums = jp.get_deplacements_voleur(terre, i)
-                    if len(deps_num) == 0 and str(i) in jp.get_lance_des_deplacements_voleur(terre):
-                        DeplacementVoleur.deplacementAleatoire(jp,terre)
+                    dep_num = jp.get_deplacement_voleur_of(terre, i)
+                    if  not dep_num is None and str(i) in jp.get_lance_des_deplacements_voleur(terre):
+                        jp.deplacementAleatoire(terre).executer()
                     else:
-                        for num in deps_nums:
-                            dep = DeplacementVoleur.getDeplacementVoleur(num)
-                            dep.executer()
+                        dep = DeplacementVoleur.getDeplacementVoleur(dep_num)
+                        dep.executer()
 
         for j in joueurs:
             jp = JoueurPossible(j.num)
