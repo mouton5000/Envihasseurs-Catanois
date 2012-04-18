@@ -191,24 +191,7 @@ class DeplacementVoleur:
                 
                 # Gestion de la défausse
                 if defausse:
-                    c = j.getCartes(terre)
-                    rs = c.ressources_size()
-                    bs = []
-                    for bn in j.getBateaux():
-                        b = Bateau.getBateau(int(bn),REDIS)
-                        if b.est_proche(terre):
-                            bs.append(b.num)
-                            rs += b.cargaison.ressources_size()
-                    if rs <= 7:
-                        j.set_defausser(terre, 0)
-                    else:
-                        ds = rs/2 + rs%2 # ressource arrondi au superieur
-                        rs2 = rs - ds
-
-                        while rs2 > 7:
-                            ds += rs2/2 + rs2%2 # ressource arrondi au superieur
-                            rs2 = rs - ds
-                        j.set_defausser(terre,ds)
+                    j.set_defausser(terre, j.informations_defausse(terre))
                 else:
                     j.set_defausser(terre, 0)
                 # Gestion du déplacemnt de voleur
@@ -339,9 +322,9 @@ def setNextJoueursParPriorite():
             for i in xrange(nbJ):
                 if i == nbJ/2:
                     nl[0] = j[i]
-                else  if(i < n/2):
+                elif i < n/2:
                     nl[n-i-1] = j[i]
-                else if(i > n/2-1):
+                elif i > n/2-1:
                     nl[n-i] = j[i]
         else:
             divImpair = (j/2)%2 == 1
@@ -351,9 +334,9 @@ def setNextJoueursParPriorite():
                         nl[0] = j[i]
                     elif i == nbJ/2-1:
                         nl[n-1] = j[i]
-                    else  if(i < n/2):
+                    elif i < n/2:
                        nl[n-i-2] = j[i]
-                    else if(i > n/2-1):
+                    elif i > n/2-1:
                         nl[n-i] = j[i]
             else:
                 for i in xrange(nbJ):
@@ -361,9 +344,9 @@ def setNextJoueursParPriorite():
                         nl[n-1] = j[i]
                     elif i == nbJ/2-1:
                         nl[0] = j[i]
-                    else  if(i < n/2):
+                    elif i < n/2:
                        nl[n-i-2] = j[i]
-                    else if(i > n/2-1):
+                    elif i > n/2-1:
                         nl[n-i] = j[i]
 
             # Puis on fait des échanges aléatoires et indépendants.
@@ -372,7 +355,7 @@ def setNextJoueursParPriorite():
             for j2 in xrange(i+1,nbJ):
                 i1 = j.index(j1)
                 i2 = j.index(j2) 
-                boolean b = random.random() < 0.3
+                b = random.random() < 0.3
                 if b:
                     nl[ind1] = j2
                     nl[ind2] = j1
