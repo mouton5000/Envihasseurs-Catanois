@@ -7,6 +7,7 @@ from bdd_interface import *
 import Jeu
 import functools
 from ActionNight import *
+import random
 REDIS = redis.StrictRedis()
 
 def predefausse(f):
@@ -105,7 +106,7 @@ class Joueur:
     def executer(self):
         ''' Execute l'ensemble de l'arbre d'action et construit une base de données à partir de toutes les actions. '''
         node = self.getRoot()
-        ibdd = REDIS
+        ibdd = BDD(REDIS)
         b = True
         while True:
             if b:
@@ -370,17 +371,18 @@ class Joueur:
     def deplacer_voleur(joueur,terre,voleurType,hex,jvol):
         DeplacementVoleur(0,joueur,terre,voleurType,hex,jvol, False).save(REDIS)
     
-    def deplacement_aleatoire(joueur, terre):
+    def deplacement_aleatoire(j, terre):
         r = random.randint(1,2)
         if r == 1:
             vT = Voleur.VoleurType.BRIGAND 
+            voleur = Voleur.getBrigand(terre, REDIS)
         else:    
             vT = Voleur.VoleurType.PIRATE
+            voleur = Voleur.getPirate(terre, REDIS)
         
         import joueurs
         joueur = joueurs.JoueurPossible(j.num)
 
-        voleur = Voleur.gePirate(terre, REDIS)
         ppv = joueur.positions_possibles_voleur(terre,voleur)
         
         r = random.randint(0, len(ppv)-1)
@@ -561,7 +563,7 @@ class Node:
         if lN is None:
             return
         for i in xrange(int(lN)):
-            Node(i+1).delete()
+            Node(i+1).deleteNode()
         REDIS.delete('LastNode')
 
 # Méthode calculant des noeuds particuliers

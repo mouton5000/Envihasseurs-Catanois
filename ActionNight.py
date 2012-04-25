@@ -71,7 +71,8 @@ class Monopole:
         bdd.set(key + ':terre', self.terre.num)
         self.carte.setTo(key + ':carte', bdd)
 
-        bdd.sadd('Monopoles', self.num)
+        jp = JoueurPossible(self.j.num, bdd)
+        jp.add_monopole(self.terre, self.num)
 
     def delete(self,bdd):
         key = "M"+str(self.num)
@@ -81,12 +82,12 @@ class Monopole:
         CartesGeneral.delete(key + ':carte',bdd)
 
 
-    @staticmethod
-    def getAllMonopolesNums(bdd = REDIS):
-        nums = []
-        for num_str in bdd.smembers('Monopoles'):
-            nums.append(int(num_str))
-        return nums
+#    @staticmethod
+#    def getAllMonopolesNums(bdd = REDIS):
+#        nums = []
+#        for num_str in bdd.smembers('Monopoles'):
+#            nums.append(int(num_str))
+#        return nums
 
     @staticmethod
     def getMonopole(num, bdd = REDIS):
@@ -140,12 +141,16 @@ class DeplacementVoleur:
         self.jvol = jvol
         self.chevallier = chevallier
 
+
     def save(self,bdd):
         key = 'DV'+str(self.num)
         bdd.set(key + ':joueur', self.j)
         bdd.set(key + ':terre', self.terre.num)
         bdd.set(key + ':voleurType', self.voleurType)
-        bdd.set(key + ':emplacement', self.hex.num)
+        if self.hex != 0:
+            bdd.set(key + ':emplacement', self.hex.num)
+        else:
+            bdd.set(key + ':emplacement', 0)
         bdd.set(key + ';jvol', self.jvol)
         bdd.set(key + ':chevallier', self.chevallier)
 
@@ -192,7 +197,9 @@ class DeplacementVoleur:
             voleur = Voleur.getPirate(self.terre,REDIS)
         voleur.deplacer(self.hex)
         voleur.save(REDIS)
-        j.voler(self.terre,self.jvol)
+
+        if self.jvol != 0:
+            j.voler(self.terre,self.jvol)
 
     @staticmethod
     def clearDeplacementsVoleurs():
@@ -351,14 +358,20 @@ def getJoueursParPriorite():
         ''' Renvoie la liste des joueurs par ordre de priorité de la journée '''
         return REDIS.lrange('JoueursPriorite',0,-1)
 
+def setJoueursParPriorite(joueurs):
+        REDIS.delete('JoueursPriorite')
+        REDIS.rpush('JoueursPriorite', *joueurs)
+
+
 def setNextJoueursParPriorite():
         ''' Remplace la liste de priorite des joueurs actuelle par la suivante '''
         j = getJoueursParPriorite()
         nbJ = len(j)
         nl = []
         for i in xrange(nbJ):
-            nb.append(0)
-        impair = j%2 == 1
+            nl.append(0)
+        
+        impair = nbJ%2 == 1
 
         # On fait un cycle où, sauf exceptions :
         # on rapproche le joueur du centre de la liste, puis on le place sur son emplacement symétrique par rapport à ce centre.
@@ -367,32 +380,32 @@ def setNextJoueursParPriorite():
             for i in xrange(nbJ):
                 if i == nbJ/2:
                     nl[0] = j[i]
-                elif i < n/2:
-                    nl[n-i-1] = j[i]
-                elif i > n/2-1:
-                    nl[n-i] = j[i]
+                elif i < nbJ/2:
+                    nl[nbJ-i-1] = j[i]
+                elif i > nbJ/2-1:
+                    nl[nbJ-i] = j[i]
         else:
-            divImpair = (j/2)%2 == 1
+            divImpair = (nbJ/2)%2 == 1
             if divImpair:
                 for i in xrange(nbJ):
                     if i == nbJ/2:
                         nl[0] = j[i]
                     elif i == nbJ/2-1:
-                        nl[n-1] = j[i]
-                    elif i < n/2:
-                       nl[n-i-2] = j[i]
-                    elif i > n/2-1:
-                        nl[n-i] = j[i]
+                        nl[nbJ-1] = j[i]
+                    elif i < nbJ/2:
+                       nl[nbJ-i-2] = j[i]
+                    elif i > nbJ/2-1:
+                        nl[nbJ-i] = j[i]
             else:
                 for i in xrange(nbJ):
                     if i == nbJ/2:
                         nl[n-1] = j[i]
                     elif i == nbJ/2-1:
                         nl[0] = j[i]
-                    elif i < n/2:
-                       nl[n-i-2] = j[i]
-                    elif i > n/2-1:
-                        nl[n-i] = j[i]
+                    elif i < nbJ/2:
+                       nl[nbJ-i-2] = j[i]
+                    elif i > nbJ/2-1:
+                        nl[nbJ-i] = j[i]
 
             # Puis on fait des échanges aléatoires et indépendants.
 
@@ -405,15 +418,19 @@ def setNextJoueursParPriorite():
                     nl[ind1] = j2
                     nl[ind2] = j1
         
-        REDIS.delete('JoueursPriorite')
-        REDIS.rpush('JoueursPriorite', *nl)
-
+        setJoueursParPriorite(nl)       
+ 
 def action_nuit():
         ''' Execute l'ensemble des actions du jour '''
         import arbre_action
 
         # En premier on fait defausser les gens qui n'ont pas defaussé leurs cartes au hasard.
-        joueurs = getJoueursParPriorite()
+        jnums = getJoueursParPriorite()
+        joueurs = []
+
+        for jnum in jnums:
+            joueurs.append(arbre_action.Joueur(jnum))
+        
         for j in joueurs:
             jp = JoueurPossible(j.num)
             for terre in jp.getTerres():
@@ -424,10 +441,11 @@ def action_nuit():
         
         for j in joueurs:
             bdd = j.executer()
-            bdd.save_all()
-            j.clear_arbre()
+            bdd.saveAll()
         arbre_action.Node.clearNodes()
-
+        
+        for j in joueurs:
+            j.setNewRoot()
         # On effectue les echanges
             
         echs_nums = Echange.getAllEchangesNums()
@@ -442,12 +460,16 @@ def action_nuit():
             for j in joueurs:
                 jp = JoueurPossible(j.num)
                 for terre in jp.getTerres():
-                    dep_num = jp.get_deplacement_voleur_of(terre, i)
-                    if  not dep_num is None and str(i) in jp.get_lance_des_deplacements_voleur(terre):
-                        jp.deplacementAleatoire(terre).executer()
-                    else:
-                        dep = DeplacementVoleur.getDeplacementVoleur(dep_num)
-                        dep.executer()
+                    if str(i) in jp.get_lances_des_deplacements_voleur(terre):
+                        dep_num = jp.get_deplacement_voleur_of(terre, i)
+                        if  dep_num is None:
+                            dep = j.deplacement_aleatoire(terre)
+                            dep.save(REDIS)
+                            dep.executer()
+                            
+                        else:
+                            dep = DeplacementVoleur.getDeplacementVoleur(dep_num)
+                            dep.executer()
 
         for j in joueurs:
             jp = JoueurPossible(j.num)
@@ -461,15 +483,19 @@ def action_nuit():
 
         # On effectue les monopoles.
 
-        mons_nums = Monopole.getAllMonopolesNums()
-        for num in mons_nums:
-            monopole = Monopole.getMonopole(num)
-            monopole.executer()
-        Monopole.clearMonopole()
+        for j in joueurs:
+            jp = JoueurPossible(j.num)
+            for terre in jp.getTerres():
+                for num in jp.get_monopoles(terre):
+                    monopole = Monopole.getMonopole(num)
+                    monopole.executer()
+        for j in joueurs:
+            jp.clear_monopoles(terre)
+        Monopole.clearMonopoles()
 
         # On relance les dés
 
-        des.roll()
+        Des.roll()
 
         # On redonne la priorié des joueurs
         
@@ -482,7 +508,10 @@ def action_nuit():
         # On effectue les récoltes
 
         for lance in Des.getDices():
-            recolter_ressources(lance)
+            try:
+                recolter_ressources(lance)
+            except RecolteError:
+                pass
  
         # On donne les cartes de développement achetée la veille
 

@@ -151,5 +151,5 @@ class BDD:
 
     def saveAll(self):
         self.save()
-        if self.bdd != REDIS:
+        if type(self.bdd) != type(REDIS):
             self.bdd.saveAll()

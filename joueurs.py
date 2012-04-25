@@ -98,6 +98,7 @@ class JoueurPossible:
         ''' Ajoute une terre aux terres colonisées du joueur'''
         self.bdd.sadd('J'+str(self.num)+':terres',terre.num)
         self.setCartes(terre,Cartes.RIEN)
+        self.setCartesEnSommeil(terre,Cartes.RIEN)
         self.setOr(terre,0)
         self.set_chevalliers(terre,0)
         self.set_route_la_plus_longue(terre,0)
@@ -214,6 +215,15 @@ class JoueurPossible:
     def getBatiments(self):
         ''' Renvoie toutes les intersection où se trouvent les batiments du joueur, tout type confondu'''
         return self.getColonies().union(self.getVilles())
+
+    def get_monopoles(self,terre):
+        return self.bdd.lrange('J'+str(self.num)+':T'+str(terre.num)+':monopoles_en_cours', 0,-1)
+    
+    def add_monopole(self,terre, num):
+        self.bdd.lpush('J'+str(self.num)+':T'+str(terre.num)+':monopoles_en_cours', num)
+    
+    def clear_monopoles(self,terre):
+        return self.bdd.delete('J'+str(self.num)+':T'+str(terre.num)+':monopoles_en_cours')
     
     def set_chevalliers(self,terre, nb):
         ''' Ajoute un chevallier à l'armée du joueur sur cette terre'''
