@@ -555,6 +555,14 @@ class Node:
         REDIS.delete(key+':racineSuivante')
         REDIS.delete(key+':racinePrecedente')
 
+    @staticmethod
+    def clearNodes():
+        lN = REDIS.get('LastNode')
+        if lN is None:
+            return
+        for i in xrange(int(lN)):
+            Node(i+1).delete()
+        REDIS.delete('LastNode')
 
 # Méthode calculant des noeuds particuliers
 
