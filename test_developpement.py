@@ -48,6 +48,7 @@ class TestDeveloppement(TestJoueur):
         j1.setCartes(tg,Tarifs.DEVELOPPEMENT)
         Jeu.acheter_carte_developpement(j1,tg)
         self.assertEqual(j1.getCartesEnSommeil(tg).size(),1) 
+        self.assertEqual(j1.getCartes(tg), Cartes.RIEN)
 
         
     def test_jouer_chevalliers(self):
