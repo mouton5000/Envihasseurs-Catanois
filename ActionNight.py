@@ -69,9 +69,17 @@ class Monopole:
         for j in self.jvols:
             bdd.sadd(key + ':joueurVoles', j)
         bdd.set(key + ':terre', self.terre.num)
-        self.carte.setTo(key + ':carte')
+        self.carte.setTo(key + ':carte', bdd)
 
         bdd.sadd('Monopoles', self.num)
+
+    def delete(self,bdd):
+        key = "M"+str(self.num)
+        bdd.delete(key + ':joueur')
+        bdd.delete(key + ':joueurVoles')
+        bdd.delete(key + ':terre')
+        CartesGeneral.delete(key + ':carte',bdd)
+
 
     @staticmethod
     def getAllMonopolesNums(bdd = REDIS):
@@ -81,16 +89,16 @@ class Monopole:
         return nums
 
     @staticmethod
-    def getMonopole(num):
+    def getMonopole(num, bdd = REDIS):
         key = "M"+str(num)
-        j1N = int(REDIS.get(key + ':joueur'))
+        j1N = int(bdd.get(key + ':joueur'))
         jvols = []
-        for j in REDIS.smembers(key + ':joueurVoles'):
+        for j in bdd.smembers(key + ':joueurVoles'):
             jvols.append(int(j))
-        terreN = int(REDIS.get(key + ':terre'))
-        accepted = REDIS.get(key + ':accepte') == 'True'
+        terreN = int(bdd.get(key + ':terre'))
+        accepted = bdd.get(key + ':accepte') == 'True'
 
-        carte = CartesGeneral.get(key+':carte')
+        carte = CartesGeneral.get(key+':carte',bdd)
 
         j1 = JoueurPossible(j1N)
         terre = Plateau.getPlateau().ter(terreN)
@@ -107,13 +115,22 @@ class Monopole:
             i += r
             j.payer(self.terre,self.carte*r)
         self.j.recevoir(self.terre,self.carte*i)
+    
+    @staticmethod
+    def clearMonopoles():
+        lM = REDIS.get('LastMonopole')
+        if lM is None:
+            return
+        for i in xrange(int(lM)):
+            Monopole.getMonopole(i+1).delete()
+        REDIS.delete('LastMonopole')
 
 
 class DeplacementVoleur:
     
     def __init__(self,num,joueur,terre, voleurType, hex, jvol, chevallier):
         if num == 0:
-            self.num = REDIS.incr("LastDeplacementVoleur")
+            self.num = REDIS.incr('LastDeplacementVoleur')
         else:
             self.num = num
         self.j = joueur.num
@@ -124,7 +141,7 @@ class DeplacementVoleur:
         self.chevallier = chevallier
 
     def save(self,bdd):
-        key = "DV"+str(self.num)
+        key = 'DV'+str(self.num)
         bdd.set(key + ':joueur', self.j)
         bdd.set(key + ':terre', self.terre.num)
         bdd.set(key + ':voleurType', self.voleurType)
@@ -142,16 +159,28 @@ class DeplacementVoleur:
         else:
             joueur.add_deplacement_voleur_chevallier(self.terre, self.num)
 
-    @staticmethod
-    def getDeplacementVoleur(num):
-        key = "DV"+str(num)
+    def delete(self,bdd):
+        key = 'DV'+str(self.num)
+        bdd.delete(key + ':joueur')
+        bdd.delete(key + ':terre')
+        bdd.delete(key + ':voleurType')
+        bdd.delete(key + ':emplacement')
+        bdd.delete(key + ';jvol')
+        bdd.delete(key + ':chevallier')
         
-        j = JoueurPossible(int(REDIS.get(key + ':joueur')))
-        terre = Plateau.getPlateau().ter(int(REDIS.get(key + ':terre')))
-        voleurType = REDIS.get(key + ':voleurType')
-        hex = Plateau.getPlateau().hexa(int(REDIS.get(key + ':emplacement')))
-        jvol = int(REDIS.get(key + ';jvol'))
-        chevallier = REDIS.get(key + ':chevallier') == 'True'
+
+    @staticmethod
+    def getDeplacementVoleur(num, bdd = REDIS):
+        key = 'DV'+str(num)
+       
+        if not bdd.exists(key + ':joueur'): 
+            return 0
+        j = JoueurPossible(int(bdd.get(key + ':joueur')))
+        terre = Plateau.getPlateau().ter(int(bdd.get(key + ':terre')))
+        voleurType = bdd.get(key + ':voleurType')
+        hex = Plateau.getPlateau().hexa(int(bdd.get(key + ':emplacement')))
+        jvol = int(bdd.get(key + ';jvol'))
+        chevallier = bdd.get(key + ':chevallier') == 'True'
 
         return DeplacementVoleur(num,j,terre,voleurType,hex,jvol,chevallier)
 
@@ -164,6 +193,15 @@ class DeplacementVoleur:
         voleur.deplacer(self.hex)
         voleur.save(REDIS)
         j.voler(self.terre,self.jvol)
+
+    @staticmethod
+    def clearDeplacementsVoleurs():
+        lDV = REDIS.get('LastDeplacementVoleur')
+        if lDV is None:
+            return
+        for i in xrange(int(lDV)):
+            DeplacementVoleur.getDeplacementVoleur(i+1).delete(REDIS)
+        REDIS.delete('LastDeplacementVoleur')
 
     @staticmethod 
     def designer_deplaceur_de_voleur():
@@ -263,6 +301,15 @@ class Echange:
 
         CartesGeneral.delete(key+':don')
         CartesGeneral.delete(key+':recu')
+    
+    @staticmethod
+    def clearEchanges():
+        lE = REDIS.get('LastEchange')
+        if lE is None:
+            return
+        for i in xrange(int(lE)):
+            Echange.getEchange(i+1).delete()
+        REDIS.delete('LastEchange')
         
 
     def executer(echange):

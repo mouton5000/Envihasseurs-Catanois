@@ -259,6 +259,16 @@ class TestVoleur(TestJoueur):
         with self.assertRaises(VoleurError) as err:
             self.assertFalse(Joueur.peut_deplacer_voleur(j1r,tg,pr,0,2)) # Il ne faut pas de joueur
         self.assertEqual(err.exception.error_code, VoleurError.EMPLACEMENT_INTERDIT)
+        
+        j1.add_lance_des_deplacement_voleur(tg,4)
+        j1r.deplacer_voleur(tg,br, desg,0)
+        self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,desg,0))
+
+        j1.clear_deplacement_voleur_of(tg,1)
+        j1.clear_lances_des_deplacement_voleur(tg)
+        j1.add_lance_des_deplacement_voleur(tg,1)
+
+        DeplacementVoleur.clearDeplacementsVoleurs() 
 
         #Deux joueurs sur l ile mais le voleur est sur le seul hexagone occupe par le deuxieme joueur
 
@@ -651,7 +661,19 @@ class TestVoleur(TestJoueur):
             Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(47),2)
         self.assertEquals(err.exception.error_code, VoleurError.DEPLACEMENT_INTERDIT)
 
-        
+       
+        # Test de la suppression totale des déplacements de voleurs dans la base de données (attention, seuls les déplacements sont supprimés, par leurs références ailleurs dans la bdd)
+
+        DeplacementVoleur.clearDeplacementsVoleurs()
+        self.assertEquals(DeplacementVoleur.getDeplacementVoleur(1),0)
+        self.assertEquals(DeplacementVoleur.getDeplacementVoleur(2),0)
+        self.assertEquals(DeplacementVoleur.getDeplacementVoleur(3),0)
+        self.assertEquals(DeplacementVoleur.getDeplacementVoleur(4),0)
+        self.assertEquals(DeplacementVoleur.getDeplacementVoleur(5),0)
+        self.assertEquals(DeplacementVoleur.getDeplacementVoleur(6),0)
+        self.assertEquals(DeplacementVoleur.getDeplacementVoleur(7),0)
+        self.assertEquals(DeplacementVoleur.getDeplacementVoleur(8),0)
+        self.assertEquals(DeplacementVoleur.getDeplacementVoleur(9),0)
 
     def test_defausser(self):
         p = Plateau.getPlateau()
