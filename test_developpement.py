@@ -61,10 +61,10 @@ class TestDeveloppement(TestJoueur):
         j1.addTerre(tg)
         j2.addTerre(td)
        
-        j1.set_deplacement_voleur(tg,False) 
-        j2.set_deplacement_voleur(tg,False)
-        j2.set_deplacement_voleur(td,False)
-
+        j1.clear_lances_des_deplacement_voleur(tg)
+        j2.clear_lances_des_deplacement_voleur(tg)
+        j2.clear_lances_des_deplacement_voleur(td)
+        
         p = Plateau.getPlateau()
 
         Colonie(2,p.it(103)).save()
@@ -460,10 +460,10 @@ class TestDeveloppement(TestJoueur):
         j2.addTerre(tg)
         j2.addTerre(td)
        
-        j1.set_deplacement_voleur(tg,False) 
-        j1.set_deplacement_voleur(td,False) 
-        j2.set_deplacement_voleur(tg,False)
-        j2.set_deplacement_voleur(td,False)
+        j1.clear_lances_des_deplacement_voleur(tg)
+        j1.clear_lances_des_deplacement_voleur(td)
+        j2.clear_lances_des_deplacement_voleur(tg)
+        j2.clear_lances_des_deplacement_voleur(td)
 
         p = Plateau.getPlateau()
 

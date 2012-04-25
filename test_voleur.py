@@ -42,53 +42,53 @@ class TestVoleur(TestJoueur):
         Des.setOrigin(0)
         DeplacementVoleur.designer_deplaceur_de_voleur()
 
-        self.assertFalse(j1.get_deplacement_voleur(tg))
-        self.assertFalse(j2.get_deplacement_voleur(tg))
-        self.assertFalse(j3.get_deplacement_voleur(tg))
-        self.assertFalse(j4.get_deplacement_voleur(tg))
-        self.assertFalse(j5.get_deplacement_voleur(tg))
-        self.assertFalse(j6.get_deplacement_voleur(tg))
+        self.assertFalse(j1.doit_deplacer_voleur(tg))
+        self.assertFalse(j2.doit_deplacer_voleur(tg))
+        self.assertFalse(j3.doit_deplacer_voleur(tg))
+        self.assertFalse(j4.doit_deplacer_voleur(tg))
+        self.assertFalse(j5.doit_deplacer_voleur(tg))
+        self.assertFalse(j6.doit_deplacer_voleur(tg))
 
-        self.assertFalse(j2.get_deplacement_voleur(td))
-        self.assertFalse(j4.get_deplacement_voleur(td))
-        self.assertFalse(j1.get_deplacement_voleur(td))
-        self.assertFalse(j3.get_deplacement_voleur(td))
-        self.assertFalse(j5.get_deplacement_voleur(td))
+        self.assertFalse(j2.doit_deplacer_voleur(td))
+        self.assertFalse(j4.doit_deplacer_voleur(td))
+        self.assertFalse(j1.doit_deplacer_voleur(td))
+        self.assertFalse(j3.doit_deplacer_voleur(td))
+        self.assertFalse(j5.doit_deplacer_voleur(td))
 
         Des.save([7,6,4,3])
         Des.setOrigin(0)
         DeplacementVoleur.designer_deplaceur_de_voleur()
         
-        self.assertTrue(j1.get_deplacement_voleur(tg))
-        self.assertFalse(j2.get_deplacement_voleur(tg))
-        self.assertFalse(j3.get_deplacement_voleur(tg))
-        self.assertFalse(j4.get_deplacement_voleur(tg))
-        self.assertFalse(j5.get_deplacement_voleur(tg))
-        self.assertFalse(j6.get_deplacement_voleur(tg))
+        self.assertTrue(j1.doit_deplacer_voleur(tg))
+        self.assertFalse(j2.doit_deplacer_voleur(tg))
+        self.assertFalse(j3.doit_deplacer_voleur(tg))
+        self.assertFalse(j4.doit_deplacer_voleur(tg))
+        self.assertFalse(j5.doit_deplacer_voleur(tg))
+        self.assertFalse(j6.doit_deplacer_voleur(tg))
 
-        self.assertTrue(j2.get_deplacement_voleur(td))
-        self.assertFalse(j4.get_deplacement_voleur(td))
-        self.assertFalse(j1.get_deplacement_voleur(td))
-        self.assertFalse(j3.get_deplacement_voleur(td))
-        self.assertFalse(j5.get_deplacement_voleur(td))
+        self.assertTrue(j2.doit_deplacer_voleur(td))
+        self.assertFalse(j4.doit_deplacer_voleur(td))
+        self.assertFalse(j1.doit_deplacer_voleur(td))
+        self.assertFalse(j3.doit_deplacer_voleur(td))
+        self.assertFalse(j5.doit_deplacer_voleur(td))
 
 
         Des.save([7,6,4,3])
         Des.setOrigin(4)
         DeplacementVoleur.designer_deplaceur_de_voleur()
         
-        self.assertFalse(j1.get_deplacement_voleur(tg))
-        self.assertFalse(j2.get_deplacement_voleur(tg))
-        self.assertFalse(j3.get_deplacement_voleur(tg))
-        self.assertFalse(j4.get_deplacement_voleur(tg))
-        self.assertTrue(j5.get_deplacement_voleur(tg))
-        self.assertFalse(j6.get_deplacement_voleur(tg))
+        self.assertFalse(j1.doit_deplacer_voleur(tg))
+        self.assertFalse(j2.doit_deplacer_voleur(tg))
+        self.assertFalse(j3.doit_deplacer_voleur(tg))
+        self.assertFalse(j4.doit_deplacer_voleur(tg))
+        self.assertTrue(j5.doit_deplacer_voleur(tg))
+        self.assertFalse(j6.doit_deplacer_voleur(tg))
 
-        self.assertFalse(j2.get_deplacement_voleur(td))
-        self.assertFalse(j4.get_deplacement_voleur(td))
-        self.assertFalse(j1.get_deplacement_voleur(td))
-        self.assertFalse(j3.get_deplacement_voleur(td))
-        self.assertTrue(j5.get_deplacement_voleur(td))
+        self.assertFalse(j2.doit_deplacer_voleur(td))
+        self.assertFalse(j4.doit_deplacer_voleur(td))
+        self.assertFalse(j1.doit_deplacer_voleur(td))
+        self.assertFalse(j3.doit_deplacer_voleur(td))
+        self.assertTrue(j5.doit_deplacer_voleur(td))
 
 
 
@@ -97,18 +97,18 @@ class TestVoleur(TestJoueur):
         self.assertEqual(Des.getOrigin(),8)
         DeplacementVoleur.designer_deplaceur_de_voleur()
         
-        self.assertFalse(j1.get_deplacement_voleur(tg))
-        self.assertFalse(j2.get_deplacement_voleur(tg))
-        self.assertTrue(j3.get_deplacement_voleur(tg))
-        self.assertFalse(j4.get_deplacement_voleur(tg))
-        self.assertFalse(j5.get_deplacement_voleur(tg))
-        self.assertFalse(j6.get_deplacement_voleur(tg))
+        self.assertFalse(j1.doit_deplacer_voleur(tg))
+        self.assertFalse(j2.doit_deplacer_voleur(tg))
+        self.assertTrue(j3.doit_deplacer_voleur(tg))
+        self.assertFalse(j4.doit_deplacer_voleur(tg))
+        self.assertFalse(j5.doit_deplacer_voleur(tg))
+        self.assertFalse(j6.doit_deplacer_voleur(tg))
 
-        self.assertFalse(j2.get_deplacement_voleur(td))
-        self.assertFalse(j4.get_deplacement_voleur(td))
-        self.assertFalse(j1.get_deplacement_voleur(td))
-        self.assertTrue(j3.get_deplacement_voleur(td))
-        self.assertFalse(j5.get_deplacement_voleur(td))
+        self.assertFalse(j2.doit_deplacer_voleur(td))
+        self.assertFalse(j4.doit_deplacer_voleur(td))
+        self.assertFalse(j1.doit_deplacer_voleur(td))
+        self.assertTrue(j3.doit_deplacer_voleur(td))
+        self.assertFalse(j5.doit_deplacer_voleur(td))
 
 
         # Plusieurs 7
@@ -116,35 +116,35 @@ class TestVoleur(TestJoueur):
         Des.setOrigin(18)
         DeplacementVoleur.designer_deplaceur_de_voleur()
         
-        self.assertFalse(j1.get_deplacement_voleur(tg))
-        self.assertTrue(j2.get_deplacement_voleur(tg))
-        self.assertFalse(j3.get_deplacement_voleur(tg))
-        self.assertTrue(j4.get_deplacement_voleur(tg))
-        self.assertFalse(j5.get_deplacement_voleur(tg))
-        self.assertFalse(j6.get_deplacement_voleur(tg))
+        self.assertFalse(j1.doit_deplacer_voleur(tg))
+        self.assertTrue(j2.doit_deplacer_voleur(tg))
+        self.assertFalse(j3.doit_deplacer_voleur(tg))
+        self.assertTrue(j4.doit_deplacer_voleur(tg))
+        self.assertFalse(j5.doit_deplacer_voleur(tg))
+        self.assertFalse(j6.doit_deplacer_voleur(tg))
 
-        self.assertFalse(j2.get_deplacement_voleur(td))
-        self.assertTrue(j4.get_deplacement_voleur(td))
-        self.assertFalse(j1.get_deplacement_voleur(td))
-        self.assertFalse(j3.get_deplacement_voleur(td))
-        self.assertTrue(j5.get_deplacement_voleur(td))
+        self.assertFalse(j2.doit_deplacer_voleur(td))
+        self.assertTrue(j4.doit_deplacer_voleur(td))
+        self.assertFalse(j1.doit_deplacer_voleur(td))
+        self.assertFalse(j3.doit_deplacer_voleur(td))
+        self.assertTrue(j5.doit_deplacer_voleur(td))
         
 
         Des.save([12,6,4,3])
         DeplacementVoleur.designer_deplaceur_de_voleur()
         
-        self.assertFalse(j1.get_deplacement_voleur(tg))
-        self.assertFalse(j2.get_deplacement_voleur(tg))
-        self.assertFalse(j3.get_deplacement_voleur(tg))
-        self.assertFalse(j4.get_deplacement_voleur(tg))
-        self.assertFalse(j5.get_deplacement_voleur(tg))
-        self.assertFalse(j6.get_deplacement_voleur(tg))
+        self.assertFalse(j1.doit_deplacer_voleur(tg))
+        self.assertFalse(j2.doit_deplacer_voleur(tg))
+        self.assertFalse(j3.doit_deplacer_voleur(tg))
+        self.assertFalse(j4.doit_deplacer_voleur(tg))
+        self.assertFalse(j5.doit_deplacer_voleur(tg))
+        self.assertFalse(j6.doit_deplacer_voleur(tg))
 
-        self.assertFalse(j2.get_deplacement_voleur(td))
-        self.assertFalse(j4.get_deplacement_voleur(td))
-        self.assertFalse(j1.get_deplacement_voleur(td))
-        self.assertFalse(j3.get_deplacement_voleur(td))
-        self.assertFalse(j5.get_deplacement_voleur(td))
+        self.assertFalse(j2.doit_deplacer_voleur(td))
+        self.assertFalse(j4.doit_deplacer_voleur(td))
+        self.assertFalse(j1.doit_deplacer_voleur(td))
+        self.assertFalse(j3.doit_deplacer_voleur(td))
+        self.assertFalse(j5.doit_deplacer_voleur(td))
         
         j1.ruiner()
         # Plusieurs 7
@@ -152,11 +152,11 @@ class TestVoleur(TestJoueur):
         Des.setOrigin(18)
         DeplacementVoleur.designer_deplaceur_de_voleur()
         
-        self.assertFalse(j2.get_deplacement_voleur(tg))
-        self.assertTrue(j3.get_deplacement_voleur(tg))
-        self.assertFalse(j4.get_deplacement_voleur(tg))
-        self.assertFalse(j5.get_deplacement_voleur(tg))
-        self.assertTrue(j6.get_deplacement_voleur(tg))
+        self.assertFalse(j2.doit_deplacer_voleur(tg))
+        self.assertTrue(j3.doit_deplacer_voleur(tg))
+        self.assertFalse(j4.doit_deplacer_voleur(tg))
+        self.assertFalse(j5.doit_deplacer_voleur(tg))
+        self.assertTrue(j6.doit_deplacer_voleur(tg))
 
         # Joueur en ruine
         j1.setEnRuine(False)
@@ -192,7 +192,7 @@ class TestVoleur(TestJoueur):
         br = Voleur.VoleurType.BRIGAND
         pr = Voleur.VoleurType.PIRATE
        
-        j1.set_deplacement_voleur(tg,True) 
+        j1.add_lance_des_deplacement_voleur(tg,1) 
 
         # Deplacement du voleur s'il n'y a aucun autre joueur sur la terre privee de l'hexagone actuellement occupe : l'hexagone choisi doit alors etre un desert, si c'est le brigand, nul si c'est un pirate et le joueur vole nul.
 
@@ -340,11 +340,11 @@ class TestVoleur(TestJoueur):
         self.assertEqual(err.exception.error_code, VoleurError.EMPLACEMENT_INTERDIT)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(17),2))
         
-        j1.set_deplacement_voleur(tg, False)
+        j1.clear_lances_des_deplacement_voleur(tg)
         with self.assertRaises(VoleurError) as err:
             self.assertFalse(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(17),2)) # Ce n'est pas a son our
         self.assertEqual(err.exception.error_code, VoleurError.DEPLACEMENT_INTERDIT)
-        j1.set_deplacement_voleur(tg, True)
+        j1.add_lance_des_deplacement_voleur(tg, 1)
 
         Colonie(2,p.it(48)).save() # Colonie cotiere pas sur un port sur td
         with self.assertRaises(VoleurError) as err:
@@ -413,7 +413,7 @@ class TestVoleur(TestJoueur):
 #        # Joueur en ruine
 #        j1.enRuine = False
 
-        j1.set_deplacement_voleur(tg,False)
+        j1.clear_lances_des_deplacement_voleur(tg)
         with self.assertRaises(VoleurError) as err: 
             self.assertFalse(Joueur.peut_deplacer_voleur(j1r,tg,pr,p.hexa(57),2)) # Ce n'est pas a son tour
         self.assertEqual(err.exception.error_code, VoleurError.DEPLACEMENT_INTERDIT)
@@ -423,7 +423,7 @@ class TestVoleur(TestJoueur):
         self.assertEqual(err.exception.error_code, VoleurError.DEPLACEMENT_INTERDIT)
         
 
-        j1.set_deplacement_voleur(tg,True)
+        j1.add_lance_des_deplacement_voleur(tg,1)
         Colonie(2,p.it(90)).save()
         b2.deplacer(p.it(107).lien(p.it(108)))
         b2.save()
@@ -490,9 +490,8 @@ class TestVoleur(TestJoueur):
         j2.setOr(td,1)
 
         
-        j1.set_deplacement_voleur(tg, True)
-        self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(17),2))
-        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
+        self.assertTrue(j1r.peut_deplacer_voleur(tg,br,p.hexa(17),2))
+        j1r.deplacer_voleur(tg,br,p.hexa(17),2)
 
         dep = DeplacementVoleur.getDeplacementVoleur(1)
         dep.executer()
@@ -508,10 +507,10 @@ class TestVoleur(TestJoueur):
         j2.setCartes(tg,c2)
         brg.deplacer(desg)
         brg.save()
-        j1.set_deplacement_voleur(tg, True)
+        j1.clear_deplacement_voleur_of(tg, 1)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(17),2))
 
-        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
+        j1r.deplacer_voleur(tg,br,p.hexa(17),2)
         dep = DeplacementVoleur.getDeplacementVoleur(2)
         dep.executer()
 
@@ -525,10 +524,10 @@ class TestVoleur(TestJoueur):
 
         j2.setCartes(tg,cch)
         j1.setCartes(tg,c0)
-        j1.set_deplacement_voleur(tg, True)
+        j1.clear_deplacement_voleur_of(tg, 1)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,pr,p.hexa(57),2))
        
-        Jeu.deplacer_voleur(j1,tg,pr,p.hexa(57),2)
+        j1r.deplacer_voleur(tg,pr,p.hexa(57),2)
         dep = DeplacementVoleur.getDeplacementVoleur(3)
         dep.executer()
 
@@ -547,10 +546,10 @@ class TestVoleur(TestJoueur):
         b2.deplacer(p.it(25).lien(p.it(35)))
         b2.cargaison = Cartes.BLE
         b2.save()
-        j1.set_deplacement_voleur(tg, True)
+        j1.clear_deplacement_voleur_of(tg, 1)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,pr,p.hexa(7),2))
         
-        Jeu.deplacer_voleur(j1,tg,pr,p.hexa(7),2)
+        j1r.deplacer_voleur(tg,pr,p.hexa(7),2)
         dep = DeplacementVoleur.getDeplacementVoleur(4)
         dep.executer()
         
@@ -571,10 +570,10 @@ class TestVoleur(TestJoueur):
         b2.save()
         brg.deplacer(desg)
         brg.save()
-        j1.set_deplacement_voleur(tg, True)
+        j1.clear_deplacement_voleur_of(tg, 1)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(17),2))
         
-        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
+        j1r.deplacer_voleur(tg,br,p.hexa(17),2)
         dep = DeplacementVoleur.getDeplacementVoleur(5)
         dep.executer()
         
@@ -594,10 +593,10 @@ class TestVoleur(TestJoueur):
         b2.save()
         brg.deplacer(desg)
         brg.save()
-        j1.set_deplacement_voleur(tg, True)
+        j1.clear_deplacement_voleur_of(tg, 1)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(17),2))
         
-        Jeu.deplacer_voleur(j1,tg,br,p.hexa(17),2)
+        j1r.deplacer_voleur(tg,br,p.hexa(17),2)
         dep = DeplacementVoleur.getDeplacementVoleur(6)
         dep.executer()
         
@@ -615,13 +614,44 @@ class TestVoleur(TestJoueur):
         b2.deplacer(p.it(1).lien(p.it(2)))
         b2.cargaison = Cartes.BLE
         b2.save()
-        j1.set_deplacement_voleur(tg, True)
+        j1.clear_deplacement_voleur_of(tg, 1)
         self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(47),2))
-        Jeu.deplacer_voleur(j1,tg,br,p.hexa(47),2)
+        j1r.deplacer_voleur(tg,br,p.hexa(47),2)
         self.assertEqual(j2.getCartes(tg),c0)
         self.assertEqual(j1.getCartes(tg),c0)
         b2 = Bateau.getBateau(2)
         self.assertEqual(b2.cargaison,Cartes.BLE)
+
+
+        # Test de la limitation du déplacemnt du voleur.
+        # Lorsqu'un joueur a déplacé le voleur autant de fois qu'il ne devait, il n'est plus possible de le déplacer à nouveau.
+
+        j1.clear_deplacement_voleur_of(tg, 1)
+        brg.deplacer(p.hexa(17))
+        self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(47),2))
+        j1r.deplacer_voleur(tg,br,p.hexa(47),2)
+        self.assertFalse(j1.doit_deplacer_voleur(tg))
+        brg.deplacer(p.hexa(17))
+        with self.assertRaises(VoleurError) as err:
+            Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(47),2)
+        self.assertEquals(err.exception.error_code, VoleurError.DEPLACEMENT_INTERDIT)
+        
+        j1.add_lance_des_deplacement_voleur(tg,3)
+        j1.clear_deplacement_voleur_of(tg, 1)
+        brg.deplacer(p.hexa(17))
+        self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(47),2))
+        j1r.deplacer_voleur(tg,br,p.hexa(47),2)
+        
+        brg.deplacer(p.hexa(17))
+        self.assertTrue(Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(47),2))
+        j1r.deplacer_voleur(tg,br,p.hexa(47),2)
+        
+        brg.deplacer(p.hexa(17))
+        with self.assertRaises(VoleurError) as err:
+            Joueur.peut_deplacer_voleur(j1r,tg,br,p.hexa(47),2)
+        self.assertEquals(err.exception.error_code, VoleurError.DEPLACEMENT_INTERDIT)
+
+        
 
     def test_defausser(self):
         p = Plateau.getPlateau()

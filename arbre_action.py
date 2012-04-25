@@ -346,7 +346,7 @@ class Joueur:
         joueur = joueurs.JoueurPossible(j.num)
         if not joueur.aColoniseTerre(terre):
             raise VoleurError(VoleurError.TERRE_NON_COLONISEE)
-        if not joueur.get_deplacement_voleur(terre):
+        if not joueur.doit_deplacer_voleur(terre):
             raise VoleurError(VoleurError.DEPLACEMENT_INTERDIT) 
         if not (hex == 0 or hex.terre == terre):
             raise VoleurError(VoleurError.EMPLACEMENT_INTERDIT)
@@ -369,7 +369,6 @@ class Joueur:
     @protection
     def deplacer_voleur(joueur,terre,voleurType,hex,jvol):
         DeplacementVoleur(0,joueur,terre,voleurType,hex,jvol, False).save(REDIS)
-        joueur.set_deplacement_voleur(terre,False)
     
     def deplacement_aleatoire(joueur, terre):
         r = random.randint(1,2)

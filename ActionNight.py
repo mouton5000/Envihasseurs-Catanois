@@ -135,9 +135,9 @@ class DeplacementVoleur:
         joueur = JoueurPossible(self.j,bdd)
         if not self.chevallier:
             j = Des.NB_LANCES+1
-            for i in joueur.get_lance_des_deplacements_voleur(self.terre):
-                if not joueur.get_deplacement_voleur_of(terre,i) is None:
-                    joueur.add_deplacement_voleur(self.terre,j,self.num)
+            for i in joueur.get_lances_des_deplacements_voleur(self.terre):
+                if joueur.get_deplacement_voleur_of(self.terre,i) is None:
+                    joueur.set_deplacement_voleur_of(self.terre,i,self.num)
                     break
         else:
             joueur.add_deplacement_voleur_chevallier(self.terre, self.num)
@@ -172,11 +172,10 @@ class DeplacementVoleur:
             js = terre.getJoueurs(REDIS)
             for jn in js:
                 j = JoueurPossible(int(jn))
-                j.set_deplacement_voleur(terre,False)
-                j.clear_lance_des_deplacement_voleur(terre)
+                j.clear_lances_des_deplacement_voleur(terre)
                 j.clear_deplacement_voleur_chevallier(terre)
                 for i in xrange(Des.NB_LANCES):
-                    j.clear_deplacement_voleur(terre,i+1)
+                    j.clear_deplacement_voleur_of(terre,i+1)
     
         des = Des.getDices()
         defausse = 7 in des 
@@ -198,7 +197,6 @@ class DeplacementVoleur:
                 for i in range(0,Des.NB_LANCES):
                     if des[i] == 7:
                         j = js[(i+origin)%len(js)]
-                        j.set_deplacement_voleur(terre,True)
                         j.add_lance_des_deplacement_voleur(terre,i+1)
 
 class Echange:
