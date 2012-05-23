@@ -168,6 +168,7 @@ class Joueur:
     def executerNodePartiel(self, node, action, ibdd):
         '''  Execute les actions du noeud jusqu'à l'exécution de action (incluse), ou jusqu'à ce qu'une action renvoie Faux. ibdd est modifiée'''
         actionsNum = node.getActionsNum()
+
         if not str(action.num) in actionsNum:
             return False
         
@@ -786,7 +787,7 @@ class Node:
 # Travail avec les actions
 
     def getActionsNum(node):
-        ''' Ajoute une action au noeud node, en fin de liste des actions '''
+        ''' Renvoie l'ensemble des actions du noeud num '''
         return REDIS.lrange('N'+str(node.num)+':actions',0,-1)
 
     def addAction(node,action):
