@@ -40,12 +40,27 @@ class JoueurPossible:
         ''' Renvoie la main du joueur sur cette terre'''
         return CartesGeneral.get('J'+str(self.num)+':T'+str(terre.num), self.bdd)
     
+    def getAllCartes(self):
+        ''' Renvoie la main du joueur sur toutes les terres'''
+        return CartesGeneral.get('J'+str(self.num)+':allCartes', self.bdd)
+    
+    def setAllCartes(self,terre,cartes):
+        ''' Associe à la main du joueur sur toutes les terres les cartes données en paramètre'''
+        cartes.setTo('J'+str(self.num)+':allCartes', self.bdd)
+
+    
     def payer(self,terre, cartes):
         ''' Déduis de la main du joueur sur cette terre les cartes données en paramètre'''
         actCartes = self.getCartes(terre)
         if actCartes == 0:
             actCartes = Cartes.RIEN
+        
+        actWCartes = self.getAllCartes()
+        if actWCartes == 0:
+            actWCartes = Cartes.RIEN
+
         self.setCartes(terre,actCartes - cartes)
+        self.setAllCartes(terre,actWCartes - cartes)
 
     def recevoir(self,terre,cartes):
         ''' Ajoute à la main du joeuur sur cette terre les cartes données en paramètre'''
@@ -77,15 +92,31 @@ class JoueurPossible:
 
     def getOr(self,terre):
         ''' Renvoie la quantité d'or du joueur présente sur cette terre'''
-        return int(self.bdd.get('J'+str(self.num)+':T'+str(terre.num)+':or'))
+        try:
+            return int(self.bdd.get('J'+str(self.num)+':T'+str(terre.num)+':or'))
+        except TypeError:
+            return 0
 
     def setOr(self,terre, nb):
         ''' Définit la quantité d'or du joueur présente sur cette terre'''
         self.bdd.set('J'+str(self.num)+':T'+str(terre.num)+':or', nb)
+    
+    def getAllOr(self,terre):
+        ''' Renvoie la quantité d'or du joueur présente sur toutes les terres'''
+        try:
+            return int(self.bdd.get('J'+str(self.num)+':allOr'))
+        except TypeError:
+            return 0
+
+    def setAllOr(self,terre, nb):
+        ''' Définit la quantité d'or du joueur présente sur toutes les terres'''
+        self.bdd.set('J'+str(self.num)+':allOr', nb)
+
 
     def addOr(self,terre,nb):
         ''' Ajoute au stock d'or du joeuur sur cette terre nb lingots d'or'''
         self.setOr(terre, self.getOr(terre) + nb)
+        self.setAllOr(terre, self.getAllOr(terre) + nb)
 
     def payerOr(self,terre):
         ''' Déduis du stock d'or du joueur sur cette terre un lingot d'or'''
