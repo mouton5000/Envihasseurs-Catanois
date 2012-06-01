@@ -11,7 +11,6 @@ from arbre_action import *
 @app.route('/ressources/infos/<int:nodeNum>/<int:actionIndex>/<int:terreNum>')
 @needLogin
 def show_ressource(nodeNum,actionIndex,terreNum):
-    # show the post with the given id, the id is an integer
 
     jnum = session['joueur_num']
     j1 = Joueur(jnum)
