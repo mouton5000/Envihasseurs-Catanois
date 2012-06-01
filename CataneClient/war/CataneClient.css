@@ -1,0 +1,71 @@
+/** Add css rules here for your application. */
+
+
+/** Example rules used by the template application (remove for your app) */
+
+.vPanel {
+  width : 100%;
+  height : 100%;
+}
+
+.hPanel {
+  width : 100%;
+  height : 100%;
+  
+  padding : 0px;
+  margin : 0px;
+ 
+}
+
+.buttonTest{
+  width : 100%;
+  height : 100%;
+  min-height : 100px;
+  padding : 0px;
+  margin : 0px;
+  auto-width;
+}
+
+
+.tabButtonTest{
+  width : 100%;
+  height : 100%;
+  min-height : 150px;
+  padding : 0px;
+  margin : 0px;
+  auto-width;
+}
+
+.gwt-TabBar{
+	width : 100%; 
+  	max-height : 50px;
+}
+
+.gwt-TabPanelBottom{
+  width : 100%; 
+  height : 100%;
+}
+
+.infosLabels{
+	min-height : 20px;
+	margin : 3px;
+}
+
+td{
+	padding : 0px;
+	margin : 0px;
+	width:50%;
+	height : 100%;
+}
+
+tr{
+	padding : 0px;
+	margin : 0px;
+	height : 100%;
+	
+}
+
+table{
+	padding : 0px;
+	margin : 0px;
+}
