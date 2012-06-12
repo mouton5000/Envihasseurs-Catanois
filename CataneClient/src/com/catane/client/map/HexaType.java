@@ -16,29 +16,43 @@ enum HexaType {
 	MER, 
 	DESERT;
 	
-	Color getColor(){
+	String getColor(){
+		Color color;
 		switch(this){
 		case ARGILE:
-			return KnownColor.ORANGE_RED;
+			color = KnownColor.ORANGE_RED;
+			break;
 		case BLE:
-			return KnownColor.YELLOW;
+			color = KnownColor.YELLOW;
+			break;
 		case BOIS:
-			return KnownColor.DARK_GREEN;
+			color = KnownColor.DARK_GREEN;
+			break;
 		case CAILLOU:
-			return KnownColor.GRAY;
+			color = KnownColor.GRAY;
+			break;
 		case MARCHE:
-			return KnownColor.HOT_PINK;
+			color = KnownColor.HOT_PINK;
+			break;
 		case MOUTON:
-			return KnownColor.GREEN_YELLOW;
+			color = KnownColor.GREEN_YELLOW;
+			break;
 		case OR:
-			return KnownColor.GOLDEN_ROD;
+			color = KnownColor.GOLDEN_ROD;
+			break;
 		case PORT:
-			return KnownColor.AQUA;
+			color = KnownColor.AQUA;
+			break;
 		case MER:
-			return KnownColor.CORNFLOWER_BLUE;
+			color = KnownColor.CORNFLOWER_BLUE;
+			break;
 		case DESERT:
-			return KnownColor.SANDY_BROWN;
+			color = KnownColor.SANDY_BROWN;
+			break;
+		default : return null;
 		}
-		return null;
+		return color.getColorCode();
 	}
+	
+	
 }

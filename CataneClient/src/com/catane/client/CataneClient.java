@@ -1,12 +1,15 @@
 package com.catane.client;
 
-import gwt.g2d.client.graphics.KnownColor;
-import gwt.g2d.client.graphics.Surface;
-import gwt.g2d.client.graphics.shapes.ShapeBuilder;
 
+import com.catane.client.bateaux.BateauxWidget;
+import com.catane.client.constructions.ConstructionsWidget;
+import com.catane.client.developpements.DeveloppementWidget;
+import com.catane.client.echanges.EchangesWidget;
+import com.catane.client.genInfos.GenInfoWidget;
 import com.catane.client.infosWidgets.InfoWidget;
-import com.catane.client.map.Map;
 import com.catane.client.map.MapWidget;
+import com.catane.client.options.OptionsWidget;
+import com.catane.client.points.PointsWidget;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockPanel;
@@ -29,8 +32,6 @@ public class CataneClient implements EntryPoint {
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
-		//		final TextBox nameField = new TextBox();
-		//		final Label errorLabel = new Label();
 
 		Panel infoPanel = new HorizontalPanel();
 		Panel centerPanel = new HorizontalPanel();
@@ -40,8 +41,6 @@ public class CataneClient implements EntryPoint {
 
 		DockPanel dockPanel = new DockPanel();
 
-
-		final Button infoButton = new Button("Info");
 		final InfoWidget info = new InfoWidget();
 		final MapWidget map = new MapWidget();
 		final Button actionsButton = new Button("actions");
@@ -52,19 +51,24 @@ public class CataneClient implements EntryPoint {
 		leftPanel.add(actionsButton);
 		infoPanel.add(info);
 
-
-		String[] menus = {"Infos Générales", "Constructions", "Bateaux", "Développement", "Points", "Echanges", "Options"};
-
-		int i = 0;
-		for(String s : menus){
-			final Button rB = new Button(s);
-			rightPanel.insert(rB, s, i);
-			rB.setStyleName("tabButtonTest");
-			i++;
-		}
+		GenInfoWidget giw = new GenInfoWidget();
+		ConstructionsWidget cw = new ConstructionsWidget();
+		BateauxWidget bw =  new BateauxWidget();
+		DeveloppementWidget dw = new DeveloppementWidget();
+		PointsWidget pw = new PointsWidget();
+		EchangesWidget ew = new EchangesWidget();
+		OptionsWidget ow = new OptionsWidget();
+		
+		rightPanel.insert(giw, "Infos Générales", 0);
+		rightPanel.insert(cw, "Constructions", 1);
+		rightPanel.insert(bw, "Bateaux", 2);
+		rightPanel.insert(dw, "Développement", 3);
+		rightPanel.insert(pw, "Points", 4);
+		rightPanel.insert(ew, "Echanges", 5);
+		rightPanel.insert(ow, "Options", 6);
+			
 
 		rightPanel.selectTab(0);
-		//rightPanel.add(rightButton);
 
 		centerPanel.add(leftPanel);
 		centerPanel.add(rightPanel);
@@ -81,9 +85,10 @@ public class CataneClient implements EntryPoint {
 		dockPanel.setStyleName("hPanel");
 		RootPanel.get().add(dockPanel);
 
-		infoButton.setStyleName("buttonTest");
 		actionsButton.setStyleName("buttonTest");
-
+		
+		
+//		new MapPopup().center();
 
 	}
 }

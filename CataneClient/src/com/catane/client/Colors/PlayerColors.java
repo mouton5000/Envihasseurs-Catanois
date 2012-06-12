@@ -1,7 +1,6 @@
 package com.catane.client.Colors;
 
 import gwt.g2d.client.graphics.Color;
-import gwt.g2d.client.graphics.KnownColor;
 
 import java.util.ArrayList;
 
@@ -22,17 +21,21 @@ public class PlayerColors implements Connectable{
 		new Connector("players/colors",this);
 	}
 	
+	public static void setPlayerColors(){
+		if(inst == null)
+			inst = new PlayerColors();
+		
+	}
+
 	/**
 	 * Renvoie la couleur du joueur n° player (attention le premier joueur est 1)
 	 * @param player
 	 * @return
 	 */
-	public static Color getPlayerColor(int player){
-		if(inst == null)
-			inst = new PlayerColors();
+	public static String getPlayerColor(int player){
 		if(inst.colors.size() < player)
-			return KnownColor.BLACK;
-		return inst.colors.get(player-1);
+			return "black";
+		return inst.colors.get(player-1).getColorCode();
 	}
 
 	@Override
@@ -44,7 +47,8 @@ public class PlayerColors implements Connectable{
 			for(int i = 0; i<jcolors.length(); i++){
 				this.colors.add(jcolors.get(i).getColor());
 			}
-			Map.getLittleMap().drawPions();
+			Map.getLittleMap().colorPionsJoueurs();
+			Map.getBigMap().colorPionsJoueurs(); //TODO Réfléchir à autre chose
 		}
 	}
 

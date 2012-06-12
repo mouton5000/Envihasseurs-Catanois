@@ -1,11 +1,9 @@
 package com.catane.client.map;
 
-import com.gargoylesoftware.htmlunit.OnbeforeunloadHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 
@@ -14,54 +12,71 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  * @author mouton
  *
  */
-public class MapWidget extends Composite implements ClickHandler{
-
-	private Button leftB;
-	private Button rightB;
-	private Button upB;
-	private Button downB;
+public class MapWidget extends Composite implements MapClickHandler{
 	
 	
 	private Map map;
-
+	private Label infos;
+	
 	public MapWidget() {
 		map = Map.getLittleMap();
-
+		map.setMapClickHandler(this);
+		
 		HorizontalPanel hp = new HorizontalPanel();
 		hp.add(map);
 
 		VerticalPanel vp = new VerticalPanel();
-		leftB = new Button("left");
-		rightB = new Button("right");
-		upB = new Button("up");
-		downB = new Button("down");
-
-		Button[] bs = {leftB, rightB, upB, downB};
-		for(Button b : bs){
-			vp.add(b);
-			b.addClickHandler(this);
-		}
-
+		infos = new Label();
+		vp.add(infos);
 		hp.add(vp);
 		initWidget(hp);
 	}
 
 	@Override
-	public void onClick(ClickEvent event) {
-		Button b = (Button) event.getSource();
-		if(b == leftB){
-			map.left();
-		}
-		else if(b == rightB){
-			map.right();
-		}
-		else if(b == upB){
-			map.up();
-		}
-		else if(b == downB){
-			map.down();
-		}
-
+	public void onHexagoneClick(ClickEvent event) {
+		infos.setText("Hexagone : "+((HexagonePath)event.getSource()).getInfos().getNum());
 	}
+
+	@Override
+	public void onColonieClick(ClickEvent event) {
+		infos.setText("Colonie de J"+((ColoniePath)event.getSource()).getJoueur());
+	}
+
+	@Override
+	public void onVilleClick(ClickEvent event) {
+		infos.setText("Ville de J"+((VillePath)event.getSource()).getJoueur());
+	}
+
+
+	@Override
+	public void onRouteClick(ClickEvent event) {
+		infos.setText("Route de J"+((RoutePath)event.getSource()).getJoueur());
+	}
+	
+	@Override
+	public void onBateauTransportClick(ClickEvent event) {
+		infos.setText("Bateau de J"+((TransportPath)event.getSource()).getJoueur());
+	}
+
+	@Override
+	public void onCargoClick(ClickEvent event) {
+		infos.setText("Cargo de J"+((CargoPath)event.getSource()).getJoueur());
+	}
+
+	@Override
+	public void onVoilierClick(ClickEvent event) {
+		infos.setText("Voilier de J"+((VoilierPath)event.getSource()).getJoueur());
+	}
+
+	@Override
+	public void onBrigandClick(ClickEvent event) {
+		infos.setText("Brigand");
+	}
+
+	@Override
+	public void onPirateClick(ClickEvent event) {
+		infos.setText("Pirate");
+	}
+
 
 }

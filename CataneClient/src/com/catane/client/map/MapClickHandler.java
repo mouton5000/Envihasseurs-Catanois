@@ -1,23 +1,15 @@
 package com.catane.client.map;
 
-import java.util.Arrays;
-
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 
-public class MapClickHandler implements ClickHandler{
-
-	private Map map;
-	
-	public MapClickHandler(Map map) {
-		this.map = map;
-	}
-
-	@Override
-	public void onClick(ClickEvent event) {
-//		System.out.println(map.getHexagoneFromCoords(event.getX(), event.getY()));
-//		System.out.println(map.getIntersectionFromCoords(event.getX(), event.getY()));
-		System.out.println(Arrays.toString(map.getArreteFromCoords(event.getX(), event.getY())));
-	}
-
+public interface MapClickHandler {
+	public void onHexagoneClick(ClickEvent event);
+	public void onColonieClick(ClickEvent event);
+	public void onVilleClick(ClickEvent event);
+	public void onRouteClick(ClickEvent event);
+	public void onBateauTransportClick(ClickEvent event);
+	public void onCargoClick(ClickEvent event);
+	public void onVoilierClick(ClickEvent event);
+	public void onBrigandClick(ClickEvent event);
+	public void onPirateClick(ClickEvent event);
 }

@@ -59,4 +59,23 @@ class TestActionNuit(TestJoueur):
 
         ActionNight.action_nuit()
 
+        self.assertEquals(j1p.getCartes(tg), CartesRessources(2,1,0,1,0)) # Une defausse prévue a eu lieu
+        self.assertEquals(j2p.getCartes(tg).ressources_size(), 4) # Une défausse aléatoire a eu lieu
+        self.assertEquals(j3p.getCartes(tg), CartesRessources(0,2,1,2,0)) # Aucune défausse n'a eu lieu.
+
+
+    def test_execution_arbre_action_nuit(self):
+        j1p = JoueurPossible(self.j1)
+        j2p = JoueurPossible(self.j2)
+        j3p = JoueurPossible(self.j3)
+
+        tg = self.tg
+        td = self.td
+
+
+        j1p.setCartes(tg, Cartes.RIEN)
+        j2p.setCartes(tg, Cartes.RIEN)
+        j3p.setCartes(tg, Cartes.RIEN)
+        
+        ActionNight.action_nuit()
 

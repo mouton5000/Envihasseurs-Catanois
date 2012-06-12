@@ -11,7 +11,6 @@ def needLogin(f):
     @functools.wraps(f)
     def helper(*args,**kwargs):
         if 'username' in session:
-            print kwargs
             return f(*args,**kwargs)
         else:
             return '{"error":"login"}'           
@@ -29,3 +28,4 @@ def index():
 import controllers.ressources
 import controllers.map
 import controllers.players
+import controllers.constructions

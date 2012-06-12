@@ -1,26 +1,25 @@
 package com.catane.client.map;
 
-import gwt.g2d.client.graphics.KnownColor;
-import gwt.g2d.client.graphics.Surface;
-import gwt.g2d.client.graphics.shapes.Shape;
-import gwt.g2d.client.math.Vector2;
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+
+import org.vaadin.gwtgraphics.client.DrawingArea;
+import org.vaadin.gwtgraphics.client.VectorObject;
+import org.vaadin.gwtgraphics.client.shape.Path;
 
 import com.catane.client.Colors.PlayerColors;
 import com.catane.client.requests.Connectable;
 import com.catane.client.requests.Connector;
-import com.catane.shared.Collections2;
 import com.catane.shared.Math2;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 
+public class Map extends DrawingArea implements Connectable {
 
-public class Map extends Surface implements Connectable {
 
 	/**
 	 * Nombres d'hexagones sur une ligne de la carte
@@ -32,22 +31,26 @@ public class Map extends Surface implements Connectable {
 	 */
 	public static final int MAP_HH = 6;
 
-	/**
-	 * Coordonnées actuelle du point supérieur gauche du canvas.
-	 */
-	Vector2 origin;
 
+	private MapMouseHandler mmh;
+	private MapClickHandler mch; 
 
-	private Map(int width, int height){
+	public Map(int width, int height) {
 		super(width,height);
-		origin = new Vector2(0,0);
 
-		this.addClickHandler(new MapClickHandler(this));
+		mmh = new MapMouseHandler(this);
+		this.addMouseMoveHandler(mmh);
+		this.addMouseOutHandler(mmh);
 
+		buildPlateau();
 		connectMap();
-		draw();
-
 	}
+	
+	public void setMapClickHandler(MapClickHandler mch){
+		this.mch = mch;
+	}
+
+
 	private static Map littleMap;
 
 	private static final int LITTLE_MAP_WIDTH = 800;
@@ -59,75 +62,169 @@ public class Map extends Surface implements Connectable {
 		return littleMap;
 	}
 
-	private void drawHexagones(){
-		for(int[] infos : getHexagones())
-			this.drawHexagone(infos[0], map[infos[0]-1], infos[1], infos[2]);
+	private static Map bigMap;
+
+	private static final int BIG_MAP_WIDTH = 1400;
+	private static final int BIG_MAP_HEIGHT = 800;
+
+	public static Map getBigMap() {
+		if(bigMap == null)
+			bigMap = new Map(BIG_MAP_WIDTH, BIG_MAP_HEIGHT);
+		return bigMap;
+	}
+
+	ArrayList<HexagoneInfos> plateau = new ArrayList<HexagoneInfos>();
+	private void buildPlateau() {
+		HexagoneInfos hi;
+		for(int i = 1; i<=2*MAP_HW*MAP_HH;i++){
+			hi = new HexagoneInfos(i);
+			plateau.add(hi);
+			hi.setColor(colorMap[i-1].getColor());
+		}
+
+		int i,il,ir,iu,id,iul,iur,idl,idr;
+		boolean plan1 = true;
+		for(int line = 0; line<2*MAP_HH;line++){
+			for(int column = 0; column <MAP_HW; column++){
+				i = line*MAP_HW+column;
+				hi = plateau.get(i);
+
+				il = line*MAP_HW+Math2.mod(column-1,MAP_HW);
+				ir = line*MAP_HW+Math2.mod(column+1,MAP_HW);
+				iu = Math2.mod((line-2)*MAP_HW+column,2*MAP_HW*MAP_HH);
+				id = Math2.mod((line+2)*MAP_HW+column,2*MAP_HW*MAP_HH);
+
+				if(plan1){
+					iul = Math2.mod((line-1)*MAP_HW+Math2.mod(column-1,MAP_HW),2*MAP_HW*MAP_HH);
+					iur = Math2.mod((line-1)*MAP_HW+column,2*MAP_HW*MAP_HH);
+					idl = Math2.mod((line+1)*MAP_HW+Math2.mod(column-1,MAP_HW),2*MAP_HW*MAP_HH);
+					idr = Math2.mod((line+1)*MAP_HW+column,2*MAP_HW*MAP_HH);
+				}
+				else
+				{
+					iul = Math2.mod((line-1)*MAP_HW+column,2*MAP_HW*MAP_HH);
+					iur = Math2.mod((line-1)*MAP_HW+Math2.mod(column+1,MAP_HW),2*MAP_HW*MAP_HH);
+					idl = Math2.mod((line+1)*MAP_HW+column,2*MAP_HW*MAP_HH);
+					idr = Math2.mod((line+1)*MAP_HW+Math2.mod(column+1,MAP_HW),2*MAP_HW*MAP_HH);
+
+				}
+				hi.setLeft(plateau.get(il));
+				hi.setRight(plateau.get(ir));
+				hi.setUp(plateau.get(iu));
+				hi.setDown(plateau.get(id));
+				hi.setUpLeft(plateau.get(iul));
+				hi.setUpRight(plateau.get(iur));
+				hi.setDownLeft(plateau.get(idl));
+				hi.setDownRight(plateau.get(idr));
+			}
+			plan1 = !plan1;
+		}
+
+		drawFirst();
 
 	}
 
-	public void drawPions(){
-		for(int[] infos : getHexagones()){
-			if(brigands.contains(infos[0])){
-				this.drawBrigand(infos[0], infos[1], infos[2]);
-			}
-			if(pirates.contains(infos[0]))
-				this.drawPirate(infos[0], infos[1], infos[2]);
-			if(colonies.containsKey(infos[0])){
-				for(int[] tab : colonies.get(infos[0])){
-					this.drawColonie(tab[0], infos[1], infos[2], tab[1]);
-				}
-			}
-			if(villes.containsKey(infos[0])){
-				for(int[] tab : villes.get(infos[0]))
-					this.drawVille(tab[0], infos[1], infos[2], tab[1]);
-			}
-			if(routes.containsKey(infos[0])){
-				for(int[] tab : routes.get(infos[0]))
-					this.drawRoute(tab[0], tab[1], infos[1], infos[2],tab[2]);
-			}
-			if(bateauTransports.containsKey(infos[0])){
-				for(int[] tab : bateauTransports.get(infos[0]))
-					this.drawBateauTransport(tab[0], tab[1], infos[1], infos[2], tab[2]);
-			}
-			if(cargos.containsKey(infos[0])){
-				for(int[] tab : cargos.get(infos[0]))
-					this.drawCargo(tab[0], tab[1], infos[1], infos[2], tab[2]);
-			}
-			if(voilliers.containsKey(infos[0])){
-				for(int[] tab : voilliers.get(infos[0]))
-					this.drawVoillier(tab[0], tab[1], infos[1], infos[2], tab[2]);
-			}
+	private void drawFirst(){
+		for(int i = 1; i<=2*MAP_HW*MAP_HH;i++){
+			drawHexagone(i);
 		}
 	}
 
+	private LinkedList<PionJoueurPath> pionsJoueurs
+	= new LinkedList<PionJoueurPath>();
+
 	private void draw(){
-		this.fillBackground(KnownColor.BLACK);
+		HexagonePath hex;
+		HexagoneInfos hi;
+		for(int i = 0; i<map.size();i++){
+			hex = map.get(i);
+			hi = hex.getInfos();
+			hex.setFillColor(hi.getColor());
+			int[] coords = hex.getCoords();
+			PionPath p;
+			
+			if((p = hi.getVoleur()) != null){
+				p.setX(coords[0]);
+				p.setY(coords[1]);
+				if(p.getParent() == null)
+					this.add(p);
+			}
 
-		drawHexagones();
-		drawPions();
+			if((p = hi.getIntLeft()) != null){
+				p.setX(coords[0]-getHLargeur());
+				p.setY(coords[1]-getHLongueur());
+				if(p.getParent() == null)
+					this.add(p);
+			}
+
+			if((p = hi.getIntRight()) != null){
+				p.setX(coords[0]+getHLargeur());
+				p.setY(coords[1]-getHLongueur());
+				if(p.getParent() == null)
+					this.add(p);
+			}
+
+			VectorObject vo;
+			if((vo = hi.getArLeft()) != null){
+				int x = coords[0]-getHLargeur()*3/2;
+				int y = coords[1]-getHLongueur()/2;
+				if(vo instanceof PionPath){
+					((PionPath)vo).setX(x);
+					((PionPath)vo).setY(y);
+				}
+				else
+				{
+					((PionsJoueursGroup)vo).setX(x);
+					((PionsJoueursGroup)vo).setY(y);
+				}
+				if(vo.getParent() == null)
+					this.add(vo);
+			}
+
+			if((vo = hi.getArUp()) != null){
+				int x = coords[0];
+				int y = coords[1]-getHLongueur();
+				if(vo instanceof PionPath){
+					((PionPath)vo).setX(x);
+					((PionPath)vo).setY(y);
+				}
+				else
+				{
+					((PionsJoueursGroup)vo).setX(x);
+					((PionsJoueursGroup)vo).setY(y);
+				}
+				if(vo.getParent() == null)
+					this.add(vo);
+			}
+
+			if((vo = hi.getArRight()) != null){
+				int x = coords[0]+getHLargeur()*3/2;
+				int y = coords[1]-getHLongueur()/2;
+				if(vo instanceof PionPath){
+					((PionPath)vo).setX(x);
+					((PionPath)vo).setY(y);
+				}
+				else
+				{
+					((PionsJoueursGroup)vo).setX(x);
+					((PionsJoueursGroup)vo).setY(y);
+				}
+				if(vo.getParent() == null)
+					this.add(vo);
+			}
+
+		}
+	}
+	
+	public void colorPionsJoueurs(){
+		for(PionJoueurPath p : pionsJoueurs){
+			p.color();
+		}
+		pionsJoueurs.clear();
+		pionsJoueurs = null;
 	}
 
-	/**
-	 * Renvoie la largeur actuelle des hexagones. Par largeur, on entends
-	 * la valeur de CataneShapeBuild.HLARGEUR modifiée suite à un zoom de
-	 * la carte.
-	 * @return
-	 */
-	private double getHLargeur(){
-		return CataneShapeBuilder.HLARGEUR;
-	}
-
-	/**
-	 * Renvoie la largeur actuelle des hexagones. Par largeur, on entends
-	 * la valeur de CataneShapeBuild.HLONGUEUR modifiée suite à un zoom de
-	 * la carte.
-	 * @return
-	 */
-	private double getHLongueur(){
-		return CataneShapeBuilder.HLONGUEUR;
-	}
-
-	private final HexaType[] map= {
+	private final HexaType[] colorMap= {
 			HexaType.MER, HexaType.PORT, HexaType.MER, HexaType.MER, HexaType.MER, 
 			HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, 
 			HexaType.MER, HexaType.BLE, HexaType.MER, HexaType.MER, HexaType.BOIS, 
@@ -142,293 +239,14 @@ public class Map extends Surface implements Connectable {
 			HexaType.MER, HexaType.PORT, HexaType.MER, HexaType.MER, HexaType.MER};
 
 	/**
-	 * Renvoie les hexagones actuellement visibles sur la carte associé à deux chiffres :
-	 * s'ils sont nuls, c'est qu'on observe la carte au centre du canvas, sinon c'est qu'on
-	 * observe une copie de la carte du fait que celle ci est un tore. Si le premier chiffre
-	 * est négatif, on est "au dessus" de la carte originale, positif, en dessous. Le second
-	 * concerne la gauche et la droite.
-	 * @return
-	 */
-	private ArrayList<int[]> getHexagones(){
-		int[] limits = getLimits();
-		ArrayList<int[]> ar = new ArrayList<int[]>();
-		int[] infos;
-		int mline, mcolumn, dcol;
-		for(int column = limits[2]; column <= limits[3]; column ++){
-			dcol = Math2.mod(column,2);
-			for(int line = limits[0]; line <= limits[1]; line ++){
-				if(Math2.mod(line,2) == dcol){
-					infos = new int[3];
-
-					mline = Math2.mod(line,2*MAP_HH);
-					mcolumn = Math2.mod(column,2*MAP_HW);
-
-					infos[0] = mline * MAP_HW + mcolumn/2+1;
-					infos[1] = Math2.div(line,2*MAP_HH);
-					infos[2] = Math2.div(column,2*MAP_HW);
-					ar.add(infos);
-				}
-			}
-		}
-		return ar;
-	}
-
-	/**
-	 * Renvoie les lignes et colonnes limites contenue actuellement dans la carte.
-	 * @return
-	 */
-	private int[] getLimits(){
-		double x0 = origin.getX(),
-				x1 = x0 + this.getWidth(),
-				y0 = origin.getY(),
-				y1 = y0 + this.getHeight();
-		int line0 = getLine(y0, true);
-		int line1 = getLine(y1, false);
-		int column0 = getColumn(x0, true);
-		int column1 = getColumn(x1, false);
-
-		int[] limits = {line0, line1, column0, column1};
-		return limits;
-	}
-
-	/**
-	 * Renvoie la colonne la plus à gauche (resp droite) contenant l'abscisse si left est vrai (resp faux)
-	 * @param x
-	 * @param left
-	 * @return
-	 */
-	private int getColumn(double x, boolean left) {
-		return 
-				Math2.div((int)(x-(left?-1:-2)*getHLargeur()),
-						(int)(getHLargeur()*3));
-
-	}
-
-	/**
-	 * Renvoie la ligne la plus haute (resp basse) contenant l'ordonnée y si top est vrai (resp faux).
-	 * @param y
-	 * @param top
-	 * @return
-	 */
-	private int getLine(double y, boolean top) {
-		int line = Math2.div((int)y,(int)getHLongueur());
-		return top?line:line+1;
-
-	}
-
-	/**
-	 * Renvoie l'hexagone actuellement affiché sur la cartes aux coordonnées M : (x,y).
-	 * @param x
-	 * @param y
-	 * @return
-	 */
-	int getHexagoneFromCoords(double x, double y){
-		double x0 = origin.getX(),
-				x1 = Math2.mod((int)(x0 + x), (int)(MAP_HW*6*getHLargeur())),
-				y0 = origin.getY(),
-				y1 = Math2.mod((int)(y0 + y), (int)(MAP_HH*2*getHLongueur()));
-
-		double l = getHLargeur();
-		double h = getHLongueur();
-
-		double mc = Math2.mod((int)x1, (int)(6*l));
-		int column = Math2.div((int)x1, (int)(6*l));
-		if(x1 >= MAP_HW*6*l - 2*l)
-			column -= MAP_HW;
-		int ml = Math2.mod((int)y1, (int)(2*h));
-		int line = Math2.div((int)y1, (int)(2*h));
-		if(y1 >= MAP_HH*2*h - h)
-			line -= MAP_HH;
-
-		int hex;
-		if(mc >= 5*l || mc < l)
-		{
-			if(ml >= h)
-				line++;
-			if(mc>=5*l)
-				column++;
-			hex = 2*line*MAP_HW+column;
-		}
-		else if(mc >= 2*l && mc < 4*l)
-		{
-			hex =  2*line*MAP_HW+column+MAP_HW;
-		}
-
-		else{ 
-			double alpha = -1;
-			boolean b = false;
-			if(mc >= l  && mc < 2*l){
-				alpha = mc-l;
-			}
-			else if(b = (mc >= 4*l  && mc < 5*l)){
-				alpha = 5*l-mc;
-			}
-			if(ml < (l-alpha)*h/l || ml > 2*h-(l-alpha)*h/l){
-				if (b) column++;
-				if(ml >= h)
-					line++;
-				hex =  2*line*MAP_HW+column;
-			}
-			else{
-				if(x1 >= MAP_HW*6*l - 2*l && x1 < MAP_HW*6*l - l)
-					column += MAP_HW;
-				hex =  2*line*MAP_HW+column + MAP_HW;
-			}
-		}
-		return Math2.mod(hex, 2*MAP_HW*MAP_HH) + 1;
-	}
-
-	int getIntersectionFromCoords(double x, double y){
-		int i = getHexagoneFromCoords(x, y);
-		System.out.print(i+" ");
-		Vector2 c = getHexagoneCoords(i, 0, 0);
-		double x0 = origin.getX(),
-				x1 = Math2.mod((int)(x0 + x), (int)(MAP_HW*6*getHLargeur())),
-				y0 = origin.getY(),
-				y1 = Math2.mod((int)(y0 + y), (int)(MAP_HH*2*getHLongueur()));
-
-		double l = getHLargeur();
-		double h = getHLongueur();
-
-		x1 -= c.getX();
-		y1 -= c.getY();
-
-		int iq = (i-1)/MAP_HW;
-		boolean plan1 = (iq%2 == 0);
-		int[] inters = new int[6]; 
-		if(plan1){
-
-			if(x1 >= MAP_HW*6*l - 2*l)
-				x1 -= MAP_HW*6*l;
-			if(y1 >= MAP_HH*2*h - h)
-				y1 -= MAP_HH*2*h;
-
-			inters[0] = 2*i-2;
-			inters[1] = 2*i-1;
-			inters[2] = 2*i+2*MAP_HW-1;
-			inters[3] = 2*i+4*MAP_HW-1;
-			inters[4] = 2*i+4*MAP_HW-2;
-			inters[5] = 2*i+2*MAP_HW-2;
-		}
-		else
-		{
-			inters[0] = 2*i-1;
-			inters[1] = inters[0]+(((inters[0]+1)%(2*MAP_HW)==0)?-9:1);
-			inters[2] = inters[1]+MAP_HW*2;
-			inters[3] = inters[1]+MAP_HW*4;
-			inters[5] = inters[0]+2*MAP_HW;
-			inters[4] = inters[0]+4*MAP_HW;
-		}
-
-		double[][] delta = {{-l,-h},{l,-h},{2*l,0},{l,h},{-l,h},{-2*l,0}};
-		int inter = 0;
-		double dist = Double.MAX_VALUE,d;
-		for(int j = 0; j<6;j++){
-			d = Math2.dist(x1,y1,delta[j][0], delta[j][1]);
-			if(dist > d){
-				dist = d;
-				inter = inters[j];
-			}
-		}
-		return Math2.mod(inter,4*MAP_HW*MAP_HH)+1;
-	}
-
-	int[] getArreteFromCoords(double x, double y){
-		int i = getHexagoneFromCoords(x, y);
-		System.out.print(i+" ");
-		Vector2 c = getHexagoneCoords(i, 0, 0);
-		double x0 = origin.getX(),
-				x1 = Math2.mod((int)(x0 + x), (int)(MAP_HW*6*getHLargeur())),
-				y0 = origin.getY(),
-				y1 = Math2.mod((int)(y0 + y), (int)(MAP_HH*2*getHLongueur()));
-
-		double l = getHLargeur();
-		double h = getHLongueur();
-
-		x1 -= c.getX();
-		y1 -= c.getY();
-
-		int iq = (i-1)/MAP_HW;
-		boolean plan1 = (iq%2 == 0);
-		int[] inters = new int[6]; 
-		if(plan1){
-
-			if(x1 >= MAP_HW*6*l - 2*l)
-				x1 -= MAP_HW*6*l;
-			if(y1 >= MAP_HH*2*h - h)
-				y1 -= MAP_HH*2*h;
-
-			inters[0] = 2*i-2;
-			inters[1] = 2*i-1;
-			inters[2] = 2*i+2*MAP_HW-1;
-			inters[3] = 2*i+4*MAP_HW-1;
-			inters[4] = 2*i+4*MAP_HW-2;
-			inters[5] = 2*i+2*MAP_HW-2;
-		}
-		else
-		{
-			inters[0] = 2*i-1;
-			inters[1] = inters[0]+(((inters[0]+1)%(2*MAP_HW)==0)?-9:1);
-			inters[2] = inters[1]+MAP_HW*2;
-			inters[3] = inters[1]+MAP_HW*4;
-			inters[5] = inters[0]+2*MAP_HW;
-			inters[4] = inters[0]+4*MAP_HW;
-		}
-
-		double[][] delta = {{0,-h},{3*l/2,-h/2},{3*l/2,h/2},{0,h},{-3*l/2,h/2},{-3*l/2,-h/2}};
-		int mj = 0;
-		double dist = Math2.dist(x1,y1,delta[0][0], delta[0][1]),d;
-		for(int j = 1; j<6;j++){
-			d = Math2.dist(x1,y1,delta[j][0], delta[j][1]);
-			if(dist > d){
-				dist = d;
-				mj = j;
-			}
-		}
-
-		int[] arrete = new int[2];
-		switch(mj){
-		case 0: 
-			arrete[0] = inters[0];
-			arrete[1] = inters[1];
-			break;
-		case 1: 
-			arrete[0] = inters[1];
-			arrete[1] = inters[2];
-			break;
-		case 2: 
-			arrete[0] = inters[2];
-			arrete[1] = inters[3];
-			break;
-		case 3: 
-			arrete[0] = inters[3];
-			arrete[1] = inters[4];
-			break;
-		case 4: 
-			arrete[0] = inters[4];
-			arrete[1] = inters[5];
-			break;
-		case 5: 
-			arrete[0] = inters[5];
-			arrete[1] = inters[0];
-			break;
-
-		};
-		arrete[0] = Math2.mod(arrete[0],4*MAP_HW*MAP_HH)+1;
-		arrete[1] = Math2.mod(arrete[1],4*MAP_HW*MAP_HH)+1;
-		return arrete;
-	}
-
-	/**
 	 * Renvoie les coordonnées centrale de l'hexagone numéro i.
 	 * le premier hexagone est 1. (bouuuhh)
 	 * @param i
 	 * @return
 	 */
-	private Vector2 getHexagoneCoords(int i, int deltaLine, int deltaColumn){
+	private int[] getHexagoneCoords(int i){
 		i--;
 
-		Vector2 v = new Vector2();
 		/*
 		 * Il existe deux types de lignes et deux types de colones d'hexagones
 		 * quand on les numérotes dans l'ordre horizontal (et non pas suivant un
@@ -446,10 +264,10 @@ public class Map extends Surface implements Connectable {
 		 */
 
 		boolean plan1 = (iq%2 == 0);
-		double x0, y0;
+		int x0, y0;
 
-		double l = getHLargeur();
-		double h = getHLongueur();
+		int l = getHLargeur();
+		int h = getHLongueur();
 
 		if(plan1){
 			x0 = 0;
@@ -457,14 +275,62 @@ public class Map extends Surface implements Connectable {
 		}
 		else
 		{
-			x0 = l*3.0;
+			x0 = l*3;
 			y0 = h;
 		}
 
-		v.setX(x0 + column * l*6 + deltaColumn * 6*l * MAP_HW);
-		v.setY(y0 + line * h*2 + deltaLine * 2*h * MAP_HH);
+		int[] v = {x0 + column * l*6,
+				y0 + line * 2*h};
 
 		return v;
+	}
+
+	/**
+	 * Renvoie un tableau contenant le numéro de l'hexagone situé "en dessous" de l'intersection numéro i
+	 * et 0 si l'intersection est à gauche, ou 1 sinon 
+	 * @param i
+	 * @return 
+	 */
+	private static int[] getHexagoneFromIntersection(int i){
+
+		i--;
+		int iq = i/(2*MAP_HW), column = i%(2*MAP_HW);
+		int[] ar = new int[2];
+		boolean plan1 = (iq%2 == 0);
+		if(plan1){
+			ar[0] = i/2+1;
+			ar[1] = (i%2 == 0)?0:1; 
+		}
+		else
+		{
+			if(column == 0)
+				i+=2*MAP_HW;
+			ar[0] = (i+1)/2;
+			ar[1] = (i%2 == 1)?0:1;
+		}
+		return ar;
+	}
+
+	ArrayList<HexagonePath> map = new ArrayList<HexagonePath>();
+
+	/**
+	 * Renvoie la largeur actuelle des hexagones. Par largeur, on entends
+	 * la valeur de CataneShapeBuild.HLARGEUR modifiée suite à un zoom de
+	 * la carte.
+	 * @return
+	 */
+	private int getHLargeur(){
+		return HexagonePath.HLARGEUR;
+	}
+
+	/**
+	 * Renvoie la largeur actuelle des hexagones. Par largeur, on entends
+	 * la valeur de CataneShapeBuild.HLONGUEUR modifiée suite à un zoom de
+	 * la carte.
+	 * @return
+	 */
+	private int getHLongueur(){
+		return HexagonePath.HLONGUEUR;
 	}
 
 	/**
@@ -473,340 +339,273 @@ public class Map extends Surface implements Connectable {
 	 * @param j
 	 * @return
 	 */
-	public Map drawHexagone(int i, HexaType type, int deltaLine, int deltaColumn){
-		Vector2 v = getHexagoneCoords(i, deltaLine, deltaColumn);
+	public Map drawHexagone(final int i){
+		int[] v = getHexagoneCoords(i);
 
-		Shape s = new CataneShapeBuilder()
-		.drawHexagone(v.getX(), v.getY()).build();
-		this.setFillStyle(type.getColor());
-		this.fillShape(s);
-		this.setStrokeStyle(KnownColor.BLACK);
-		this.strokeShape(s);
-		return this;
-	}
-
-	/**
-	 * Dessine un brigand sur l'hexagone numéro i
-	 * @param i
-	 * @param j
-	 * @return
-	 */
-	public Map drawBrigand(int i, int deltaLine, int deltaColumn){
-		Vector2 v = getHexagoneCoords(i,deltaLine, deltaColumn);
-
-
-		this.setFillStyle(KnownColor.BLACK);
-		this.fillShape(new CataneShapeBuilder()
-		.drawBrigand(v.getX(), v.getY()).build());
-		return this;
-	}
-
-	/**
-	 * Dessine un pirate sur l'hexagone numéro i
-	 * @param i
-	 * @param j
-	 * @return
-	 */
-	public Map drawPirate(int i, int deltaLine, int deltaColumn){
-		Vector2 v = getHexagoneCoords(i,deltaLine, deltaColumn);
-
-		this.setFillStyle(KnownColor.BLACK);
-		this.fillShape(new CataneShapeBuilder()
-		.drawPirate(v.getX(), v.getY()).build());
-		return this;
-	}
-
-	/**
-	 * Renvoie l'hexagone situé "en dessous" de l'intersection numéro i
-	 * @param i
-	 * @return
-	 */
-	private static int getHexagoneFromIntersection(int i){
-
-		i--;
-		int iq = i/(2*MAP_HW), column = i%(2*MAP_HW);
-		boolean plan1 = (iq%2 == 0);
-		if(plan1)
-			return i/2+1; 
-		else
-		{
-			if(column == 0)
-				i+=2*MAP_HW;
-			return i/2+1;
+		boolean bx = v[0] >= -2*getHLargeur()-10 && v[0] <= getWidth()+2*getHLargeur()+10;
+		boolean by = v[1] >= -getHLongueur()-10 && v[1] <=  getHeight()+getHLongueur()+10;
+		if(bx && by){
+			final HexagonePath hexagone = new HexagonePath(v[0], v[1]);
+			hexagone.setFillColor(colorMap[i-1].getColor());
+			this.add(hexagone);
+			hexagone.setInfos(plateau.get(i-1));
+			map.add(hexagone);
+			hexagone.addClickHandler(new ClickHandler() {
+				
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.mch.onHexagoneClick(event);
+				}
+			});
 		}
+		return this;
 	}
-	/**
-	 * Renvoie les coordonnées de l'intersection numéro i.
-	 * @param i
-	 * @return
-	 */
-	private Vector2 getIntersectionCoord(int i, int deltaLine, int deltaColumn){
-		i--;
 
-		Vector2 v = new Vector2();
-		int iq = i/(2*MAP_HW), column = i%(2*MAP_HW), line = iq/2;
-		boolean plan1 = (iq%2 == 0);
 
-		double x0, y0;
-		double l = getHLargeur();
-		double h = getHLongueur();
-		if(plan1){
-			if(i%2 == 0){
-				x0 = -l;
-				y0 = -h;
-			}
-			else
-			{
-				x0 = l;
-				y0 = -h;
+
+	private enum Direction{
+		LEFT,RIGHT,UP,DOWN,UPLEFT,UPRIGHT,DOWNLEFT,DOWNRIGHT;
+	}
+
+	private void translate(Direction dir){
+		boolean iterationFromTop;
+		switch(dir){
+		case DOWN:
+			iterationFromTop = true;
+			break;
+		case DOWNLEFT:
+			iterationFromTop = true;
+			break;
+		case DOWNRIGHT:
+			iterationFromTop = true;
+			break;
+		case LEFT:
+			iterationFromTop = false;
+			break;
+		case RIGHT:
+			iterationFromTop = true;
+			break;
+		case UP:
+			iterationFromTop = false;
+			break;
+		case UPLEFT:
+			iterationFromTop = false;
+			break;
+		case UPRIGHT:
+			iterationFromTop = false;
+			break;
+		default:
+			return;
+		}
+
+		HexagonePath hex;
+		if(iterationFromTop){
+			for(int i = 0 ; i<map.size(); i++){
+				hex = map.get(i);
+				vanish(hex.getInfos());
+				switch(dir){
+				case RIGHT:
+					hex.setInfos(hex.getInfos().getRight());
+					break;
+				case DOWN:
+					hex.setInfos(hex.getInfos().getDown());
+					break;
+				case DOWNLEFT:
+					hex.setInfos(hex.getInfos().getDownLeft());
+					break;
+				case DOWNRIGHT:
+					hex.setInfos(hex.getInfos().getDownRight());
+					break;
+				}
 			}
 		}
 		else
 		{
-			if(i%2 == 0){
-				x0 = -l*2.0;
-				y0 = 0;
-			}
-			else
-			{
-				x0 = l*2.0;
-				y0 = 0;
+			for(int i = map.size()-1 ; i>=0; i--){
+				hex = map.get(i);
+				vanish(hex.getInfos());
+				switch(dir){
+				case LEFT:
+					hex.setInfos(hex.getInfos().getLeft());
+					break;
+				case UP:
+					hex.setInfos(hex.getInfos().getUp());
+					break;
+				case UPLEFT:
+					hex.setInfos(hex.getInfos().getUpLeft());
+					break;
+				case UPRIGHT:
+					hex.setInfos(hex.getInfos().getUpRight());
+					break;
+				}
 			}
 		}
-
-		v.setX(x0  + column/2 * l*6.0 + deltaColumn * 6*l * MAP_HW);
-		v.setY(y0  + line * h*2.0 + deltaLine * 2*h * MAP_HH);
-
-		return v;
+		draw();
 	}
 
-	/**
-	 * Dessine une colonie sur l'intersection numéro i
-	 * @param i
-	 * @param j
-	 * @param left
-	 * @return
-	 */
-	public Map drawColonie(int i, int deltaLine, int deltaColumn, int player){
-		return drawBatiment(i,true, deltaLine, deltaColumn, player);
+	private void vanish(HexagoneInfos infos) {
+		VectorObject p;
+
+		p = infos.getVoleur();
+		if(p != null && p.getParent() == this)
+			this.remove(p);
+
+		p = infos.getIntLeft();
+		if(p != null && p.getParent() == this)
+			this.remove(p);
+
+		p = infos.getIntRight();
+		if(p != null && p.getParent() == this)
+			this.remove(p);
+
+		p = infos.getArLeft();
+		if(p != null && p.getParent() == this)
+			this.remove(p);
+
+		p = infos.getArUp();
+		if(p != null && p.getParent() == this)
+			this.remove(p);
+
+		p = infos.getArRight();
+		if(p != null && p.getParent() == this)
+			this.remove(p);
 	}
 
-	/**
-	 * Dessinge une ville sur l'intersection numéro i
-	 * @param i
-	 * @param j
-	 * @param left
-	 * @return
-	 */
-	public Map drawVille(int i, int deltaLine, int deltaColumn, int player){
-		return drawBatiment(i,false, deltaLine, deltaColumn, player);
-	}
+	private Arrow left;
+	private Arrow right;
+	private Arrow up;
+	private Arrow down;
 
-	private Map drawBatiment(int i, boolean isColonie, int deltaLine, int deltaColumn, int player){
-		this.setFillStyle(PlayerColors.getPlayerColor(player));
-		Vector2 v = getIntersectionCoord(i, deltaLine, deltaColumn);
-		Shape s;
-		if(isColonie)
-			s = new CataneShapeBuilder()
-		.drawColonie(v.getX(), v.getY()).build();
-		else
-			s = new CataneShapeBuilder()
-		.drawVille(v.getX(), v.getY()).build();
+	private Arrow upLeft;
+	private Arrow upRight;
+	private Arrow downLeft;
+	private Arrow downRight;
 
-		this.fillShape(s);
-		this.setStrokeStyle(KnownColor.BLACK);
-		this.strokeShape(s);
+	private Arrow currentArrow;
 
+	private Map arrow(Arrow arrow){
+		removeCurrentArrow();
+		currentArrow = arrow;
+		this.add(arrow);
 		return this;
 	}
 
-	/**
-	 * Dessinge une route sur l'arrête d'intersections i et j, 
-	 * sur le coté haut gauche si position < 0, haut si position = 0
-	 * haut droit si position > 0.
-	 * @param i
-	 * @param j
-	 * @param left
-	 * @return
-	 */
-	public Map drawRoute(int i, int j, int deltaLine, int deltaColumn, int player){
-		return drawLink(i,j,LinkType.ROUTE, deltaLine, deltaColumn, player);
-	}
-
-	/**
-	 * Dessinge un bateau de transport sur l'arrête d'intersections i et j, 
-	 * sur le coté haut gauche si position < 0, haut si position = 0
-	 * haut droit si position > 0.
-	 * @param i
-	 * @param j
-	 * @param left
-	 * @return
-	 */
-	public Map drawBateauTransport(int i, int j, int deltaLine, int deltaColumn, int player){
-		return drawLink(i,j,LinkType.TRANSPORT,deltaLine, deltaColumn, player);
-	}
-
-	/**
-	 * Dessinge un bateau cargo sur l'arrête d'intersections i et j, 
-	 * sur le coté haut gauche si position < 0, haut si position = 0
-	 * haut droit si position > 0.
-	 * @param i
-	 * @param j
-	 * @param left
-	 * @return
-	 */
-	public Map drawCargo(int i, int j, int deltaLine, int deltaColumn, int player){
-		return drawLink(i,j,LinkType.CARGO, deltaLine, deltaColumn, player);
-	}
-
-	/**
-	 * Dessinge un bateau voillier sur l'arrête d'intersections i et j, 
-	 * sur le coté haut gauche si position < 0, haut si position = 0
-	 * haut droit si position > 0.
-	 * @param i
-	 * @param j
-	 * @param left
-	 * @return
-	 */
-	public Map drawVoillier(int i, int j, int deltaLine, int deltaColumn, int player){
-		return drawLink(i,j,LinkType.VOILLIER, deltaLine, deltaColumn, player);
-	}
-
-
-	private enum LinkType {ROUTE, TRANSPORT, CARGO, VOILLIER};
-
-	public Map drawLink(int i, int j, LinkType link, int deltaLine, int deltaColumn, int player){
-		this.setFillStyle(PlayerColors.getPlayerColor(player));
-		Vector2 v1 = getIntersectionCoord(i,deltaLine, deltaColumn),
-				v2 = getIntersectionCoord(j, deltaLine, deltaColumn);
-		double x1 = v1.getX(), y1 = v1.getY(), x2 = v2.getX(), y2 = v2.getY();
-		Shape s;
-		switch(link){
-		case ROUTE:
-			s = new CataneShapeBuilder()
-			.drawRoute(x1,y1,x2,y2).build();
-			break;
-		case TRANSPORT:
-			s = new CataneShapeBuilder()
-			.drawBateauTransport(x1,y1,x2,y2).build();
-			break;
-		case CARGO:
-			s = new CataneShapeBuilder()
-			.drawCargo(x1,y1,x2,y2).build();
-			break;
-		case VOILLIER:
-			s = new CataneShapeBuilder()
-			.drawVoillier(x1,y1,x2,y2).build();
-			break;
-		default : s = null;
+	Map arrowLeft(){
+		if(left == null){
+			left = Arrow.getLeft(this);
+			left.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.translate(Direction.LEFT);
+					Map.this.bringToFront(left);
+				}
+			});
 		}
-
-		this.fillShape(s);
-		this.setStrokeStyle(KnownColor.BLACK);
-		this.strokeShape(s);
-		return this;
+		return arrow(left);
 	}
 
-	public Map translateX(double x){
-		double x0 = origin.getX(),
-				limitColumn = 6*getHLargeur() * MAP_HW;
-
-		if(x0-x < -limitColumn)
-			x-=limitColumn;
-		else if (x0-x > limitColumn)
-			x+=limitColumn;
-
-		origin.setX(origin.getX()-x);
-
-		super.translate(x,0);
-		return this;
+	Map arrowRight(){
+		if(right == null){
+			right = Arrow.getRight(this);
+			right.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.translate(Direction.RIGHT);
+					Map.this.bringToFront(right);
+				}
+			});
+		}
+		return arrow(right);
 	}
 
-	public Map translateY(double y){
-
-		double y0 = origin.getY(),
-				limitLine = 2*getHLongueur() * MAP_HH;
-
-		if(y0-y < -limitLine)
-			y-=limitLine;
-		else if (y0-y > limitLine)
-			y+=limitLine;
-
-		origin.setY(origin.getY()-y);
-
-		super.translate(0,y);
-		return this;
+	Map arrowUp(){
+		if(up == null){
+			up = Arrow.getUp(this);
+			up.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.translate(Direction.UP);
+					Map.this.bringToFront(up);
+				}
+			});
+		}
+		return arrow(up);
 	}
 
-	public void left() {
-		this.translateX(100);
-		this.draw();
+	Map arrowDown(){
+		if(down == null){
+			down = Arrow.getDown(this);
+			down.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.translate(Direction.DOWN);
+					Map.this.bringToFront(down);
+				}
+			});
+		}
+		return arrow(down);
 	}
 
-	public void right() {
-		this.translateX(-100);
-		this.draw();
+	Map arrowUpLeft(){
+		if(upLeft == null){
+			upLeft = Arrow.getUpLeft(this);
+			upLeft.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.translate(Direction.UPLEFT);
+					Map.this.bringToFront(upLeft);
+				}
+			});
+		}
+		return arrow(upLeft);
 	}
 
-	public void up() {
-		this.translateY(100);
-
-		this.draw();
+	Map arrowUpRight(){
+		if(upRight == null){
+			upRight = Arrow.getUpRight(this);
+			upRight.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.translate(Direction.UPRIGHT);
+					Map.this.bringToFront(upRight);
+				}
+			});
+		}
+		return arrow(upRight);
 	}
 
-	public void down() {
-		this.translateY(-100);
-		this.draw();
+	Map arrowDownLeft(){
+		if(downLeft == null){
+			downLeft = Arrow.getDownLeft(this);
+			downLeft.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.translate(Direction.DOWNLEFT);
+					Map.this.bringToFront(downLeft);
+				}
+			});
+		}
+		return arrow(downLeft);
 	}
 
+	Map arrowDownRight(){
+		if(downRight == null){
+			downRight = Arrow.getDownRight(this);
+			downRight.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.translate(Direction.DOWNRIGHT);
+					Map.this.bringToFront(downRight);
+				}
+			});
+		}
+		return arrow(downRight);
+	}
 
-	/**
-	 * Informations concernant les colonies : 
-	 * hashMap des hexagones vers les intersections et joueurs propriétaire
-	 */
-	private HashMap<Integer, ArrayList<int[]>> colonies = new HashMap<Integer,ArrayList<int[]>>();
-
-	/**
-	 * Informations concernant les villes : 
-	 * hashMap des hexagones vers les intersections et le joueurs propriétaire
-	 */
-	private HashMap<Integer, ArrayList<int[]>> villes = new HashMap<Integer,ArrayList<int[]>>();
-
-	/**
-	 * Informations concernant les routes : 
-	 * HashMap des hexagones vers un tableaux de 3 entiers, les intersections de l'arrete et le joueur.
-	 */
-	private HashMap<Integer,ArrayList<int[]>> routes = new HashMap<Integer,ArrayList<int[]>>();
-
-	/**
-	 * Informations concernant les bateaux : 
-	 * HashMap des hexagones vers un tableaux de 3 entiers, les intersections de l'arrete et le joueur.
-	 */
-	private HashMap<Integer,ArrayList<int[]>> bateauTransports = new HashMap<Integer,ArrayList<int[]>>();
-
-	/**
-	 * Informations concernant les cargos : 
-	 * HashMap des hexagones vers un tableaux de 3 entiers, les intersections de l'arrete et le joueur.
-	 */
-	private HashMap<Integer, ArrayList<int[]>> cargos = new HashMap<Integer,ArrayList<int[]>>();
-
-	/**
-	 * Informations concernant les voilliers : 
-	 * HashMap des hexagones vesr tableaux de 3 entiers, les intersections de l'arrete et le joueur.
-	 */
-	private HashMap<Integer, ArrayList<int[]>> voilliers = new HashMap<Integer,ArrayList<int[]>>();
-
-	/**
-	 * Informations concernant les brigands : 
-	 * les divers hexagones contenant un brigand.
-	 */
-	private HashSet<Integer> brigands = new HashSet<Integer>();
-
-	/**
-	 * Informations concernant les pirates : 
-	 * les divers hexagones contenant un pirate.
-	 */
-	private HashSet<Integer> pirates = new HashSet<Integer>();
+	void removeCurrentArrow(){
+		if(currentArrow != null)
+			this.remove(currentArrow);
+	}
 
 	/**
 	 * Se connecte au serveur pour chercher toutes les informations nécessaires à la
@@ -816,93 +615,406 @@ public class Map extends Surface implements Connectable {
 		new Connector("map/infos/3/0", this);
 	}
 
+	private enum BatimentType {COLONIE,VILLE};
+	private enum LinkType {ROUTE, TRANSPORT, CARGO, VOILLIER};
+
 	@Override
 	public void callback(JavaScriptObject json) {
 		if (json == null)
 			displayError();
 		else{
+			VoleurPath p = null;
 			MapInfos jmap = asMap(json);
 			JsArrayInteger brs = jmap.getBrigands();
-			brigands.clear();
-			for(int i = 0; i<brs.length(); i++)
-				brigands.add(brs.get(i));
+			for(int i = 0; i<brs.length(); i++){
+				p = new BrigandPath();
+				p.setFillColor("black");
+				plateau.get(brs.get(i)-1).setVoleur(p);
+				p.addClickHandler(new ClickHandler() {
+					
+					@Override
+					public void onClick(ClickEvent event) {
+						Map.this.mch.onBrigandClick(event);
+					}
+				});
+			}
 
 			JsArrayInteger prs = jmap.getPirates();
-			pirates.clear();
-			for(int i = 0; i<prs.length(); i++)
-				pirates.add(prs.get(i));
-
-			int[] tab;
+			for(int i = 0; i<prs.length(); i++){
+				p = new PiratePath();
+				p.setFillColor("black");
+				plateau.get(prs.get(i)-1).setVoleur(p);
+				p.addClickHandler(new ClickHandler() {
+					
+					@Override
+					public void onClick(ClickEvent event) {
+						Map.this.mch.onPirateClick(event);
+					}
+				});
+			}
 
 			JsArray<BatimentInfos> cols = jmap.getColonies();
-			colonies.clear();
 			BatimentInfos col;
 			for(int i = 0; i<cols.length(); i++){
 				col = cols.get(i);
-				tab = new int[2]; tab[0] = col.getPosition(); tab[1] = col.getJoueur();
-				Collections2.put(colonies, getHexagoneFromIntersection(tab[0]), tab);
+				addBatiment(col, BatimentType.COLONIE);
 			}
 
+
+
 			JsArray<BatimentInfos> vils = jmap.getVilles();
-			villes.clear();
 			BatimentInfos vil;
 			for(int i = 0; i<vils.length(); i++){
 				vil = vils.get(i);
-				tab = new int[2]; tab[0] = vil.getPosition(); tab[1] = vil.getJoueur();
-				Collections2.put(villes, getHexagoneFromIntersection(tab[0]), tab);
+				addBatiment(vil, BatimentType.VILLE);
 			}
 
+
+
 			JsArray<LienInfos> routs = jmap.getRoutes();
-			routes.clear();
 			LienInfos rout;
 			for(int i = 0; i<routs.length(); i++){
 				rout = routs.get(i);
-				tab = new int[3]; 
-				tab[0] = rout.getPosition1(); 
-				tab[1] = rout.getPosition2(); 
-				tab[2] = rout.getJoueur();
-				Collections2.put(routes, getHexagoneFromIntersection(tab[0]), tab);
+				this.addLien(rout, LinkType.ROUTE);
 			}
 
+			/*
+			 * Bateaux : on vérifie si deux bateaux n'ont pas la même 
+			 * position, ils ne seront pas affichés pareils.
+			 */
 			JsArray<LienInfos> transp = jmap.getBateauxTransports();
-			bateauTransports.clear();
-			LienInfos trans;
-			for(int i = 0; i<transp.length(); i++){
-				trans = transp.get(i);
-				tab = new int[3]; 
-				tab[0] = trans.getPosition1(); 
-				tab[1] = trans.getPosition2(); 
-				tab[2] = trans.getJoueur();
-				Collections2.put(bateauTransports, getHexagoneFromIntersection(tab[0]), tab);
-			}
-
 			JsArray<LienInfos> cargs = jmap.getCargos();
-			cargos.clear();
-			LienInfos carg;
-			for(int i = 0; i<cargs.length(); i++){
-				carg = cargs.get(i);
-				tab = new int[3]; 
-				tab[0] = carg.getPosition1(); 
-				tab[1] = carg.getPosition2(); 
-				tab[2] = carg.getJoueur();
-				Collections2.put(cargos, getHexagoneFromIntersection(tab[0]), tab);
-			}
-
 			JsArray<LienInfos> voils = jmap.getVoilliers();
-			voilliers.clear();
-			LienInfos voil;
-			for(int i = 0; i<voils.length(); i++){
-				voil = voils.get(i);
-				tab = new int[3]; 
-				tab[0] = voil.getPosition1(); 
-				tab[1] = voil.getPosition2(); 
-				tab[2] = voil.getJoueur();
-				Collections2.put(voilliers, getHexagoneFromIntersection(tab[0]), tab);
+			
+			
+			ArrayList<LienInfos> transpSeuls = new ArrayList<LienInfos>();
+			ArrayList<LienInfos> cargsSeuls = new ArrayList<LienInfos>();
+			ArrayList<LienInfos> voilsSeuls = new ArrayList<LienInfos>();
+			ArrayList<ArrayList<LienInfos>> batMultiples = new ArrayList<ArrayList<LienInfos>>();
+			HashSet<Integer> deletedTransp = new HashSet<Integer>();
+			HashSet<Integer> deletedCargs = new HashSet<Integer>();
+			HashSet<Integer> deletedVoils = new HashSet<Integer>();
+			
+			
+			ArrayList<LienInfos> mult = new ArrayList<LienInfos>();
+			
+			LienInfos li;
+			for(int i = 0; i<transp.length(); i++){
+				if(deletedTransp.contains(i))
+					continue;
+				li = transp.get(i);
+				for(int j = i+1; j<transp.length(); j++){
+					if (equalsPosBateaux(li, transp.get(j)))
+					{
+						deletedTransp.add(j);
+						mult.add(transp.get(j));
+					}
+						
+				}
+				for(int j = 0; j<cargs.length(); j++){
+					if (equalsPosBateaux(li, cargs.get(j)))
+					{
+						deletedCargs.add(j);
+						mult.add(cargs.get(j));
+					}
+				}
+				for(int j = 0; j<voils.length(); j++){
+					if (equalsPosBateaux(li, voils.get(j)))
+					{
+						deletedVoils.add(j);
+						mult.add(voils.get(j));
+					}
+				}
+				
+				if(mult.size() == 0)
+					transpSeuls.add(li);
+				else{
+					mult.add(li);
+					batMultiples.add(mult);
+					mult = new ArrayList<LienInfos>();
+				}
 			}
+			
+			for(int i = 0; i<cargs.length(); i++){
+				if(deletedCargs.contains(i))
+					continue;
+				
+				li = cargs.get(i);
+				for(int j = i+1; j<cargs.length(); j++){
+					if (equalsPosBateaux(li, cargs.get(j)))
+					{
+						deletedCargs.add(j);
+						mult.add(cargs.get(j));
+					}
+				}
+				for(int j = 0; j<voils.length(); j++){
+					if (equalsPosBateaux(li, voils.get(j)))
+					{
+						deletedVoils.add(j);
+						mult.add(voils.get(j));
+					}
+				}
+				
+				if(mult.size() == 0)
+					cargsSeuls.add(li);
+				else{
+					mult.add(li);
+					batMultiples.add(mult);
+					mult = new ArrayList<LienInfos>();
+				}
+			}
+			
+			for(int i = 0; i<voils.length(); i++){
+				if(deletedVoils.contains(i))
+					continue;
+				li = voils.get(i);
+				for(int j = i+1; j<voils.length(); j++){
+					if (equalsPosBateaux(li, voils.get(j)))
+					{
+						deletedVoils.add(j);
+						mult.add(voils.get(j));
+					}
+				}
+				
+				if(mult.size() == 0)
+					voilsSeuls.add(li);
+				else{
+					mult.add(li);
+					batMultiples.add(mult);
+					mult = new ArrayList<LienInfos>();
+				}
+			}
+			
+			
+			
+			for(LienInfos trans : transpSeuls)
+				this.addLien(trans,LinkType.TRANSPORT);
 
-
+			for(LienInfos carg : cargsSeuls)
+				this.addLien(carg,LinkType.CARGO);
+			
+			for(LienInfos voil : voilsSeuls)
+				this.addLien(voil,LinkType.VOILLIER);
+			
+			for(ArrayList<LienInfos> batMult : batMultiples){
+				this.addBatMult(batMult);
+			}
+			
 			draw();
+			PlayerColors.setPlayerColors();
 		}
+	}
+
+	private boolean equalsPosBateaux(LienInfos li1, LienInfos li2){
+		return (
+				li1.getPosition1() == li2.getPosition1() 
+				&& li1.getPosition2() == li2.getPosition2() )
+				||
+				(
+				li1.getPosition2() == li2.getPosition1() 
+					&& li1.getPosition1() == li2.getPosition2() 
+					);
+	}
+
+	private void addBatiment(BatimentInfos bat, BatimentType type){
+		PionJoueurPath pjp = null;
+		switch(type){
+		case COLONIE:{
+			pjp = new ColoniePath(bat.getJoueur());
+			pjp.addClickHandler(new ClickHandler() {
+				
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.mch.onColonieClick(event);
+				}
+			});
+			break;
+		}
+		case VILLE:{
+			pjp = new VillePath(bat.getJoueur());
+			pjp.addClickHandler(new ClickHandler() {
+				
+				@Override
+				public void onClick(ClickEvent event) {
+					Map.this.mch.onVilleClick(event);
+				}
+			});
+			break;
+		}
+
+		}
+
+
+		int[] tab = getHexagoneFromIntersection(bat.getPosition());
+		if(tab[1] == 0)
+			plateau.get(tab[0]-1).setIntLeft(pjp);
+		else
+			plateau.get(tab[0]-1).setIntRight(pjp);
+		
+		pionsJoueurs.add(pjp);
+	}
+
+	private void addLien(LienInfos lien, LinkType type){
+		int[] tab1 = getHexagoneFromIntersection(lien.getPosition1());
+		int[] tab2 = getHexagoneFromIntersection(lien.getPosition2());
+
+		SideDirection dir;
+		int hex;
+
+
+		if(tab1[0] == tab2[0]){
+			dir = SideDirection.NONE;
+			hex = tab1[0];
+		}
+		else{
+			boolean tab1Left = tab1[1] == 0;
+			boolean t1Abovt2 = (tab1[0] < tab2[0] || (tab1[0] >= 2*MAP_HW*(MAP_HH-1) 
+					&& tab2[0] <= 2*MAP_HW));
+			if(tab1Left){
+				if(t1Abovt2){
+					dir = SideDirection.LEFT;
+					hex = tab1[0];
+				}
+				else{
+					dir = SideDirection.RIGHT;
+					hex = tab2[0];
+				}
+			}
+			else{
+				if(t1Abovt2){
+					dir = SideDirection.RIGHT;
+					hex = tab1[0];
+				}
+				else{
+					dir = SideDirection.LEFT;
+					hex = tab2[0];
+				}
+			}
+		}
+
+		PionJoueurPath pjp = null;
+		switch(type){
+		case ROUTE:{
+			pjp = new RoutePath(lien.getJoueur(), dir);
+			pjp.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					mch.onRouteClick(event);
+				}
+				
+			});
+			break;
+		}
+		case TRANSPORT:{
+			pjp = new TransportPath(lien.getJoueur(), dir);
+			pjp.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					mch.onBateauTransportClick(event);
+				}
+				
+			});
+			break;
+		}
+		case CARGO:{
+			pjp = new CargoPath(lien.getJoueur(), dir);
+			pjp.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					mch.onCargoClick(event);
+				}
+				
+			});
+			break;
+		}
+		case VOILLIER:{
+			pjp = new VoilierPath(lien.getJoueur(), dir);
+			pjp.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					mch.onVoilierClick(event);
+				}
+				
+			});
+			break;
+		}
+
+		}
+
+
+		switch(dir){
+		case LEFT:
+			plateau.get(hex-1).setArLeft(pjp);
+			break;
+		case NONE:
+			plateau.get(hex-1).setArUp(pjp);
+			break;
+		case RIGHT:
+			plateau.get(hex-1).setArRight(pjp);
+			break;
+
+		}
+		
+		pionsJoueurs.add(pjp);
+	}
+	
+
+	private void addBatMult(ArrayList<LienInfos> batMult) {
+		int[] tab1 = getHexagoneFromIntersection(batMult.get(0).getPosition1());
+		int[] tab2 = getHexagoneFromIntersection(batMult.get(0).getPosition2());
+
+		SideDirection dir;
+		int hex;
+
+
+		if(tab1[0] == tab2[0]){
+			dir = SideDirection.NONE;
+			hex = tab1[0];
+		}
+		else{
+			boolean tab1Left = tab1[1] == 0;
+			boolean t1Abovt2 = (tab1[0] < tab2[0] || (tab1[0] >= 2*MAP_HW*(MAP_HH-1) 
+					&& tab2[0] <= 2*MAP_HW));
+			if(tab1Left){
+				if(t1Abovt2){
+					dir = SideDirection.LEFT;
+					hex = tab1[0];
+				}
+				else{
+					dir = SideDirection.RIGHT;
+					hex = tab2[0];
+				}
+			}
+			else{
+				if(t1Abovt2){
+					dir = SideDirection.RIGHT;
+					hex = tab1[0];
+				}
+				else{
+					dir = SideDirection.LEFT;
+					hex = tab2[0];
+				}
+			}
+		}
+		ArrayList<Integer> joueurs = new ArrayList<Integer>();
+		for(LienInfos li : batMult)
+			joueurs.add(li.getJoueur());
+		
+		BateauxGroup bat = new BateauxGroup(joueurs, false, dir);
+		
+		switch(dir){
+		case LEFT:
+			plateau.get(hex-1).setArLeft(bat);
+			break;
+		case NONE:
+			plateau.get(hex-1).setArUp(bat);
+			break;
+		case RIGHT:
+			plateau.get(hex-1).setArRight(bat);
+			break;
+
+		}
+		
 	}
 
 	/**
@@ -919,4 +1031,3 @@ public class Map extends Surface implements Connectable {
 	}
 
 }
-

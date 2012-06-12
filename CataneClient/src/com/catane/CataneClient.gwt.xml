@@ -14,6 +14,7 @@
 
   <!-- Other module inherits                                      -->
     <inherits name='gwt.g2d.g2d'/>
+    <inherits name='org.vaadin.gwtgraphics.GWTGraphics'/>
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='com.catane.client.CataneClient'/>

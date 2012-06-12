@@ -53,7 +53,7 @@ public class Connector {
 	     document.body.removeChild(script);
 	     delete window[callback];
 	     delete window[callback + "done"];
-	   }, 1000);
+	   }, 10000);
 
 	   // [6] Attach the script element to the document body.
 	   document.body.appendChild(script);
