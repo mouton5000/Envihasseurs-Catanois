@@ -67,9 +67,15 @@ public class MapPopup extends PopupPanel implements MapClickHandler, CloseHandle
 		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
 	public void onPirateClick(ClickEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	public void onBateauxMultipleClick(ClickEvent event) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -78,5 +84,6 @@ public class MapPopup extends PopupPanel implements MapClickHandler, CloseHandle
 	public void onClose(CloseEvent<PopupPanel> event) {
 		Map.getBigMap().remove(p);
 	}
+
 	
 }

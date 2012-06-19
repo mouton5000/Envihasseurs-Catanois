@@ -3,7 +3,7 @@ package com.catane.client.map;
 import org.vaadin.gwtgraphics.client.shape.Path;
 
 
-public class Arrow extends Path {
+class Arrow extends Path {
 
 	private Arrow(int x, int y) {
 		super(x, y);

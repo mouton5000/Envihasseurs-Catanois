@@ -12,7 +12,6 @@ import org.vaadin.gwtgraphics.client.shape.Text;
 public abstract class PionsJoueursGroup extends Group{
 
 	private ArrayList<Integer> joueurs;
-	private boolean cntPlayer;
 
 	private Text nbPions;
 	private Circle circNbPions;
@@ -21,10 +20,9 @@ public abstract class PionsJoueursGroup extends Group{
 	
 	private static final int textOffSet = 15;
 	
-	public PionsJoueursGroup(ArrayList<Integer> joueurs, boolean cntPlayer) {
+	public PionsJoueursGroup(ArrayList<Integer> joueurs) {
 		super();
 		this.setJoueurs(joueurs);
-		this.cntPlayer =  cntPlayer;
 		nbPions = new Text(textOffSet, textOffSet, String.valueOf(joueurs.size()));
 		nbPions.setFillColor("black");
 		
@@ -38,7 +36,6 @@ public abstract class PionsJoueursGroup extends Group{
 		rectNbPions = new Rectangle(textOffSet, textOffSet-th, tw, th);
 		rectNbPions.setFillColor("white");
 		super.add(circNbPions);
-//		super.add(rectNbPions);
 		super.add(nbPions);
 	}
 	
@@ -67,7 +64,6 @@ public abstract class PionsJoueursGroup extends Group{
 		int delta = x-modelPion.getX();
 		modelPion.setX(x);
 		circNbPions.setX(circNbPions.getX()+delta);
-//		rectNbPions.setX(rectNbPions.getX()+delta);
 		nbPions.setX(nbPions.getX()+delta);
 	}
 	
@@ -75,8 +71,15 @@ public abstract class PionsJoueursGroup extends Group{
 		int delta = y-modelPion.getY();
 		modelPion.setY(y);
 		circNbPions.setY(circNbPions.getY()+delta);
-//		rectNbPions.setY(rectNbPions.getY()+delta);
 		nbPions.setY(nbPions.getY()+delta);
+	}
+	
+	public void setFillColor(String color){
+		modelPion.setFillColor(color);
+	}
+
+	public void setFillOpacity(double opacity) {
+		modelPion.setFillOpacity(opacity);
 	}
 
 }
@@ -89,11 +92,12 @@ class BateauxGroup extends PionsJoueursGroup{
 	public static final int h = (int)(HexagonePath.HEXAGONES_SIDE_LENGTH*BATEAU_HEIGHTR);
 	public static final int off = (int)(HexagonePath.HEXAGONES_SIDE_LENGTH * BATEAU_OFFSETR);
 	
-	public BateauxGroup(ArrayList<Integer> joueurs, boolean cntPlayer, SideDirection dir) {
-		super(joueurs,cntPlayer);
+	public BateauxGroup(ArrayList<Integer> joueurs, SideDirection dir) {
+		super(joueurs);
 		Path bateau = new Path(0,0);
 		PionBuilder.makeTransport(bateau, h, off, dir);
 		this.setModelPion(bateau);
+		
 	}
 	
 	

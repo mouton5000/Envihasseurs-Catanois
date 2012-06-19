@@ -12,4 +12,5 @@ public interface MapClickHandler {
 	public void onVoilierClick(ClickEvent event);
 	public void onBrigandClick(ClickEvent event);
 	public void onPirateClick(ClickEvent event);
+	public void onBateauxMultipleClick(ClickEvent event);
 }

@@ -3,17 +3,26 @@ from controllers import app, needLogin
 import re
 import controllers.login
 import controllers.callback
-from Jeu import *
-from joueurs import *
-from plateau import *
+from user import *
 from arbre_action import *
 
-@app.route('/players/colors')
+@app.route('/players/all')
 @needLogin
-def getColors():
+def getAllPlayers():
 
-    body = '[{"red":255, "blue":0, "green":0}, {"red":0, "blue":0, "green":255}, {"red":0, "blue":255, "green":0}, {"red":100, "blue":100, "green":100}, {"red":200, "blue":200, "green":50}]'
+    meNum = session['joueur_num']
 
-    body = controllers.callback.addCallback(body, request)
+    body = '{"meIndex" : '+str(meNum)+', "users":['
 
+    users = User.getUsersAndColors()
+    body += makeJoueurBody(users[0][0], users[0][1], users[0][2])
+    for user in users[1:]:
+         body += ', '+makeJoueurBody(user[0],user[1], user[2])
+    body += ']}'
+
+    body = controllers.callback.addCallback(body,request)
     return body
+
+def makeJoueurBody(username, jnum, color):
+    return '{"username":"'+username + '", "number":'+str(jnum)+', "red":'+str(color[0])+', "blue":'+str(color[1])+', "green":'+str(color[2])+'}'
+ 

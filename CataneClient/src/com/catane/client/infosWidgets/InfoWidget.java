@@ -1,12 +1,19 @@
 package com.catane.client.infosWidgets;
 
 
+import java.util.Iterator;
+
+import com.catane.client.map.Map;
+import com.catane.client.map.Terre;
 import com.catane.client.requests.Connectable;
 import com.catane.client.requests.Connector;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 
 /**
  * Désigne le widget d'information situé en haut de l'écran. Il donne entre autres
@@ -23,10 +30,15 @@ public class InfoWidget extends Composite {
 	private RessourceInfoWidget rCai;
 	private RessourceInfoWidget rMou;
 	private RessourceInfoWidget rOr;
-	
+
+	private ListBox lb;
+	public ListBox getLb(){
+		return lb;
+	}
+
 	public InfoWidget() {
 		super();
-		
+
 		rArg = RessourceInfoWidget.getArgile();
 		rBle = RessourceInfoWidget.getBle();
 		rBoi = RessourceInfoWidget.getBois();
@@ -35,13 +47,26 @@ public class InfoWidget extends Composite {
 		rOr = RessourceInfoWidget.getOr();
 		Label points = new Label("Points");
 		Label Voleur = new Label("Voleur");
-		
+
 		HorizontalPanel hP = new HorizontalPanel();
-		
+
 		points.setStyleName("infosLabels");
 		Voleur.setStyleName("infosLabels");
-		
-		
+
+		lb = new ListBox();
+		Iterator<Terre> it = Terre.getTerreIterator();
+		while(it.hasNext())
+			lb.addItem(it.next().getName());
+		lb.addChangeHandler(new ChangeHandler() {
+
+			@Override
+			public void onChange(ChangeEvent event) {
+				Terre t = Terre.getTerre(lb.getSelectedIndex());
+				t.choose();
+				Map.getLittleMap().center();
+			}
+		});
+
 		hP.add(rArg);
 		hP.add(rBle);
 		hP.add(rBoi);
@@ -50,13 +75,14 @@ public class InfoWidget extends Composite {
 		hP.add(rOr);
 		hP.add(points);
 		hP.add(Voleur);
-		
+		hP.add(lb);
+
 		initWidget(hP);
-		refreshInfos();
 	}
 
-	private void refreshInfos() {
-		new Connector("ressources/infos/3/0/1", new Connectable(){
+	public void refreshInfos() {
+		Terre t = Terre.getChosenOne();
+		new Connector("ressources/infos/3/0/"+(t.getIndex()+1), new Connectable(){
 
 			@Override
 			public void callback(JavaScriptObject json) {
@@ -82,14 +108,15 @@ public class InfoWidget extends Composite {
 				InfoWidget.this.rMou.displayError();
 				InfoWidget.this.rOr.displayError();
 			}
-			
-			 /**
-			   * Cast JavaScriptObject as JsArray of StockData.
-			   */
-			  private final native RessourcesInfos asRessources(JavaScriptObject jso) /*-{
+
+			/**
+			 * Cast JavaScriptObject as JsArray of StockData.
+			 */
+			private final native RessourcesInfos asRessources(JavaScriptObject jso) /*-{
 			    return jso;
 			  }-*/;
-			
+
 		});
 	}
+
 }

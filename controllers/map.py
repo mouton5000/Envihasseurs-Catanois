@@ -56,28 +56,27 @@ def displayMap(nodeNum,actionIndex):
                 colonies.append(col)
 
 
-
     body += '"colonies":'
     body += '['
     if len(colonies)>0:
-        body += '{"position":'+str(colonies[0].position)+', "joueur":'+str(colonies[0].joueur)+'}'
+        body += makeBatimentBody(colonies[0])
         for col in colonies[1:]:
-            body += ', {"position":'+str(col.position)+', "joueur":'+str(col.joueur)+'}' 
+            body += ', '+ makeBatimentBody(col) 
     body += '],'
 
     body += '"villes":'
     body += '['
     if len(villes)>0:
-        body += '{"position":'+str(villes[0].position)+', "joueur":'+str(villes[0].joueur)+'}'
+        body += makeBatimentBody(villes[0])
         for vil in villes[1:]:
-            body += ', {"position":'+str(vil.position)+', "joueur":'+str(vil.joueur)+'}' 
+            body += ', '+makeBatimentBody(vil) 
     body += '],'
     
 
     routes = []
     bateaux_transport = []
     cargos = []
-    voilliers = []
+    voiliers = []
     for arrete in p.arretes:
         route = Route.getRoute(arrete,bdd)
         if route != 0:
@@ -90,42 +89,54 @@ def displayMap(nodeNum,actionIndex):
             elif bateau.etat == Bateau.BateauType.CARGO:
                 cargos.append(t)
             else:
-                voilliers.append(t) 
+                voiliers.append(t) 
         
 
     body += '"routes":'
     body += '['
     if len(routes)>0:
-        body += '{"position1":'+str(routes[0][0].int1)+', "position2":'+str(routes[0][0].int2)+', "joueur":'+str(routes[0][1])+'}'
+        body += makeRouteBody(routes[0]) 
         for route in routes[1:]:
-            body += ', {"position1":'+str(route[0].int1)+', "position2":'+str(route[0].int2)+', "joueur":'+str(route[1])+'}'
+            body += ', '+makeRouteBody(route)
     body += '],'
 
     body += '"bateaux_transports":'
     body += '['
     if len(bateaux_transport)>0:
-        body += '{"position1":'+str(bateaux_transport[0][0].int1)+', "position2":'+str(bateaux_transport[0][0].int2)+', "joueur":'+str(bateaux_transport[0][1])+'}'
+        body += makeBateauBody(bateaux_transport[0])
         for bateau in bateaux_transport[1:]:
-            body += ', {"position1":'+str(bateau[0].int1)+', "position2":'+str(bateau[0].int2)+', "joueur":'+str(bateau[1])+'}'
+            body += ', '+makeBateauBody(bateau)
     body += '],'
 
     body += '"cargos":'
     body += '['
     if len(cargos)>0:
-        body += '{"position1":'+str(cargos[0][0].int1)+', "position2":'+str(cargos[0][0].int2)+', "joueur":'+str(cargos[0][1])+'}'
+        body += makeBateauBody(cargos[0])
         for cargo in cargos[1:]:
-            body += ', {"position1":'+str(cargo[0].int1)+', "position2":'+str(cargo[0].int2)+', "joueur":'+str(cargo[1])+'}'
+            body += ', '+makeBateauBody(cargo)
     body += '],'
 
     body += '"voilliers":'
     body += '['
-    if len(voilliers)>0:
-        body += '{"position1":'+str(voilliers[0][0].int1)+', "position2":'+str(voilliers[0][0].int2)+', "joueur":'+str(voilliers[0][1])+'}'
-        for voillier in voilliers[1:]:
-            body += ', {"position1":'+str(voillier[0].int1)+', "position2":'+str(voillier[0].int2)+', "joueur":'+str(voillier[1])+'}'
+    if len(voiliers)>0:
+        body += makeBateauBody(voiliers[0])
+        for voilier in voiliers[1:]:
+            body += ', '+makeBateauBody(voilier)
     body += ']'
 
     body += '}'
 
     body = controllers.callback.addCallback(body,request)
     return body
+
+def makeBatimentBody(bat):
+    jnum = bat.joueur
+    return '{"position":'+str(bat.position)+', "joueur":'+str(jnum)+'}'
+
+def makeRouteBody(route):
+    jnum = route[1]
+    return '{"position1":'+str(route[0].int1)+', "position2":'+str(route[0].int2)+', "joueur":'+str(jnum)+'}'
+
+def makeBateauBody(bat):
+    jnum = bat[1]
+    return '{"position1":'+str(bat[0].int1)+', "position2":'+str(bat[0].int2)+', "joueur":'+str(jnum)+'}'

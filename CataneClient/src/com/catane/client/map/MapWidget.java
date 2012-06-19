@@ -1,9 +1,13 @@
 package com.catane.client.map;
 
+import com.catane.client.User;
+import com.catane.shared.Collections2;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 
@@ -13,15 +17,15 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  *
  */
 public class MapWidget extends Composite implements MapClickHandler{
-	
-	
+
+
 	private Map map;
 	private Label infos;
-	
+
 	public MapWidget() {
 		map = Map.getLittleMap();
 		map.setMapClickHandler(this);
-		
+
 		HorizontalPanel hp = new HorizontalPanel();
 		hp.add(map);
 
@@ -34,48 +38,159 @@ public class MapWidget extends Composite implements MapClickHandler{
 
 	@Override
 	public void onHexagoneClick(ClickEvent event) {
-		infos.setText("Hexagone : "+((HexagonePath)event.getSource()).getInfos().getNum());
+		HexagonePath hp = (HexagonePath)event.getSource();
+		Terre t1 = Terre.getChosenOne(),
+				t2 = hp.getInfos().getTerre();
+		if(t1 != t2)
+			t2.choose();
 	}
 
 	@Override
 	public void onColonieClick(ClickEvent event) {
-		infos.setText("Colonie de J"+((ColoniePath)event.getSource()).getJoueur());
+		ColoniePath p = (ColoniePath)event.getSource();
+		Terre t1 = Terre.getChosenOne(),
+				t2 = p.getHi().getTerre();
+		if(t1 != t2)
+			t2.choose();
+		else
+		{
+			PopupPanel popup = new PopupPanel(true);
+			popup.setWidget(new ColoniePopupWidget(p));
+			popup.center();
+		}
+	}
+	
+	private class ColoniePopupWidget extends Composite{
+
+		public ColoniePopupWidget(ColoniePath cp) {
+			VerticalPanel vp = new VerticalPanel();
+			vp.add(new Label("Colonie du joueur " + cp.getJoueur()));
+			if(cp.getJoueur() == User.getMe().getNumber())
+				vp.add(new Button("Evoluer"));
+			this.initWidget(vp);
+		}
+		
 	}
 
 	@Override
 	public void onVilleClick(ClickEvent event) {
-		infos.setText("Ville de J"+((VillePath)event.getSource()).getJoueur());
+		VillePath p = (VillePath)event.getSource();
+		Terre t1 = Terre.getChosenOne(),
+				t2 = p.getHi().getTerre();
+		if(t1 != t2)
+			t2.choose();
 	}
 
 
 	@Override
 	public void onRouteClick(ClickEvent event) {
-		infos.setText("Route de J"+((RoutePath)event.getSource()).getJoueur());
+		RoutePath p = (RoutePath)event.getSource();
+		Terre t1 = Terre.getChosenOne(),
+				t2 = p.getHi().getTerre();
+		if(t1 != t2)
+			t2.choose();
+	}
+
+	
+	private class BateauPopupWidget extends Composite{
+
+		public BateauPopupWidget(TransportPath p) {
+			VerticalPanel vp = new VerticalPanel();
+			vp.add(new Label("Bateau de transport du joueur " + p.getJoueur()));
+			if(p.getJoueur() == User.getMe().getNumber())
+				vp.add(new Button("Evoluer"));
+			this.initWidget(vp);
+		}
+		
+		public BateauPopupWidget(CargoPath p) {
+			VerticalPanel vp = new VerticalPanel();
+			vp.add(new Label("Bateau de transport du joueur " + p.getJoueur()));
+			if(p.getJoueur() == User.getMe().getNumber())
+				vp.add(new Button("Evoluer"));
+			this.initWidget(vp);
+		}
+		
+		public BateauPopupWidget(VoilierPath p) {
+			VerticalPanel vp = new VerticalPanel();
+			vp.add(new Label("Bateau de transport du joueur " + p.getJoueur()));
+			if(p.getJoueur() == User.getMe().getNumber())
+				vp.add(new Button("Evoluer"));
+			this.initWidget(vp);
+		}
+		
 	}
 	
 	@Override
 	public void onBateauTransportClick(ClickEvent event) {
-		infos.setText("Bateau de J"+((TransportPath)event.getSource()).getJoueur());
+		TransportPath p = (TransportPath)event.getSource();
+		Terre t1 = Terre.getChosenOne(),
+				t2 = p.getHi().getTerre();
+		if(t1 != t2)
+			t2.choose();
+		else
+		{
+			PopupPanel popup = new PopupPanel(true);
+			popup.setWidget(new BateauPopupWidget(p));
+			popup.center();
+		}
 	}
 
 	@Override
 	public void onCargoClick(ClickEvent event) {
-		infos.setText("Cargo de J"+((CargoPath)event.getSource()).getJoueur());
+		CargoPath p = (CargoPath)event.getSource();
+		Terre t1 = Terre.getChosenOne(),
+				t2 = p.getHi().getTerre();
+		if(t1 != t2)
+			t2.choose();
+		else
+		{
+			PopupPanel popup = new PopupPanel(true);
+			popup.setWidget(new BateauPopupWidget(p));
+			popup.center();
+		}
 	}
 
 	@Override
 	public void onVoilierClick(ClickEvent event) {
-		infos.setText("Voilier de J"+((VoilierPath)event.getSource()).getJoueur());
+		VoilierPath p = (VoilierPath)event.getSource();
+		Terre t1 = Terre.getChosenOne(),
+				t2 = p.getHi().getTerre();
+		if(t1 != t2)
+			t2.choose();
+		else
+		{
+			PopupPanel popup = new PopupPanel(true);
+			popup.setWidget(new BateauPopupWidget(p));
+			popup.center();
+		}
 	}
 
 	@Override
 	public void onBrigandClick(ClickEvent event) {
-		infos.setText("Brigand");
+		BrigandPath p = (BrigandPath)event.getSource();
+		Terre t1 = Terre.getChosenOne(),
+				t2 = p.getHi().getTerre();
+		if(t1 != t2)
+			t2.choose();
 	}
 
 	@Override
 	public void onPirateClick(ClickEvent event) {
-		infos.setText("Pirate");
+		PiratePath p = (PiratePath)event.getSource();
+		Terre t1 = Terre.getChosenOne(),
+				t2 = p.getHi().getTerre();
+		if(t1 != t2)
+			t2.choose();
+	}
+
+	@Override
+	public void onBateauxMultipleClick(ClickEvent event) {
+		BateauxGroup bat = (BateauxGroup) event.getSource();
+		String s = "Joueurs :" + Collections2.join(bat.getJoueurs(), ',');
+		infos.setText(s);
+		PopupPanel p = new PopupPanel(true);
+		p.setWidget(new Label("great"));
+		p.center();
 	}
 
 

@@ -48,7 +48,7 @@ public class ConstructionsWidget extends Composite implements Connectable{
 	}
 	
 	private void connectCons() {
-		new Connector("constructions/3/0/1", this);
+//		new Connector("constructions/3/0/1", this);
 	}
 
 	private void refreshLabels(){

@@ -4,6 +4,7 @@ import com.catane.client.Colors.PlayerColors;
 
 public abstract class PionJoueurPath extends PionPath{
 	private int joueur;
+
 	
 	public PionJoueurPath(int i) {
 		super(0,0);

@@ -4,7 +4,6 @@ import gwt.g2d.client.graphics.Color;
 
 import java.util.ArrayList;
 
-import com.catane.client.map.Map;
 import com.catane.client.requests.Connectable;
 import com.catane.client.requests.Connector;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -47,8 +46,6 @@ public class PlayerColors implements Connectable{
 			for(int i = 0; i<jcolors.length(); i++){
 				this.colors.add(jcolors.get(i).getColor());
 			}
-			Map.getLittleMap().colorPionsJoueurs();
-			Map.getBigMap().colorPionsJoueurs(); //TODO Réfléchir à autre chose
 		}
 	}
 

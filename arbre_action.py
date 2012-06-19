@@ -8,6 +8,8 @@ import Jeu
 import functools
 from ActionNight import *
 import random
+from user import *
+
 REDIS = redis.StrictRedis()
 
 def predefausse(f):
@@ -70,6 +72,53 @@ class Joueur:
     def __str__(self):
         return str(self.num)
 
+# Interface avec l'utilisateur qui est derrière ce joueur
+
+    def getUser(self):
+        username = REDIS.get('J'+str(self.num)+':username')
+        return User.getUser(username)
+
+    def setColor(self,red,blue,green):
+        key = 'J'+str(self.num)
+        REDIS.set(key+':red', red)
+        REDIS.set(key+':blue', blue)
+        REDIS.set(key+':green', green)
+
+    def getRed(self):
+        key = 'J'+str(self.num)
+        return int(REDIS.get(key+':red'))
+
+    def getBlue(self):
+        key = 'J'+str(self.num)
+        return int(REDIS.get(key+':blue'))
+    
+    def getGreen(self):
+        key = 'J'+str(self.num)
+        return int(REDIS.get(key+':green'))
+
+    @staticmethod
+    def getColors():
+        ''' Renvoie les couleurs de tous les joueurs sous forme d'un tableau de
+        triplets (r,b,g). Attention les éélments des triplets sont des chaines de
+        caractères, pas des chiffres'''
+        import joueurs
+        nb = joueurs.JoueurPossible.getNbJoueurs()
+        pipe = REDIS.pipeline()
+        for i in xrange(nb):
+            key = 'J'+str(i+1)
+            pipe.get(key+':red')
+            pipe.get(key+':blue')
+            pipe.get(key+':green')
+        res = pipe.execute()
+        colors = []
+        for i in xrange(nb):
+            color = []
+            color.append(res[i*3])
+            color.append(res[i*3+1])
+            color.append(res[i*3+2])
+            colors.append(color)
+        return colors
+    
 
 # Gestion de l'arbre d'action
 
@@ -99,6 +148,10 @@ class Joueur:
         Node.incrNodeId()
 
         return node
+
+    def getNodes(self):
+        ''' Renvoie un parcours prefixe de l'arbre d'action, sans la racine'''
+        return self.getRoot().getDescendants()
 
 
 # Execution de l'arbre d'action

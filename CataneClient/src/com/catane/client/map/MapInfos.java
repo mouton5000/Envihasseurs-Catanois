@@ -23,16 +23,22 @@ public class MapInfos extends JavaScriptObject{
 
 }
 
+abstract class PionJoueurInfos extends JavaScriptObject{
+	protected PionJoueurInfos(){
+	}	
+	public final native int getJoueur() /*-{return this.joueur}-*/;
+
+}
+
 /**
  * Informations concernant une colonie ou une ville sur la carte
  * @author mouton
  *
  */
-class BatimentInfos extends JavaScriptObject{
+class BatimentInfos extends PionJoueurInfos{
 	protected BatimentInfos(){
 	}	
 	public final native int getPosition() /*-{return this.position}-*/;
-	public final native int getJoueur() /*-{return this.joueur}-*/;
 }
 
 /**
@@ -40,10 +46,9 @@ class BatimentInfos extends JavaScriptObject{
  * @author mouton
  *
  */
-class LienInfos extends JavaScriptObject{
+class LienInfos extends PionJoueurInfos{
 	protected LienInfos(){
 	}	
 	public final native int getPosition1() /*-{return this.position1}-*/;
 	public final native int getPosition2() /*-{return this.position2}-*/;
-	public final native int getJoueur() /*-{return this.joueur}-*/;
 }

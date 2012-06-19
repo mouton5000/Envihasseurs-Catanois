@@ -29,3 +29,4 @@ import controllers.ressources
 import controllers.map
 import controllers.players
 import controllers.constructions
+import controllers.arbreAction

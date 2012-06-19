@@ -48,7 +48,7 @@ public class BateauxWidget extends Composite implements Connectable{
 	}
 	
 	private void connectBat() {
-		new Connector("constructions/3/0/1", this);
+//		new Connector("constructions/3/0/1", this);
 	}
 
 

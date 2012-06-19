@@ -4,6 +4,7 @@ import org.vaadin.gwtgraphics.client.VectorObject;
 
 public final class HexagoneInfos {
 
+	private Terre terre;
 	
 	private HexagoneInfos left;
 	private HexagoneInfos right;
@@ -24,14 +25,22 @@ public final class HexagoneInfos {
 	private VectorObject arUp;
 	private VectorObject arRight;
 	
-	public HexagoneInfos(int num) {
+	
+	public HexagoneInfos(int num, Terre terre) {
 		this.num = num;
+		this.terre = terre;
 	}
 
+	public Terre getTerre(){
+		return terre;
+	}
+	
+	
 	public HexagoneInfos getLeft() {
 		return left;
 	}
 
+	
 	public void setLeft(HexagoneInfos left) {
 		this.left = left;
 	}
@@ -98,6 +107,7 @@ public final class HexagoneInfos {
 
 	public void setVoleur(VoleurPath voleur) {
 		this.voleur = voleur;
+		voleur.setHi(this);
 	}
 
 	public PionPath getPastille() {
@@ -114,6 +124,7 @@ public final class HexagoneInfos {
 
 	public void setIntLeft(PionJoueurPath intLeft) {
 		this.intLeft = intLeft;
+		intLeft.setHi(this);
 	}
 
 	public PionJoueurPath getIntRight() {
@@ -122,6 +133,7 @@ public final class HexagoneInfos {
 
 	public void setIntRight(PionJoueurPath intRight) {
 		this.intRight = intRight;
+		intRight.setHi(this);
 	}
 
 	public VectorObject getArLeft() {
@@ -130,6 +142,8 @@ public final class HexagoneInfos {
 
 	public void setArLeft(VectorObject arLeft) {
 		this.arLeft = arLeft;
+		if(arLeft instanceof PionJoueurPath)
+			((PionJoueurPath) arLeft).setHi(this);
 	}
 
 	public VectorObject getArUp() {
@@ -138,6 +152,8 @@ public final class HexagoneInfos {
 
 	public void setArUp(VectorObject arUp) {
 		this.arUp = arUp;
+		if(arUp instanceof PionJoueurPath)
+			((PionJoueurPath) arUp).setHi(this);
 	}
 
 	public VectorObject getArRight() {
@@ -146,6 +162,8 @@ public final class HexagoneInfos {
 
 	public void setArRight(VectorObject arRight) {
 		this.arRight = arRight;
+		if(arRight instanceof PionJoueurPath)
+			((PionJoueurPath) arRight).setHi(this);
 	}
 
 	public int getNum() {

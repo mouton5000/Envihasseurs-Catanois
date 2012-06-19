@@ -1,6 +1,7 @@
 package com.catane.client;
 
 
+import com.catane.client.actionReader.ActionReader;
 import com.catane.client.bateaux.BateauxWidget;
 import com.catane.client.constructions.ConstructionsWidget;
 import com.catane.client.developpements.DeveloppementWidget;
@@ -8,10 +9,14 @@ import com.catane.client.echanges.EchangesWidget;
 import com.catane.client.genInfos.GenInfoWidget;
 import com.catane.client.infosWidgets.InfoWidget;
 import com.catane.client.map.MapWidget;
+import com.catane.client.map.Terre;
 import com.catane.client.options.OptionsWidget;
 import com.catane.client.points.PointsWidget;
+import com.catane.client.requests.Connectable;
+import com.catane.client.requests.Connector;
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Panel;
@@ -27,28 +32,76 @@ public class CataneClient implements EntryPoint {
 	 * The message displayed to the user when the server cannot be reached or
 	 * returns an error.
 	 */
+
+	public static CataneClient instance;
 	
 	/**
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
+		instance = this;
+		
+		new Connector("players/all",new Connectable() {
+
+			@Override
+			public void displayError() {
+				secondStep();
+			}
+
+			@Override
+			public void callback(JavaScriptObject json) {
+				int meIndex = asMeIndex(json);
+				JsArray<UserInfos> users = asArrayOfUsers(json);
+								
+				User.meIndex = meIndex;
+				UserInfos ui;
+
+				for(int i = 0; i<users.length(); i++){
+					ui = users.get(i);
+					User.users.add(new User(ui.getNumber(), ui.getColor(), ui.getUsername()));
+				}
+
+				secondStep();
+			}
+			
+			private final native JsArray<UserInfos> asArrayOfUsers(JavaScriptObject json)/*-{
+	    		return json.users;
+	  		}-*/;
+			
+			private final native int asMeIndex(JavaScriptObject json)/*-{
+    			return json.meIndex;
+  			}-*/;
+
+		});
+		
+
+	}
+	
+	public InfoWidget info;
+	public MapWidget map;
+	public ActionReader actionReader;
+	public TabPanel rightPanel;
+	
+	
+	private void secondStep() {
+		Terre.makeTerres();
 
 		Panel infoPanel = new HorizontalPanel();
 		Panel centerPanel = new HorizontalPanel();
 		Panel leftPanel = new VerticalPanel();
 		//Panel rightPanel = new VerticalPanel();
-		TabPanel rightPanel = new TabPanel();
+		rightPanel = new TabPanel();
 
 		DockPanel dockPanel = new DockPanel();
 
-		final InfoWidget info = new InfoWidget();
-		final MapWidget map = new MapWidget();
-		final Button actionsButton = new Button("actions");
+		info = new InfoWidget();
+		map = new MapWidget();
+		actionReader = ActionReader.getActionReader();
 
 
 
 		leftPanel.add(map);
-		leftPanel.add(actionsButton);
+		leftPanel.add(actionReader);
 		infoPanel.add(info);
 
 		GenInfoWidget giw = new GenInfoWidget();
@@ -58,7 +111,7 @@ public class CataneClient implements EntryPoint {
 		PointsWidget pw = new PointsWidget();
 		EchangesWidget ew = new EchangesWidget();
 		OptionsWidget ow = new OptionsWidget();
-		
+
 		rightPanel.insert(giw, "Infos Générales", 0);
 		rightPanel.insert(cw, "Constructions", 1);
 		rightPanel.insert(bw, "Bateaux", 2);
@@ -66,7 +119,7 @@ public class CataneClient implements EntryPoint {
 		rightPanel.insert(pw, "Points", 4);
 		rightPanel.insert(ew, "Echanges", 5);
 		rightPanel.insert(ow, "Options", 6);
-			
+
 
 		rightPanel.selectTab(0);
 
@@ -84,12 +137,8 @@ public class CataneClient implements EntryPoint {
 
 		dockPanel.setStyleName("hPanel");
 		RootPanel.get().add(dockPanel);
-
-		actionsButton.setStyleName("buttonTest");
 		
-		
-//		new MapPopup().center();
-
+		Terre.getTerre(0).choose();
 	}
 }
 

@@ -2,13 +2,11 @@ package com.catane.client.map;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 
 import org.vaadin.gwtgraphics.client.DrawingArea;
 import org.vaadin.gwtgraphics.client.VectorObject;
-import org.vaadin.gwtgraphics.client.shape.Path;
 
-import com.catane.client.Colors.PlayerColors;
+import com.catane.client.User;
 import com.catane.client.requests.Connectable;
 import com.catane.client.requests.Connector;
 import com.catane.shared.Math2;
@@ -53,8 +51,8 @@ public class Map extends DrawingArea implements Connectable {
 
 	private static Map littleMap;
 
-	private static final int LITTLE_MAP_WIDTH = 800;
-	private static final int LITTLE_MAP_HEIGHT = 500;
+	public static final int LITTLE_MAP_WIDTH = 800;
+	public static final int LITTLE_MAP_HEIGHT = 500;
 
 	public static Map getLittleMap(){
 		if(littleMap == null)
@@ -77,7 +75,7 @@ public class Map extends DrawingArea implements Connectable {
 	private void buildPlateau() {
 		HexagoneInfos hi;
 		for(int i = 1; i<=2*MAP_HW*MAP_HH;i++){
-			hi = new HexagoneInfos(i);
+			hi = new HexagoneInfos(i,Terre.getTerre(terresRepartition[i-1]));
 			plateau.add(hi);
 			hi.setColor(colorMap[i-1].getColor());
 		}
@@ -130,29 +128,40 @@ public class Map extends DrawingArea implements Connectable {
 		}
 	}
 
-	private LinkedList<PionJoueurPath> pionsJoueurs
-	= new LinkedList<PionJoueurPath>();
-
-	private void draw(){
+	public void center(){
+		Terre t = Terre.getChosenOne();
+		int hindex = centers[t.getIndex()];
+		center(plateau.get(hindex));
+	}
+	
+	private void center(HexagoneInfos hi){
+		// TODO
+	}
+	
+	public void draw(){
+		Terre t = Terre.getChosenOne();
 		HexagonePath hex;
 		HexagoneInfos hi;
 		for(int i = 0; i<map.size();i++){
 			hex = map.get(i);
 			hi = hex.getInfos();
 			hex.setFillColor(hi.getColor());
+			double opacity = (hi.getTerre() == t)?1:0.5;
+			hex.setFillOpacity(opacity);
 			int[] coords = hex.getCoords();
 			PionPath p;
 			
 			if((p = hi.getVoleur()) != null){
 				p.setX(coords[0]);
 				p.setY(coords[1]);
+				p.setFillOpacity(opacity);
 				if(p.getParent() == null)
 					this.add(p);
 			}
-
 			if((p = hi.getIntLeft()) != null){
 				p.setX(coords[0]-getHLargeur());
 				p.setY(coords[1]-getHLongueur());
+				p.setFillOpacity(opacity);
 				if(p.getParent() == null)
 					this.add(p);
 			}
@@ -160,6 +169,7 @@ public class Map extends DrawingArea implements Connectable {
 			if((p = hi.getIntRight()) != null){
 				p.setX(coords[0]+getHLargeur());
 				p.setY(coords[1]-getHLongueur());
+				p.setFillOpacity(opacity);
 				if(p.getParent() == null)
 					this.add(p);
 			}
@@ -168,14 +178,17 @@ public class Map extends DrawingArea implements Connectable {
 			if((vo = hi.getArLeft()) != null){
 				int x = coords[0]-getHLargeur()*3/2;
 				int y = coords[1]-getHLongueur()/2;
+				
 				if(vo instanceof PionPath){
 					((PionPath)vo).setX(x);
 					((PionPath)vo).setY(y);
+					((PionPath) vo).setFillOpacity(opacity);
 				}
 				else
 				{
 					((PionsJoueursGroup)vo).setX(x);
 					((PionsJoueursGroup)vo).setY(y);
+					((PionsJoueursGroup)vo).setFillOpacity(opacity);
 				}
 				if(vo.getParent() == null)
 					this.add(vo);
@@ -187,11 +200,13 @@ public class Map extends DrawingArea implements Connectable {
 				if(vo instanceof PionPath){
 					((PionPath)vo).setX(x);
 					((PionPath)vo).setY(y);
+					((PionPath) vo).setFillOpacity(opacity);
 				}
 				else
 				{
 					((PionsJoueursGroup)vo).setX(x);
 					((PionsJoueursGroup)vo).setY(y);
+					((PionsJoueursGroup)vo).setFillOpacity(opacity);
 				}
 				if(vo.getParent() == null)
 					this.add(vo);
@@ -203,11 +218,13 @@ public class Map extends DrawingArea implements Connectable {
 				if(vo instanceof PionPath){
 					((PionPath)vo).setX(x);
 					((PionPath)vo).setY(y);
+					((PionPath) vo).setFillOpacity(opacity);
 				}
 				else
 				{
 					((PionsJoueursGroup)vo).setX(x);
 					((PionsJoueursGroup)vo).setY(y);
+					((PionsJoueursGroup)vo).setFillOpacity(opacity);
 				}
 				if(vo.getParent() == null)
 					this.add(vo);
@@ -215,16 +232,8 @@ public class Map extends DrawingArea implements Connectable {
 
 		}
 	}
-	
-	public void colorPionsJoueurs(){
-		for(PionJoueurPath p : pionsJoueurs){
-			p.color();
-		}
-		pionsJoueurs.clear();
-		pionsJoueurs = null;
-	}
 
-	private final HexaType[] colorMap= {
+	static final HexaType[] colorMap= {
 			HexaType.MER, HexaType.PORT, HexaType.MER, HexaType.MER, HexaType.MER, 
 			HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, 
 			HexaType.MER, HexaType.BLE, HexaType.MER, HexaType.MER, HexaType.BOIS, 
@@ -238,6 +247,30 @@ public class Map extends DrawingArea implements Connectable {
 			HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, 
 			HexaType.MER, HexaType.PORT, HexaType.MER, HexaType.MER, HexaType.MER};
 
+	static final int[] terresRepartition = {
+		0,0,0,1,1,
+		0,0,0,1,1,
+		0,0,0,1,1,
+		0,0,0,1,1,
+		0,0,0,1,1,
+		0,0,0,1,1,
+		0,0,0,1,1,
+		0,0,0,1,1,
+		0,0,0,1,1,
+		0,0,0,1,1,
+		0,0,0,1,1,
+		0,0,0,1,1};
+
+	static final String[] terres = {
+		"Terre gauche",
+		"Terre droite"
+	};
+	
+	static final int[] centers = {
+		26,28
+	};
+	
+	
 	/**
 	 * Renvoie les coordonnées centrale de l'hexagone numéro i.
 	 * le premier hexagone est 1. (bouuuhh)
@@ -661,7 +694,6 @@ public class Map extends DrawingArea implements Connectable {
 			}
 
 
-
 			JsArray<BatimentInfos> vils = jmap.getVilles();
 			BatimentInfos vil;
 			for(int i = 0; i<vils.length(); i++){
@@ -786,13 +818,11 @@ public class Map extends DrawingArea implements Connectable {
 			}
 			
 			
-			
 			for(LienInfos trans : transpSeuls)
 				this.addLien(trans,LinkType.TRANSPORT);
 
 			for(LienInfos carg : cargsSeuls)
-				this.addLien(carg,LinkType.CARGO);
-			
+				this.addLien(carg,LinkType.CARGO);		
 			for(LienInfos voil : voilsSeuls)
 				this.addLien(voil,LinkType.VOILLIER);
 			
@@ -801,7 +831,6 @@ public class Map extends DrawingArea implements Connectable {
 			}
 			
 			draw();
-			PlayerColors.setPlayerColors();
 		}
 	}
 
@@ -851,7 +880,7 @@ public class Map extends DrawingArea implements Connectable {
 		else
 			plateau.get(tab[0]-1).setIntRight(pjp);
 		
-		pionsJoueurs.add(pjp);
+		pjp.setFillColor(User.getPlayer(bat.getJoueur()).getColor().getColorCode());
 	}
 
 	private void addLien(LienInfos lien, LinkType type){
@@ -955,7 +984,7 @@ public class Map extends DrawingArea implements Connectable {
 
 		}
 		
-		pionsJoueurs.add(pjp);
+		pjp.setFillColor(User.getPlayer(lien.getJoueur()).getColor().getColorCode());
 	}
 	
 
@@ -1000,7 +1029,7 @@ public class Map extends DrawingArea implements Connectable {
 		for(LienInfos li : batMult)
 			joueurs.add(li.getJoueur());
 		
-		BateauxGroup bat = new BateauxGroup(joueurs, false, dir);
+		BateauxGroup bat = new BateauxGroup(joueurs, dir);
 		
 		switch(dir){
 		case LEFT:
@@ -1012,9 +1041,22 @@ public class Map extends DrawingArea implements Connectable {
 		case RIGHT:
 			plateau.get(hex-1).setArRight(bat);
 			break;
-
 		}
 		
+		bat.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				mch.onBateauxMultipleClick(event);
+			}
+			
+		});
+		
+		User me = User.getMe();
+		if(joueurs.contains(me.getNumber())){
+			bat.setFillColor(me.getColor().getColorCode());
+		}
+		else
+			bat.setFillColor(User.getPlayer(batMult.get(0).getJoueur()).getColor().getColorCode());
 	}
 
 	/**
