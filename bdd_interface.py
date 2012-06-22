@@ -29,6 +29,11 @@ class BDD:
         else:
             return self.bdd.get(key)
 
+    def incr(self,key,nb):
+        i = int(self.get(key))+nb
+        self.set(key, i)
+        return str(i)
+
     def exists(self,key):
         if key in self.dict:
             return True
@@ -59,7 +64,10 @@ class BDD:
     def srem(self,key,value):
         if not key in self.dict or self.dict[key] == None:
             self.dict[key] = copy.copy(self.smembers(key))
-        self.dict[key].remove(str(value))
+        try:
+            self.dict[key].remove(str(value))
+        except KeyError:
+            pass
 
     def linsert(self,key,after,pivot,value):
         if not key in self.dict:
