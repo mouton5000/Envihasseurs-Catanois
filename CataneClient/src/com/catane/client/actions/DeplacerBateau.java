@@ -13,7 +13,7 @@ public class DeplacerBateau  extends Action {
 	private int position;
 	private int num;
 	public DeplacerBateau(int num, int position) {
-		super(TITLE);
+		super(num, TITLE);
 		this.position = position;
 		this.num = num;
 		init();

@@ -8,16 +8,15 @@ from joueurs import *
 from plateau import *
 from arbre_action import *
 
-@app.route('/constructions/<int:nodeNum>/<int:actionIndex>/<int:terreNum>')
+@app.route('/constructions/<int:actionNum>/<int:terreNum>')
 @needLogin
-def constructions_infos(nodeNum,actionIndex,terreNum):
+def constructions_infos(actionNum,terreNum):
 
     jnum = session['joueur_num']
     j1 = Joueur(jnum)
     
-    node = Node(nodeNum)
-    action = Action.getAction(int(node.getActionsNum()[actionIndex]))
-    bdd = j1.executerPartiel(node,action) 
+    action = Action.getAction(actionNum)
+    bdd = j1.executerPartiel(action) 
 
     j = JoueurPossible(session['joueur_num'], bdd)
     terre = Plateau.getPlateau().ter(terreNum)

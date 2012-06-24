@@ -11,8 +11,8 @@ private static final String TITLE = "Construction : ville";
 	
 	
 	private int position;
-	public EvoluerColonie(int position) {
-		super(TITLE);
+	public EvoluerColonie(int num, int position) {
+		super(num, TITLE);
 		this.position = position;
 		
 		init();

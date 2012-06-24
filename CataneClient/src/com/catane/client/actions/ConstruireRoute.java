@@ -11,8 +11,8 @@ public class ConstruireRoute extends Action{
 	
 	
 	private int position;
-	public ConstruireRoute(int position) {
-		super(TITLE);
+	public ConstruireRoute(int num, int position) {
+		super(num,TITLE);
 		this.position = position;
 		
 		init();

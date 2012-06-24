@@ -54,42 +54,42 @@ class TestExecutionArbreAction(TestJoueur):
         self.a16 = p.it(74).lien(p.it(75))
         self.a17 = p.it(75).lien(p.it(85))
 
-        self.act1 = Action(1, 'construire_route', self.a1.num)
-        self.act2 = Action(2, 'construire_route', self.a2.num)
-        self.act3 = Action(3, 'construire_route', self.a3.num)
-        self.act4 = Action(4, 'construire_route', self.a4.num)
-        self.act5 = Action(5, 'construire_route', self.a5.num)
-        self.act6 = Action(6, 'construire_route', self.a6.num)
-        self.act7 = Action(7, 'construire_route', self.a7.num)
-        self.act8 = Action(8, 'construire_route', self.a8.num)
-        self.act9 = Action(9, 'construire_route', self.a9.num)
-        self.act10 = Action(10, 'construire_route', self.a10.num)
-        self.act11 = Action(11, 'construire_route', self.a11.num)
-        self.act12 = Action(12, 'construire_route', self.a12.num)
-        self.act13 = Action(13, 'construire_route', self.a13.num)
-        self.act14 = Action(14, 'construire_route', self.a14.num)
-        self.act15 = Action(15, 'construire_route', self.a15.num)
-        self.act16 = Action(16, 'construire_route', self.a16.num)
-        self.act17 = Action(17, 'construire_route', self.a17.num)
+        self.act1 = Action(1, NodeCst.NULL, 'construire_route', self.a1.num)
+        self.act2 = Action(2, NodeCst.NULL, 'construire_route', self.a2.num)
+        self.act3 = Action(3, NodeCst.NULL, 'construire_route', self.a3.num)
+        self.act4 = Action(4, NodeCst.NULL, 'construire_route', self.a4.num)
+        self.act5 = Action(5, NodeCst.NULL, 'construire_route', self.a5.num)
+        self.act6 = Action(6, NodeCst.NULL, 'construire_route', self.a6.num)
+        self.act7 = Action(7, NodeCst.NULL, 'construire_route', self.a7.num)
+        self.act8 = Action(8, NodeCst.NULL, 'construire_route', self.a8.num)
+        self.act9 = Action(9, NodeCst.NULL, 'construire_route', self.a9.num)
+        self.act10 = Action(10, NodeCst.NULL, 'construire_route', self.a10.num)
+        self.act11 = Action(11, NodeCst.NULL, 'construire_route', self.a11.num)
+        self.act12 = Action(12, NodeCst.NULL, 'construire_route', self.a12.num)
+        self.act13 = Action(13, NodeCst.NULL, 'construire_route', self.a13.num)
+        self.act14 = Action(14, NodeCst.NULL, 'construire_route', self.a14.num)
+        self.act15 = Action(15, NodeCst.NULL, 'construire_route', self.a15.num)
+        self.act16 = Action(16, NodeCst.NULL, 'construire_route', self.a16.num)
+        self.act17 = Action(17, NodeCst.NULL, 'construire_route', self.a17.num)
         
 
-        self.act101 = Action(101, 'construire_route', self.a1.num)
-        self.act102 = Action(102, 'construire_route', self.a2.num)
-        self.act103 = Action(103, 'construire_route', self.a3.num)
-        self.act104 = Action(104, 'construire_route', self.a4.num)
-        self.act105 = Action(105, 'construire_route', self.a5.num)
-        self.act106 = Action(106, 'construire_route', self.a6.num)
-        self.act107 = Action(107, 'construire_route', self.a7.num)
-        self.act108 = Action(108, 'construire_route', self.a8.num)
-        self.act109 = Action(109, 'construire_route', self.a9.num)
-        self.act110 = Action(110, 'construire_route', self.a10.num)
-        self.act111 = Action(111, 'construire_route', self.a11.num)
-        self.act112 = Action(112, 'construire_route', self.a12.num)
-        self.act113 = Action(113, 'construire_route', self.a13.num)
-        self.act114 = Action(114, 'construire_route', self.a14.num)
-        self.act115 = Action(115, 'construire_route', self.a15.num)
-        self.act116 = Action(116, 'construire_route', self.a16.num)
-        self.act117 = Action(117, 'construire_route', self.a17.num)
+        self.act101 = Action(101, NodeCst.NULL, 'construire_route', self.a1.num)
+        self.act102 = Action(102, NodeCst.NULL, 'construire_route', self.a2.num)
+        self.act103 = Action(103, NodeCst.NULL, 'construire_route', self.a3.num)
+        self.act104 = Action(104, NodeCst.NULL, 'construire_route', self.a4.num)
+        self.act105 = Action(105, NodeCst.NULL, 'construire_route', self.a5.num)
+        self.act106 = Action(106, NodeCst.NULL, 'construire_route', self.a6.num)
+        self.act107 = Action(107, NodeCst.NULL, 'construire_route', self.a7.num)
+        self.act108 = Action(108, NodeCst.NULL, 'construire_route', self.a8.num)
+        self.act109 = Action(109, NodeCst.NULL, 'construire_route', self.a9.num)
+        self.act110 = Action(110, NodeCst.NULL, 'construire_route', self.a10.num)
+        self.act111 = Action(111, NodeCst.NULL, 'construire_route', self.a11.num)
+        self.act112 = Action(112, NodeCst.NULL, 'construire_route', self.a12.num)
+        self.act113 = Action(113, NodeCst.NULL, 'construire_route', self.a13.num)
+        self.act114 = Action(114, NodeCst.NULL, 'construire_route', self.a14.num)
+        self.act115 = Action(115, NodeCst.NULL, 'construire_route', self.a15.num)
+        self.act116 = Action(116, NodeCst.NULL, 'construire_route', self.a16.num)
+        self.act117 = Action(117, NodeCst.NULL, 'construire_route', self.a17.num)
 
         self.ars = [self.a1, self.a2, self.a3, self.a4, self.a5, self.a6, self.a7, self.a8, self.a9, self.a10, self.a11, self.a12, self.a13, self.a14, self.a15, self.a16, self.a17]
 
@@ -132,8 +132,11 @@ class TestExecutionArbreAction(TestJoueur):
         j1.set_route_la_plus_longue(self.tg,0)
         
         self.n13 = Node(13)
-        self.n13.addAction(self.act1)
-
+        
+        self.act201 = Action(201, NodeCst.NULL, 'construire_route', self.a1.num)
+        self.act201.save()
+        self.n13.addAction(self.act201)
+        self.n13.setPlayer(Joueur(2))
 
 
  
@@ -348,11 +351,11 @@ class TestExecutionArbreAction(TestJoueur):
 
         self.base_arbre()
 
-        act1 = Action(2001, 'construire_route', 2045)
+        act1 = Action(2001, NodeCst.NULL, 'construire_route', 2045)
         act1.save()
-        act2 = Action(2002, 'construire_rouuuuute', self.a1.num)
+        act2 = Action(2002, NodeCst.NULL, 'construire_rouuuuute', self.a1.num)
         act2.save()
-        act3 = Action(2003, 'construire_route', self.a1.num, self.a2.num)
+        act3 = Action(2003, NodeCst.NULL, 'construire_route', self.a1.num, self.a2.num)
         act3.save()
         self.n2.addAction(act1)
         self.n5.addAction(act2)
@@ -367,11 +370,11 @@ class TestExecutionArbreAction(TestJoueur):
 
         self.base_arbre()
 
-        act1 = Action(2001, 'construire_route', 'yahoo')
+        act1 = Action(2001, NodeCst.NULL, 'construire_route', 'yahoo')
         act1.save()
-        act2 = Action(2002, 'construire_rouuuuute')
+        act2 = Action(2002, NodeCst.NULL, 'construire_rouuuuute')
         act2.save()
-        act3 = Action(2003, 'construire_route', self.a1.num, self.a2.num)
+        act3 = Action(2003, NodeCst.NULL, 'construire_route', self.a1.num, self.a2.num)
         act3.save()
         self.n2.addAction(act1)
         self.n5.addAction(act2)
@@ -439,15 +442,17 @@ class TestExecutionArbreAction(TestJoueur):
         self.assertEqual(exc.action, self.act117)
         self.assertEqual(exc.actionError.error_code, RouteError.ARRETE_NON_RELIEE)
         self.assertNotIn(str(self.act117.num), self.n5.getActionsNum())
-        
-        act18 = Action(18, 'construire_route', p.it(73).lien(p.it(83)).num)
+       
+        act18 = Action(18, NodeCst.NULL, 'construire_route', p.it(73).lien(p.it(83)).num)
         act18.save()
-        act118 = Action(118, 'construire_route', p.it(73).lien(p.it(83)).num)
+        act118 = Action(118, NodeCst.NULL, 'construire_route', p.it(73).lien(p.it(83)).num)
         act118.save()
+
         self.n11.addAction(act18)
         with(self.assertRaises(NodeError)) as err:
             j1.insererAction(act118, self.n5,2) # Non valide, autre action d'un descendant (4) n11
         exc = err.exception
+        print exc.node, exc.action.num, exc.actionError.error_code
         self.assertEqual(exc.node, self.n11)
         self.assertEqual(exc.action, act18)
         self.assertEqual(exc.actionError.error_code, RouteError.ARRETE_OCCUPEE)
@@ -518,32 +523,31 @@ class TestExecutionArbreAction(TestJoueur):
         p = Plateau.getPlateau()
         self.base_arbre()
 
-        bdd = j1.executerPartiel(self.n2, 0)
+        bdd = j1.executerPartiel(None)
         self.assertEqual(len(bdd.keys()), len(REDIS.keys()))
         
-
-        bdd = j1.executerPartiel(self.n2, self.act1)
+        bdd = j1.executerPartiel(self.act1)
         self.assertTrue(Route.hasRoute(self.a1,bdd))
         self.assertFalse(Route.hasRoute(self.a1))
         
 
-        bdd = j1.executerPartiel(self.n2, self.act1)
+        bdd = j1.executerPartiel(self.act1)
         self.check_ars([True,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False], bdd) 
         
 
-        bdd = j1.executerPartiel(self.n4, self.act4)
+        bdd = j1.executerPartiel(self.act4)
         self.check_ars([True,True,True,True,False,False,False,False,False,False,False,False,False,False,False,False,False], bdd) 
         
 
-        bdd = j1.executerPartiel(self.n9, self.act17) # Cette action n'est pas dans le noeud, on ne renvoie alors rien.
-        self.assertEqual(bdd, None)
+#        bdd = j1.executerPartiel(self.act17) # Cette action n'est pas dans le noeud, on ne renvoie alors rien.
+#        self.assertEqual(bdd, None)
         
 
-        bdd = j1.executerPartiel(self.n9, self.act17) # Cette action n'est pas dans le noeud, on ne renvoie alors rien.
-        self.assertEqual(bdd, None)
+#        bdd = j1.executerPartiel(self.act17) # Cette action n'est pas dans le noeud, on ne renvoie alors rien.
+#        self.assertEqual(bdd, None)
         
-        bdd = j1.executerPartiel(self.n13, self.act1) # Ce noeud n'appartient pas à j1 donc on ne renvoie rien.
-        self.assertEqual(bdd, None)
+        bdd = j1.executerPartiel(self.act201) # Ce noeud n'appartient pas à j1 donc on ne renvoie rien.
+        self.assertEqual(len(bdd.keys()), len(REDIS.keys()))
 
 
 if __name__ == '__main__':

@@ -88,10 +88,12 @@ public class ActionReader extends DrawingArea {
 			}
 			posEmpty = nb;
 			drawActions();
+			choose();
 
 			refreshArrows();
 		}
 	}
+
 
 	private void drawActions(){
 		ActionGroup ag;
@@ -107,9 +109,11 @@ public class ActionReader extends DrawingArea {
 				if(p>posEmpty)
 					p--;
 				if(p >= node.getNbActions()){
-					for(int j = i;j<actionGroups.size(); j++)
+					for(int j = i;j<actionGroups.size(); j++){
+						ag = actionGroups.get(j);
 						if(ag.getParent() == this)
 							this.remove(ag);
+					}
 					break;
 				}
 				ag.setAction(node.getAction(p));
@@ -117,7 +121,7 @@ public class ActionReader extends DrawingArea {
 			if(ag.getParent() != this)
 				this.add(ag);
 		}
-		
+
 	}
 
 	private void listDown(){
@@ -129,6 +133,7 @@ public class ActionReader extends DrawingArea {
 		if(mup.getParent()!=this)
 			this.add(mup);
 		drawActions();
+
 	}
 
 	private void listUp(){
@@ -148,6 +153,7 @@ public class ActionReader extends DrawingArea {
 			if(posEmpty<fAcIndex)
 				fAcIndex--;
 			drawActions();
+			choose();
 		}
 	}
 
@@ -157,7 +163,13 @@ public class ActionReader extends DrawingArea {
 			if(posEmpty>=fAcIndex+actionGroups.size())
 				fAcIndex++;
 			drawActions();
+			choose();
 		}
+	}
+
+
+	private void choose() {
+		node.choose(posEmpty-1);
 	}
 
 
@@ -207,16 +219,16 @@ public class ActionReader extends DrawingArea {
 	private Arrow right;
 	private Arrow up;
 	private Arrow down;
-	
+
 	private void refreshArrows(){
 		refreshArrow(left);
 		refreshArrow(right);
 		refreshArrow(up);
 		refreshArrow(down);
 	}
-	
+
 	private void refreshArrow(Arrow ar){
-		
+
 		if(getNode(ar) == null){
 			if(ar.getParent() == this)
 				this.remove(ar);
@@ -226,7 +238,7 @@ public class ActionReader extends DrawingArea {
 				this.add(ar);
 		}
 	}
-	
+
 	private ActionNode getNode(Arrow ar){
 		if(ar == left)
 			return node.getFather();
@@ -239,7 +251,7 @@ public class ActionReader extends DrawingArea {
 		else
 			return null;
 	}
-	
+
 	void arrowLeft(){
 		if(left == null){
 			left = Arrow.getLeft(this);

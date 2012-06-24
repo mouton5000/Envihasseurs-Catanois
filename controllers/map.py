@@ -8,16 +8,23 @@ from joueurs import *
 from plateau import *
 from arbre_action import *
 
-@app.route('/map/infos/<int:nodeNum>/<int:actionIndex>')
+@app.route('/map/infos')
 @needLogin
-def displayMap(nodeNum,actionIndex):
+def displayFirstMap():
+    return displayMapOf(REDIS)
+
+@app.route('/map/infos/<int:actionNum>')
+@needLogin
+def displayMap(actionNum):
     jnum = session['joueur_num']
     j1 = Joueur(jnum)
 
-    node = Node(nodeNum)
-    action = Action.getAction(int(node.getActionsNum()[actionIndex]))
-    bdd = j1.executerPartiel(node,action)
+    action = Action.getAction(actionNum)
+    bdd = j1.executerPartiel(action)
 
+    return displayMapOf(bdd)
+
+def displayMapOf(bdd):
     j = JoueurPossible(session['joueur_num'],bdd)
 
     brigands = []
@@ -116,7 +123,7 @@ def displayMap(nodeNum,actionIndex):
             body += ', '+makeBateauBody(cargo)
     body += '],'
 
-    body += '"voilliers":'
+    body += '"voiliers":'
     body += '['
     if len(voiliers)>0:
         body += makeBateauBody(voiliers[0])
@@ -140,3 +147,177 @@ def makeRouteBody(route):
 def makeBateauBody(bat):
     jnum = bat[1]
     return '{"position1":'+str(bat[0].int1)+', "position2":'+str(bat[0].int2)+', "joueur":'+str(jnum)+'}'
+
+def makePionBody(name, tab, func):
+    body = '"'+name+'":'
+    body += '['
+    if len(tab)>0:
+        body += func(tab[0])
+        for elem in tab[1:]:
+            body += ', '+ func(elem) 
+    body += ']'
+    return body
+
+@app.route('/map/diff/<int:actionNumDown>')
+@needLogin
+def diffFirst(actionNumDown):
+    jnum = session['joueur_num']
+    j1 = Joueur(jnum)
+
+    actionDown = Action.getAction(actionNumDown)
+    bdd = REDIS
+    bdd2 = j1.executerPartiel(actionDown)
+    
+    return diffOf(bdd,bdd2)
+
+@app.route('/map/diffD/<int:actionNumUp>')
+@needLogin
+def diffDFirst(actionNumUp):
+    jnum = session['joueur_num']
+    j1 = Joueur(jnum)
+
+    actionUp = Action.getAction(actionNumUp)
+    bdd2 = REDIS
+    bdd = j1.executerPartiel(actionUp)
+    
+    return diffOf(bdd,bdd2)
+
+@app.route('/map/diff/<int:actionNumUp>/<int:actionNumDown>')
+@needLogin
+def diff(actionNumUp, actionNumDown):
+    jnum = session['joueur_num']
+    j1 = Joueur(jnum)
+
+    actionUp = Action.getAction(actionNumUp)
+    actionDown = Action.getAction(actionNumDown)
+    bdd = j1.executerPartiel(actionUp)
+    bdd2 = j1.executerPartiel(actionDown)
+
+    return diffOf(bdd,bdd2)
+
+def diffOf(bdd,bdd2):
+    j = JoueurPossible(session['joueur_num'],bdd)
+    j2 = JoueurPossible(session['joueur_num'],bdd2)
+
+    body = '{'
+
+    p = Plateau.getPlateau()
+
+    colonies = []
+    coloniesD = []
+    colNum2 = j2.getColonies()
+    colNum1 = j.getColonies()
+    for cNum in colNum2:
+        if not cNum in colNum1:
+            colonies.append(Colonie.getColonie(p.it(int(cNum)),bdd2))
+    for cNum in colNum1:
+        if not cNum in colNum2:
+            coloniesD.append(Colonie.getColonie(p.it(int(cNum)),bdd))
+
+
+
+    villes = []
+    villesD = []
+    vilNum2 = j2.getVilles()
+    vilNum1 = j.getVilles()
+    for vNum in vilNum2:
+        if not vNum in vilNum1:
+            villes.append(Colonie.getColonie(p.it(int(vNum)),bdd2))
+    for vNum in vilNum1:
+        if not vNum in vilNum2:
+            villesD.append(Colonie.getColonie(p.it(int(vNum)),bdd))
+
+    body += makePionBody("colonies", colonies, makeBatimentBody)
+    body += ','
+    
+    body += makePionBody("coloniesD", coloniesD, makeBatimentBody)
+    body += ','
+    
+    body += makePionBody("villes", villes, makeBatimentBody)
+    body += ','
+
+    body += makePionBody("villesD", villesD, makeBatimentBody)
+    body += ','
+
+    routes = []
+    routesD = []
+    routNum2 = j2.getRoutes()
+    routNum1 = j.getRoutes()
+    for rNum in routNum2:
+        if not rNum in routNum1:
+            routes.append([p.ar(int(rNum)),j.num])
+    for rNum in routNum1:
+        if not rNum in routNum2:
+            routesD.append([p.ar(int(rNum)),j.num])
+    
+    body += makePionBody("routes", routes, makeRouteBody)
+    body += ','
+    
+    body += makePionBody("routesD", routesD, makeRouteBody)
+    body += ','
+
+    bateaux_transport = []
+    bateaux_transportD = []
+    btNum2 = j2.getBateauxTransport()
+    btNum1 = j.getBateauxTransport()
+    for btNum in btNum2:
+        bateau = Bateau.getBateau(btNum,bdd2)
+        if not btNum in btNum1:
+            bateaux_transport.append([bateau.position,j.num])
+        else:
+            bateauD = Bateau.getBateau(btNum,bdd)
+            if(bateau.position != bateauD.position):
+                bateaux_transport.append([bateau.position,j.num])
+                bateaux_transportD.append([bateauD.position,j.num])
+
+    for btNum in btNum1:
+        if not btNum in btNum2:
+            bateau = Bateau.getBateau(btNum,bdd)
+            bateaux_transportD.append([bateau.position,j.num])
+    
+    
+    cargos = []
+    cargosD = []
+    crNum2 = j2.getCargos()
+    crNum1 = j.getCargos()
+    for crNum in crNum2:
+        if not crNum in crNum1:
+            bateau = Bateau.getBateau(crNum,bdd2)
+            cargos.append([bateau.position,j.num])
+    for crNum in crNum1:
+        if not crNum in crNum2:
+            bateau = Bateau.getBateau(crNum,bdd)
+            cargosD.append([bateau.position,j.num])
+    
+    voiliers = []
+    voiliersD = []
+    vlNum2 = j2.getVoiliers()
+    vlNum1 = j.getVoiliers()
+    for vlNum in vlNum2:
+        if not vlNum in vlNum1:
+            bateau = Bateau.getBateau(vlNum,bdd2)
+            voiliers.append([bateau.position,j.num])
+    for vlNum in vlNum1:
+        if not vlNum in vlNum2:
+            bateau = Bateau.getBateau(vlNum,bdd)
+            voiliersD.append([bateau.position,j.num])
+    
+    body += makePionBody("bateaux_transports", bateaux_transport, makeBateauBody)
+    body += ','
+    body += makePionBody("bateaux_transportsD", bateaux_transportD, makeBateauBody)
+    body += ','
+    
+    body += makePionBody("cargos", cargos, makeBateauBody)
+    body += ','
+    body += makePionBody("cargosD", cargosD, makeBateauBody)
+    body += ','
+
+    body += makePionBody("voiliers", voiliers, makeBateauBody)
+    body += ','
+    body += makePionBody("voiliersD", voiliersD, makeBateauBody)
+
+    body += '}'
+
+    body = controllers.callback.addCallback(body,request)
+
+    return body

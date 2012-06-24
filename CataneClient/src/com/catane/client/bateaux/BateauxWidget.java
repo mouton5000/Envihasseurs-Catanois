@@ -1,7 +1,6 @@
 package com.catane.client.bateaux;
 
 import com.catane.client.requests.Connectable;
-import com.catane.client.requests.Connector;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;

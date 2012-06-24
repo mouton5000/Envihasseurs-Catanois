@@ -14,7 +14,6 @@ import com.google.gwt.user.client.ui.PopupPanel;
 
 public class ActionGroup extends Group {
 
-
 	private Text title;
 	private Path deleteButton;
 	private Path detailButton;

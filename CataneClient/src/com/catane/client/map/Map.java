@@ -1,22 +1,19 @@
 package com.catane.client.map;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 
 import org.vaadin.gwtgraphics.client.DrawingArea;
 import org.vaadin.gwtgraphics.client.VectorObject;
 
-import com.catane.client.User;
-import com.catane.client.requests.Connectable;
+import com.catane.client.actions.Action;
 import com.catane.client.requests.Connector;
 import com.catane.shared.Math2;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 
-public class Map extends DrawingArea implements Connectable {
+
+
+public class Map extends DrawingArea {
 
 
 	/**
@@ -31,7 +28,9 @@ public class Map extends DrawingArea implements Connectable {
 
 
 	private MapMouseHandler mmh;
-	private MapClickHandler mch; 
+	MapClickHandler mch; 
+	MapRefreshConnectable mrc;
+	MapDiffConnectable mdc;
 
 	public Map(int width, int height) {
 		super(width,height);
@@ -40,10 +39,12 @@ public class Map extends DrawingArea implements Connectable {
 		this.addMouseMoveHandler(mmh);
 		this.addMouseOutHandler(mmh);
 
+		mrc = new MapRefreshConnectable(this);
+		mdc = new MapDiffConnectable(this);
+
 		buildPlateau();
-		connectMap();
 	}
-	
+
 	public void setMapClickHandler(MapClickHandler mch){
 		this.mch = mch;
 	}
@@ -133,11 +134,11 @@ public class Map extends DrawingArea implements Connectable {
 		int hindex = centers[t.getIndex()];
 		center(plateau.get(hindex));
 	}
-	
+
 	private void center(HexagoneInfos hi){
 		// TODO
 	}
-	
+
 	public void draw(){
 		Terre t = Terre.getChosenOne();
 		HexagonePath hex;
@@ -150,7 +151,7 @@ public class Map extends DrawingArea implements Connectable {
 			hex.setFillOpacity(opacity);
 			int[] coords = hex.getCoords();
 			PionPath p;
-			
+
 			if((p = hi.getVoleur()) != null){
 				p.setX(coords[0]);
 				p.setY(coords[1]);
@@ -174,11 +175,47 @@ public class Map extends DrawingArea implements Connectable {
 					this.add(p);
 			}
 
-			VectorObject vo;
-			if((vo = hi.getArLeft()) != null){
+			RoutePath rp;
+			if((rp = hi.getRoutLeft()) != null){
 				int x = coords[0]-getHLargeur()*3/2;
 				int y = coords[1]-getHLongueur()/2;
+
+				rp.setX(x);
+				rp.setY(y);
+				rp.setFillOpacity(opacity);
+				if(rp.getParent() == null)
+					this.add(rp);
+			}
+
+			if((rp = hi.getRoutUp()) != null){
+				int x = coords[0];
+				int y = coords[1]-getHLongueur();
 				
+				rp.setX(x);
+				rp.setY(y);
+				rp.setFillOpacity(opacity);
+				if(rp.getParent() == null)
+					this.add(rp);
+			}
+
+			if((rp = hi.getRoutRight()) != null){
+				int x = coords[0]+getHLargeur()*3/2;
+				int y = coords[1]-getHLongueur()/2;
+				
+				rp.setX(x);
+				rp.setY(y);
+				rp.setFillOpacity(opacity);
+				if(rp.getParent() == null)
+					this.add(rp);
+			}
+
+
+
+			VectorObject vo;
+			if((vo = hi.getBatLeft()) != null){
+				int x = coords[0]-getHLargeur()*3/2;
+				int y = coords[1]-getHLongueur()/2;
+
 				if(vo instanceof PionPath){
 					((PionPath)vo).setX(x);
 					((PionPath)vo).setY(y);
@@ -194,7 +231,7 @@ public class Map extends DrawingArea implements Connectable {
 					this.add(vo);
 			}
 
-			if((vo = hi.getArUp()) != null){
+			if((vo = hi.getBatUp()) != null){
 				int x = coords[0];
 				int y = coords[1]-getHLongueur();
 				if(vo instanceof PionPath){
@@ -212,7 +249,7 @@ public class Map extends DrawingArea implements Connectable {
 					this.add(vo);
 			}
 
-			if((vo = hi.getArRight()) != null){
+			if((vo = hi.getBatRight()) != null){
 				int x = coords[0]+getHLargeur()*3/2;
 				int y = coords[1]-getHLongueur()/2;
 				if(vo instanceof PionPath){
@@ -233,19 +270,122 @@ public class Map extends DrawingArea implements Connectable {
 		}
 	}
 
+	/**
+	 * Supprime tous le pions.
+	 */
+	private void clearPions(){
+		for(HexagoneInfos hi : plateau){
+			VectorObject vo;
+			if((vo = hi.getBatLeft()) != null){
+				if(vo.getParent() == this){
+					this.remove(vo);
+				}
+				hi.setBatLeft(null);
+			}
+			if((vo = hi.getBatRight()) != null){
+				if(vo.getParent() == this){
+					this.remove(vo);
+				}
+				hi.setBatRight(null);
+			}
+			if((vo = hi.getBatUp()) != null){
+				if(vo.getParent() == this){
+					this.remove(vo);
+				}
+				hi.setBatUp(null);
+			}
+			if((vo = hi.getIntLeft()) != null){
+				if(vo.getParent() == this){
+					this.remove(vo);
+				}
+				hi.setIntLeft(null);
+			}
+			if((vo = hi.getIntRight()) != null){
+				if(vo.getParent() == this){
+					this.remove(vo);
+				}
+				hi.setIntRight(null);
+			}
+			if((vo = hi.getVoleur()) != null){
+				if(vo.getParent() == this){
+					this.remove(vo);
+				}
+				hi.setVoleur(null);
+			}
+		}
+	}
+
+	public void refresh(){
+		clearPions();
+		connectMap();
+	}
+
+	public void refreshDiff(){
+		connectDiffMap();
+	}
+
+	void removeBatiment(int hex, int dir){
+		HexagoneInfos hi = plateau.get(hex-1);
+		VectorObject vo;
+		if(dir == 0){
+			if((vo = hi.getIntLeft()) != null){
+				hi.setIntLeft(null);
+				if(vo.getParent() == this)
+					this.remove(vo);
+			}
+		}
+		else
+		{
+			if((vo = hi.getIntRight()) != null){
+				hi.setIntRight(null);
+				if(vo.getParent() == this)
+					this.remove(vo);
+			}
+		}
+	}
+
+	void removeRoute(int hex, SideDirection dir){
+		HexagoneInfos hi = plateau.get(hex-1);
+		VectorObject vo;
+		switch(dir){
+		case LEFT:
+			if((vo = hi.getRoutLeft()) != null){
+				hi.setRoutLeft(null);
+				if(vo.getParent() == this)
+					this.remove(vo);
+			}
+			break;
+		case NONE:
+			if((vo = hi.getRoutUp()) != null){
+				hi.setRoutUp(null);
+				if(vo.getParent() == this)
+					this.remove(vo);
+			}
+			break;
+		case RIGHT:
+			if((vo = hi.getRoutRight()) != null){
+				hi.setRoutRight(null);
+				if(vo.getParent() == this)
+					this.remove(vo);
+			}
+			break;
+
+		}
+	}
+
 	static final HexaType[] colorMap= {
-			HexaType.MER, HexaType.PORT, HexaType.MER, HexaType.MER, HexaType.MER, 
-			HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, 
-			HexaType.MER, HexaType.BLE, HexaType.MER, HexaType.MER, HexaType.BOIS, 
-			HexaType.BOIS, HexaType.CAILLOU, HexaType.MER, HexaType.BLE, HexaType.MER, 
-			HexaType.MER, HexaType.DESERT, HexaType.MER, HexaType.MER, HexaType.OR, 
-			HexaType.OR, HexaType.BLE, HexaType.MER, HexaType.MARCHE, HexaType.MER, 
-			HexaType.MER, HexaType.MARCHE, HexaType.MER, HexaType.MER, HexaType.MOUTON, 
-			HexaType.MARCHE, HexaType.MOUTON, HexaType.MER, HexaType.ARGILE, HexaType.MER, 
-			HexaType.MER, HexaType.ARGILE, HexaType.MER, HexaType.MER, HexaType.PORT, 
-			HexaType.MER, HexaType.BOIS, HexaType.MER, HexaType.MER, HexaType.MER, 
-			HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, 
-			HexaType.MER, HexaType.PORT, HexaType.MER, HexaType.MER, HexaType.MER};
+		HexaType.MER, HexaType.PORT, HexaType.MER, HexaType.MER, HexaType.MER, 
+		HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, 
+		HexaType.MER, HexaType.BLE, HexaType.MER, HexaType.MER, HexaType.BOIS, 
+		HexaType.BOIS, HexaType.CAILLOU, HexaType.MER, HexaType.BLE, HexaType.MER, 
+		HexaType.MER, HexaType.DESERT, HexaType.MER, HexaType.MER, HexaType.OR, 
+		HexaType.OR, HexaType.BLE, HexaType.MER, HexaType.MARCHE, HexaType.MER, 
+		HexaType.MER, HexaType.MARCHE, HexaType.MER, HexaType.MER, HexaType.MOUTON, 
+		HexaType.MARCHE, HexaType.MOUTON, HexaType.MER, HexaType.ARGILE, HexaType.MER, 
+		HexaType.MER, HexaType.ARGILE, HexaType.MER, HexaType.MER, HexaType.PORT, 
+		HexaType.MER, HexaType.BOIS, HexaType.MER, HexaType.MER, HexaType.MER, 
+		HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, HexaType.MER, 
+		HexaType.MER, HexaType.PORT, HexaType.MER, HexaType.MER, HexaType.MER};
 
 	static final int[] terresRepartition = {
 		0,0,0,1,1,
@@ -265,12 +405,12 @@ public class Map extends DrawingArea implements Connectable {
 		"Terre gauche",
 		"Terre droite"
 	};
-	
+
 	static final int[] centers = {
 		26,28
 	};
-	
-	
+
+
 	/**
 	 * Renvoie les coordonnées centrale de l'hexagone numéro i.
 	 * le premier hexagone est 1. (bouuuhh)
@@ -324,7 +464,7 @@ public class Map extends DrawingArea implements Connectable {
 	 * @param i
 	 * @return 
 	 */
-	private static int[] getHexagoneFromIntersection(int i){
+	static int[] getHexagoneFromIntersection(int i){
 
 		i--;
 		int iq = i/(2*MAP_HW), column = i%(2*MAP_HW);
@@ -384,7 +524,7 @@ public class Map extends DrawingArea implements Connectable {
 			hexagone.setInfos(plateau.get(i-1));
 			map.add(hexagone);
 			hexagone.addClickHandler(new ClickHandler() {
-				
+
 				@Override
 				public void onClick(ClickEvent event) {
 					Map.this.mch.onHexagoneClick(event);
@@ -491,18 +631,35 @@ public class Map extends DrawingArea implements Connectable {
 		if(p != null && p.getParent() == this)
 			this.remove(p);
 
-		p = infos.getArLeft();
+		p = infos.getRoutLeft();
+		if(p != null && p.getParent() == this)
+			this.remove(p);
+		
+		p = infos.getRoutUp();
+		if(p != null && p.getParent() == this)
+			this.remove(p);
+		
+		p = infos.getRoutRight();
+		if(p != null && p.getParent() == this)
+			this.remove(p);
+		
+		p = infos.getBatLeft();
 		if(p != null && p.getParent() == this)
 			this.remove(p);
 
-		p = infos.getArUp();
+		p = infos.getBatUp();
 		if(p != null && p.getParent() == this)
 			this.remove(p);
 
-		p = infos.getArRight();
+		p = infos.getBatRight();
 		if(p != null && p.getParent() == this)
 			this.remove(p);
 	}
+
+
+	/*
+	 * ------------------------------ FLECHES -------------------------------------
+	 */
 
 	private Arrow left;
 	private Arrow right;
@@ -640,436 +797,43 @@ public class Map extends DrawingArea implements Connectable {
 			this.remove(currentArrow);
 	}
 
+
+	/*
+	 *  ---------------------------------- REQUETES -------------------------------
+	 */
+
 	/**
-	 * Se connecte au serveur pour chercher toutes les informations nécessaires à la
-	 * complétion de la carte
+	 * Se connecte au serveur pour chercher les informations nécessaires à la
+	 * complétion de toute la carte
 	 */
 	private void connectMap(){
-		new Connector("map/infos/3/0", this);
-	}
+		Action a = Action.getChosenOne();
+		String urlAct = "";
+		if(a!=null)
+			urlAct += "/"+a.getNum();
 
-	private enum BatimentType {COLONIE,VILLE};
-	private enum LinkType {ROUTE, TRANSPORT, CARGO, VOILLIER};
-
-	@Override
-	public void callback(JavaScriptObject json) {
-		if (json == null)
-			displayError();
-		else{
-			VoleurPath p = null;
-			MapInfos jmap = asMap(json);
-			JsArrayInteger brs = jmap.getBrigands();
-			for(int i = 0; i<brs.length(); i++){
-				p = new BrigandPath();
-				p.setFillColor("black");
-				plateau.get(brs.get(i)-1).setVoleur(p);
-				p.addClickHandler(new ClickHandler() {
-					
-					@Override
-					public void onClick(ClickEvent event) {
-						Map.this.mch.onBrigandClick(event);
-					}
-				});
-			}
-
-			JsArrayInteger prs = jmap.getPirates();
-			for(int i = 0; i<prs.length(); i++){
-				p = new PiratePath();
-				p.setFillColor("black");
-				plateau.get(prs.get(i)-1).setVoleur(p);
-				p.addClickHandler(new ClickHandler() {
-					
-					@Override
-					public void onClick(ClickEvent event) {
-						Map.this.mch.onPirateClick(event);
-					}
-				});
-			}
-
-			JsArray<BatimentInfos> cols = jmap.getColonies();
-			BatimentInfos col;
-			for(int i = 0; i<cols.length(); i++){
-				col = cols.get(i);
-				addBatiment(col, BatimentType.COLONIE);
-			}
-
-
-			JsArray<BatimentInfos> vils = jmap.getVilles();
-			BatimentInfos vil;
-			for(int i = 0; i<vils.length(); i++){
-				vil = vils.get(i);
-				addBatiment(vil, BatimentType.VILLE);
-			}
-
-
-
-			JsArray<LienInfos> routs = jmap.getRoutes();
-			LienInfos rout;
-			for(int i = 0; i<routs.length(); i++){
-				rout = routs.get(i);
-				this.addLien(rout, LinkType.ROUTE);
-			}
-
-			/*
-			 * Bateaux : on vérifie si deux bateaux n'ont pas la même 
-			 * position, ils ne seront pas affichés pareils.
-			 */
-			JsArray<LienInfos> transp = jmap.getBateauxTransports();
-			JsArray<LienInfos> cargs = jmap.getCargos();
-			JsArray<LienInfos> voils = jmap.getVoilliers();
-			
-			
-			ArrayList<LienInfos> transpSeuls = new ArrayList<LienInfos>();
-			ArrayList<LienInfos> cargsSeuls = new ArrayList<LienInfos>();
-			ArrayList<LienInfos> voilsSeuls = new ArrayList<LienInfos>();
-			ArrayList<ArrayList<LienInfos>> batMultiples = new ArrayList<ArrayList<LienInfos>>();
-			HashSet<Integer> deletedTransp = new HashSet<Integer>();
-			HashSet<Integer> deletedCargs = new HashSet<Integer>();
-			HashSet<Integer> deletedVoils = new HashSet<Integer>();
-			
-			
-			ArrayList<LienInfos> mult = new ArrayList<LienInfos>();
-			
-			LienInfos li;
-			for(int i = 0; i<transp.length(); i++){
-				if(deletedTransp.contains(i))
-					continue;
-				li = transp.get(i);
-				for(int j = i+1; j<transp.length(); j++){
-					if (equalsPosBateaux(li, transp.get(j)))
-					{
-						deletedTransp.add(j);
-						mult.add(transp.get(j));
-					}
-						
-				}
-				for(int j = 0; j<cargs.length(); j++){
-					if (equalsPosBateaux(li, cargs.get(j)))
-					{
-						deletedCargs.add(j);
-						mult.add(cargs.get(j));
-					}
-				}
-				for(int j = 0; j<voils.length(); j++){
-					if (equalsPosBateaux(li, voils.get(j)))
-					{
-						deletedVoils.add(j);
-						mult.add(voils.get(j));
-					}
-				}
-				
-				if(mult.size() == 0)
-					transpSeuls.add(li);
-				else{
-					mult.add(li);
-					batMultiples.add(mult);
-					mult = new ArrayList<LienInfos>();
-				}
-			}
-			
-			for(int i = 0; i<cargs.length(); i++){
-				if(deletedCargs.contains(i))
-					continue;
-				
-				li = cargs.get(i);
-				for(int j = i+1; j<cargs.length(); j++){
-					if (equalsPosBateaux(li, cargs.get(j)))
-					{
-						deletedCargs.add(j);
-						mult.add(cargs.get(j));
-					}
-				}
-				for(int j = 0; j<voils.length(); j++){
-					if (equalsPosBateaux(li, voils.get(j)))
-					{
-						deletedVoils.add(j);
-						mult.add(voils.get(j));
-					}
-				}
-				
-				if(mult.size() == 0)
-					cargsSeuls.add(li);
-				else{
-					mult.add(li);
-					batMultiples.add(mult);
-					mult = new ArrayList<LienInfos>();
-				}
-			}
-			
-			for(int i = 0; i<voils.length(); i++){
-				if(deletedVoils.contains(i))
-					continue;
-				li = voils.get(i);
-				for(int j = i+1; j<voils.length(); j++){
-					if (equalsPosBateaux(li, voils.get(j)))
-					{
-						deletedVoils.add(j);
-						mult.add(voils.get(j));
-					}
-				}
-				
-				if(mult.size() == 0)
-					voilsSeuls.add(li);
-				else{
-					mult.add(li);
-					batMultiples.add(mult);
-					mult = new ArrayList<LienInfos>();
-				}
-			}
-			
-			
-			for(LienInfos trans : transpSeuls)
-				this.addLien(trans,LinkType.TRANSPORT);
-
-			for(LienInfos carg : cargsSeuls)
-				this.addLien(carg,LinkType.CARGO);		
-			for(LienInfos voil : voilsSeuls)
-				this.addLien(voil,LinkType.VOILLIER);
-			
-			for(ArrayList<LienInfos> batMult : batMultiples){
-				this.addBatMult(batMult);
-			}
-			
-			draw();
-		}
-	}
-
-	private boolean equalsPosBateaux(LienInfos li1, LienInfos li2){
-		return (
-				li1.getPosition1() == li2.getPosition1() 
-				&& li1.getPosition2() == li2.getPosition2() )
-				||
-				(
-				li1.getPosition2() == li2.getPosition1() 
-					&& li1.getPosition1() == li2.getPosition2() 
-					);
-	}
-
-	private void addBatiment(BatimentInfos bat, BatimentType type){
-		PionJoueurPath pjp = null;
-		switch(type){
-		case COLONIE:{
-			pjp = new ColoniePath(bat.getJoueur());
-			pjp.addClickHandler(new ClickHandler() {
-				
-				@Override
-				public void onClick(ClickEvent event) {
-					Map.this.mch.onColonieClick(event);
-				}
-			});
-			break;
-		}
-		case VILLE:{
-			pjp = new VillePath(bat.getJoueur());
-			pjp.addClickHandler(new ClickHandler() {
-				
-				@Override
-				public void onClick(ClickEvent event) {
-					Map.this.mch.onVilleClick(event);
-				}
-			});
-			break;
-		}
-
-		}
-
-
-		int[] tab = getHexagoneFromIntersection(bat.getPosition());
-		if(tab[1] == 0)
-			plateau.get(tab[0]-1).setIntLeft(pjp);
-		else
-			plateau.get(tab[0]-1).setIntRight(pjp);
-		
-		pjp.setFillColor(User.getPlayer(bat.getJoueur()).getColor().getColorCode());
-	}
-
-	private void addLien(LienInfos lien, LinkType type){
-		int[] tab1 = getHexagoneFromIntersection(lien.getPosition1());
-		int[] tab2 = getHexagoneFromIntersection(lien.getPosition2());
-
-		SideDirection dir;
-		int hex;
-
-
-		if(tab1[0] == tab2[0]){
-			dir = SideDirection.NONE;
-			hex = tab1[0];
-		}
-		else{
-			boolean tab1Left = tab1[1] == 0;
-			boolean t1Abovt2 = (tab1[0] < tab2[0] || (tab1[0] >= 2*MAP_HW*(MAP_HH-1) 
-					&& tab2[0] <= 2*MAP_HW));
-			if(tab1Left){
-				if(t1Abovt2){
-					dir = SideDirection.LEFT;
-					hex = tab1[0];
-				}
-				else{
-					dir = SideDirection.RIGHT;
-					hex = tab2[0];
-				}
-			}
-			else{
-				if(t1Abovt2){
-					dir = SideDirection.RIGHT;
-					hex = tab1[0];
-				}
-				else{
-					dir = SideDirection.LEFT;
-					hex = tab2[0];
-				}
-			}
-		}
-
-		PionJoueurPath pjp = null;
-		switch(type){
-		case ROUTE:{
-			pjp = new RoutePath(lien.getJoueur(), dir);
-			pjp.addClickHandler(new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					mch.onRouteClick(event);
-				}
-				
-			});
-			break;
-		}
-		case TRANSPORT:{
-			pjp = new TransportPath(lien.getJoueur(), dir);
-			pjp.addClickHandler(new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					mch.onBateauTransportClick(event);
-				}
-				
-			});
-			break;
-		}
-		case CARGO:{
-			pjp = new CargoPath(lien.getJoueur(), dir);
-			pjp.addClickHandler(new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					mch.onCargoClick(event);
-				}
-				
-			});
-			break;
-		}
-		case VOILLIER:{
-			pjp = new VoilierPath(lien.getJoueur(), dir);
-			pjp.addClickHandler(new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					mch.onVoilierClick(event);
-				}
-				
-			});
-			break;
-		}
-
-		}
-
-
-		switch(dir){
-		case LEFT:
-			plateau.get(hex-1).setArLeft(pjp);
-			break;
-		case NONE:
-			plateau.get(hex-1).setArUp(pjp);
-			break;
-		case RIGHT:
-			plateau.get(hex-1).setArRight(pjp);
-			break;
-
-		}
-		
-		pjp.setFillColor(User.getPlayer(lien.getJoueur()).getColor().getColorCode());
-	}
-	
-
-	private void addBatMult(ArrayList<LienInfos> batMult) {
-		int[] tab1 = getHexagoneFromIntersection(batMult.get(0).getPosition1());
-		int[] tab2 = getHexagoneFromIntersection(batMult.get(0).getPosition2());
-
-		SideDirection dir;
-		int hex;
-
-
-		if(tab1[0] == tab2[0]){
-			dir = SideDirection.NONE;
-			hex = tab1[0];
-		}
-		else{
-			boolean tab1Left = tab1[1] == 0;
-			boolean t1Abovt2 = (tab1[0] < tab2[0] || (tab1[0] >= 2*MAP_HW*(MAP_HH-1) 
-					&& tab2[0] <= 2*MAP_HW));
-			if(tab1Left){
-				if(t1Abovt2){
-					dir = SideDirection.LEFT;
-					hex = tab1[0];
-				}
-				else{
-					dir = SideDirection.RIGHT;
-					hex = tab2[0];
-				}
-			}
-			else{
-				if(t1Abovt2){
-					dir = SideDirection.RIGHT;
-					hex = tab1[0];
-				}
-				else{
-					dir = SideDirection.LEFT;
-					hex = tab2[0];
-				}
-			}
-		}
-		ArrayList<Integer> joueurs = new ArrayList<Integer>();
-		for(LienInfos li : batMult)
-			joueurs.add(li.getJoueur());
-		
-		BateauxGroup bat = new BateauxGroup(joueurs, dir);
-		
-		switch(dir){
-		case LEFT:
-			plateau.get(hex-1).setArLeft(bat);
-			break;
-		case NONE:
-			plateau.get(hex-1).setArUp(bat);
-			break;
-		case RIGHT:
-			plateau.get(hex-1).setArRight(bat);
-			break;
-		}
-		
-		bat.addClickHandler(new ClickHandler() {
-			@Override
-			public void onClick(ClickEvent event) {
-				mch.onBateauxMultipleClick(event);
-			}
-			
-		});
-		
-		User me = User.getMe();
-		if(joueurs.contains(me.getNumber())){
-			bat.setFillColor(me.getColor().getColorCode());
-		}
-		else
-			bat.setFillColor(User.getPlayer(batMult.get(0).getJoueur()).getColor().getColorCode());
+		new Connector("map/infos"+urlAct, mrc);
 	}
 
 	/**
-	 * Cast JavaScriptObject as JsArray of StockData.
+	 * Se connecte au serveur pour rafraichir les informations de la carte.
 	 */
-	private final native MapInfos asMap(JavaScriptObject jso) /*-{
-	    return jso;
-	  }-*/;
+	private void connectDiffMap(){
+		Action a = Action.getChosenOne(),
+				p = Action.getPreviousOne();
+		String urlAct = "";
+		if(a!=null){
 
-	@Override
-	public void displayError() {
-		// TODO Auto-generated method stub
-
+			if(p != null){
+				urlAct += "/"+p.getNum();
+			}
+			urlAct += "/"+a.getNum();
+		}
+		else
+			urlAct += "D/"+p.getNum();
+		new Connector("map/diff"+urlAct, mdc);
 	}
 
+
 }
+

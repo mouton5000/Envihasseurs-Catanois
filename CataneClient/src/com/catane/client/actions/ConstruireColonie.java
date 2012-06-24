@@ -12,8 +12,8 @@ public class ConstruireColonie extends Action {
 	
 	
 	private int position;
-	public ConstruireColonie(int position) {
-		super(TITLE);
+	public ConstruireColonie(int num, int position) {
+		super(num,TITLE);
 		this.position = position;
 		
 		init();

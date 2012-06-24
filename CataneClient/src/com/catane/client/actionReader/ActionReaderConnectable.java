@@ -32,12 +32,17 @@ public class ActionReaderConnectable implements Connectable {
 			Action a;
 			for(int i = 0; i<actions.length();i++){
 				ai = actions.get(i);
-				a = Action.getAction(ai.getFunc(), ai.getParams());
+				a = Action.getAction(ai.getNum(), ai.getFunc(), ai.getParams());
 				node.addAction(a);
 			}
 			
 			if(j == 0)
 				fan = node;
+		}
+		ActionNode fson = fan.getFson();
+		while(fson != null){
+			fan = fson;
+			fson = fan.getFson();
 		}
 		ar.setActionNode(fan);
 
@@ -73,6 +78,7 @@ class ActionInfos extends JavaScriptObject{
 
 	}
 
+	public final native int getNum() /*-{return this.num;}-*/;
 	public final native String getFunc() /*-{return this.func;}-*/;
 	public final native JsArrayString getParams() /*-{return this.params;}-*/;
 }

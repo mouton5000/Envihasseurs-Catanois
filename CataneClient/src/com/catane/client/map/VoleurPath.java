@@ -1,6 +1,6 @@
 package com.catane.client.map;
 
-public class VoleurPath extends PionPath{
+public abstract class VoleurPath extends PionPath{
 
 	public VoleurPath() {
 		super(0,0);

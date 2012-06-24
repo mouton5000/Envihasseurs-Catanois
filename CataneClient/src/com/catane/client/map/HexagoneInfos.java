@@ -21,9 +21,13 @@ public final class HexagoneInfos {
 	private PionPath pastille;
 	private PionJoueurPath intLeft;
 	private PionJoueurPath intRight;
-	private VectorObject arLeft;
-	private VectorObject arUp;
-	private VectorObject arRight;
+	
+	private RoutePath routLeft;
+	private RoutePath routUp;
+	private RoutePath routRight;
+	private VectorObject batLeft;
+	private VectorObject batUp;
+	private VectorObject batRight;
 	
 	
 	public HexagoneInfos(int num, Terre terre) {
@@ -107,7 +111,8 @@ public final class HexagoneInfos {
 
 	public void setVoleur(VoleurPath voleur) {
 		this.voleur = voleur;
-		voleur.setHi(this);
+		if(voleur!=null)
+			voleur.setHi(this);
 	}
 
 	public PionPath getPastille() {
@@ -124,7 +129,8 @@ public final class HexagoneInfos {
 
 	public void setIntLeft(PionJoueurPath intLeft) {
 		this.intLeft = intLeft;
-		intLeft.setHi(this);
+		if(intLeft != null)
+			intLeft.setHi(this);
 	}
 
 	public PionJoueurPath getIntRight() {
@@ -133,36 +139,67 @@ public final class HexagoneInfos {
 
 	public void setIntRight(PionJoueurPath intRight) {
 		this.intRight = intRight;
-		intRight.setHi(this);
+		if(intRight != null)
+			intRight.setHi(this);
 	}
 
-	public VectorObject getArLeft() {
-		return arLeft;
+	public RoutePath getRoutLeft() {
+		return routLeft;
 	}
 
-	public void setArLeft(VectorObject arLeft) {
-		this.arLeft = arLeft;
-		if(arLeft instanceof PionJoueurPath)
+	public void setRoutLeft(RoutePath pjp) {
+		this.routLeft = pjp;
+		if(routUp != null)
+			routUp.setHi(this);
+	}
+
+	public RoutePath getRoutUp() {
+		return routUp;
+	}
+
+	public void setRoutUp(RoutePath routUp) {
+		this.routUp = routUp;
+		if(routUp != null)
+			routUp.setHi(this);
+	}
+
+	public RoutePath getRoutRight() {
+		return routRight;
+	}
+
+	public void setRoutRight(RoutePath routRight) {
+		this.routRight = routRight;
+		if(routUp != null)
+			routUp.setHi(this);
+	}
+
+	public VectorObject getBatLeft() {
+		return batLeft;
+	}
+
+	public void setBatLeft(VectorObject arLeft) {
+		this.batLeft = arLeft;
+		if(arLeft instanceof PionJoueurPath && arLeft != null)
 			((PionJoueurPath) arLeft).setHi(this);
 	}
 
-	public VectorObject getArUp() {
-		return arUp;
+	public VectorObject getBatUp() {
+		return batUp;
 	}
 
-	public void setArUp(VectorObject arUp) {
-		this.arUp = arUp;
-		if(arUp instanceof PionJoueurPath)
+	public void setBatUp(VectorObject arUp) {
+		this.batUp = arUp;
+		if(arUp instanceof PionJoueurPath && batLeft != null)
 			((PionJoueurPath) arUp).setHi(this);
 	}
 
-	public VectorObject getArRight() {
-		return arRight;
+	public VectorObject getBatRight() {
+		return batRight;
 	}
 
-	public void setArRight(VectorObject arRight) {
-		this.arRight = arRight;
-		if(arRight instanceof PionJoueurPath)
+	public void setBatRight(VectorObject arRight) {
+		this.batRight = arRight;
+		if(arRight instanceof PionJoueurPath && arRight != null)
 			((PionJoueurPath) arRight).setHi(this);
 	}
 
@@ -171,12 +208,10 @@ public final class HexagoneInfos {
 	}
 
 	public String getColor() {
-		// TODO Auto-generated method stub
 		return color;
 	}
 	
 	public void setColor(String color) {
-		// TODO Auto-generated method stub
 		this.color = color;
 	}
 	

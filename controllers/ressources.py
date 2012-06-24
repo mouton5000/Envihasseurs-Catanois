@@ -8,17 +8,25 @@ from joueurs import *
 from plateau import *
 from arbre_action import *
 
-@app.route('/ressources/infos/<int:nodeNum>/<int:actionIndex>/<int:terreNum>')
+@app.route('/ressources/infos/<int:terreNum>')
 @needLogin
-def show_ressource(nodeNum,actionIndex,terreNum):
+def show_FirstRessource(terreNum):
+    return show_ressourceOf(REDIS, terreNum)
+
+@app.route('/ressources/infos/<int:actionNum>/<int:terreNum>')
+@needLogin
+def show_ressource(actionNum,terreNum):
 
     jnum = session['joueur_num']
     j1 = Joueur(jnum)
     
-    node = Node(nodeNum)
-    action = Action.getAction(int(node.getActionsNum()[actionIndex]))
-    bdd = j1.executerPartiel(node,action) 
+    action = Action.getAction(actionNum)
+    bdd = j1.executerPartiel(action)
 
+    return show_ressourceOf(bdd, terreNum)
+
+
+def show_ressourceOf(bdd, terreNum):
     j = JoueurPossible(session['joueur_num'], bdd)
     terre = Plateau.getPlateau().ter(terreNum)
     cartes = j.getCartes(terre)

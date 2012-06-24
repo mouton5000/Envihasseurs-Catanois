@@ -22,6 +22,7 @@ public abstract class PionJoueurPath extends PionPath{
 	public void color() {
 		this.setFillColor(PlayerColors.getPlayerColor(getJoueur()));
 	}
+	
 }
 
 class ColoniePath extends PionJoueurPath {

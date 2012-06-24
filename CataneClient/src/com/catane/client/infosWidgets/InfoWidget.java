@@ -3,6 +3,7 @@ package com.catane.client.infosWidgets;
 
 import java.util.Iterator;
 
+import com.catane.client.actions.Action;
 import com.catane.client.map.Map;
 import com.catane.client.map.Terre;
 import com.catane.client.requests.Connectable;
@@ -82,7 +83,15 @@ public class InfoWidget extends Composite {
 
 	public void refreshInfos() {
 		Terre t = Terre.getChosenOne();
-		new Connector("ressources/infos/3/0/"+(t.getIndex()+1), new Connectable(){
+		lb.setSelectedIndex(t.getIndex());
+		
+		Action a = Action.getChosenOne();
+		String urlAct;
+		if(a == null)
+			urlAct = "";
+		else
+			urlAct = "/"+a.getNum();
+		new Connector("ressources/infos"+urlAct+"/"+(t.getIndex()+1), new Connectable(){
 
 			@Override
 			public void callback(JavaScriptObject json) {

@@ -9,6 +9,7 @@ import hashlib
 
 REDIS = redis.StrictRedis()
 REDIS.flushdb()
+REDIS.set('lastBateauId',7)
 
 User(1, 'test1', hashlib.sha1('test1').hexdigest()).save()
 User(2, 'test2', hashlib.sha1('test2').hexdigest()).save()
@@ -28,7 +29,11 @@ p = Plateau.getPlateau()
 tg = p.ter(1)
 td = p.ter(2)
 
-Colonie(1,p.it(63)).save()
+j.addTerre(tg)
+j.addTerre(td)
+
+
+Colonie(1,p.it(62)).save()
 Colonie(2,p.it(64)).save()
 c = Colonie(1,p.it(44))
 c.evolue()
@@ -43,16 +48,19 @@ Bateau(5,1,p.it(56).lien(p.it(57)),Cartes.RIEN,Bateau.BateauType.TRANSPORT,False
 Bateau(6,3,p.it(90).lien(p.it(100)),Cartes.RIEN,Bateau.BateauType.VOILIER,False).save()
 
 
-cg = Tarifs.ROUTE*4 + Tarifs.COLONIE*2
+cg = Tarifs.ROUTE*10 + Tarifs.COLONIE*10+ Tarifs.VILLE*10+Tarifs.BATEAU_TRANSPORT*10+Tarifs.CARGO*10+Tarifs.VOILIER*10
 cd = Tarifs.ROUTE*2
 
 j.recevoir(tg,cg)
 j.addOr(tg,3)
 j.set_route_la_plus_longue(tg,0)
+j.setStaticPoints(tg,3)
+
 
 j.recevoir(td,cd)
 j.addOr(td,1)
 j.set_route_la_plus_longue(td,0)
+j.setStaticPoints(td,0)
 
 j1 = Joueur(1)
 n1 = j1.setNewRoot()
@@ -61,25 +69,34 @@ n3 = n2.addChild()
 n4 = n1.addChild()
 n5 = n2.addChild()
         
-a1 = p.it(62).lien(p.it(52))
-a2 = p.it(52).lien(p.it(53))
-act1 = Action(1, 'construire_route', a1.num)
-act2 = Action(2, 'construire_route', a2.num)
-act3 = Action(3, 'construire_route', a1.num)
-act4 = Action(4, 'construire_route', a2.num)
-act5 = Action(5, 'construire_route', a2.num)
+a1 = p.it(72).lien(p.it(82))
+i1 = p.it(82)
+a2 = p.it(82).lien(p.it(92))
+a3 = p.it(62).lien(p.it(61))
+a4 = p.it(61).lien(p.it(71))
+act1 = Action(1, NodeCst.NULL, 'construire_route', a1.num)
+act2 = Action(2, NodeCst.NULL, 'construire_route', a2.num)
+act3 = Action(3, NodeCst.NULL, 'construire_colonie', i1.num)
+act4 = Action(4, NodeCst.NULL, 'evoluer_colonie', i1.num)
+#act5 = Action(5, NodeCst.NULL, 'evoluer_bateau', 7)
+#act6 = Action(6, NodeCst.NULL, 'construire_route', a2.num)
+#act7 = Action(7, NodeCst.NULL, 'construire_route', a2.num)
         
 act1.save()
 act2.save()
 act3.save()
 act4.save()
-act5.save()
+#act5.save()
+#act6.save()
+#act7.save()
 
 n2.addAction(act1)
 n3.addAction(act2)
-n4.addAction(act3)
-n4.addAction(act4)
-n5.addAction(act5)
+n3.addAction(act3)
+n3.addAction(act4)
+#n3.addAction(act5)
+#n4.addAction(act6)
+#n5.addAction(act7)
         
 
 Voleur(p.hexa(22),Voleur.VoleurType.BRIGAND,p.ter(1)).save(REDIS)

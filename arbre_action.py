@@ -178,20 +178,24 @@ class Joueur:
             except NodeError:
                 b = False
     
-    def executerPartiel(self, node, action):
+    def executerPartiel(self, action):
         ''' Renvoie la base de données telle qu'elle serait si on exécutait l'arbre d'action jusqu'au noeud node, jusqu'à l'action action.'''
+        if action is None:
+            return REDIS
+
+        node = action.node
 
         listNodes = self.getRoot().getPath(node)
         if listNodes is None :
-            return
+            return REDIS
 
         ibdd = BDD(REDIS)
 
         c = self.executerListNodes(listNodes,ibdd)
         ibdd = BDD(c)
         if action != 0:
-            if not self.executerNodePartiel(node, action, ibdd):
-                return
+            if not self.executerNodePartiel(action, ibdd):
+                return REDIS
         return ibdd
         
                    
@@ -218,8 +222,9 @@ class Joueur:
                 raise NodeError(node,action, err)
         return True
 
-    def executerNodePartiel(self, node, action, ibdd):
+    def executerNodePartiel(self, action, ibdd):
         '''  Execute les actions du noeud jusqu'à l'exécution de action (incluse), ou jusqu'à ce qu'une action renvoie Faux. ibdd est modifiée'''
+        node = action.node
         actionsNum = node.getActionsNum()
 
         if not str(action.num) in actionsNum:
@@ -235,6 +240,9 @@ class Joueur:
 
     def executerAction(self, action, ibdd):
         ''' Execute l'action, avec la base de donnée ibdd. ibdd est modifiée. '''
+        if self != action.node.getPlayer():
+            return False
+        
         import joueurs
         j = joueurs.JoueurPossible(self.num, ibdd)
         try:
@@ -252,7 +260,7 @@ class Joueur:
         ''' Crée une nouvelle action avec les parametres func et params et l'ajoute a node en position index'''
         num = Action.getNextActionId()
         Action.incrActionId()
-        a = Action(num, func, *params)
+        a = Action(num, NodeCst.NULL, func, *params)
         a.save()
         return self.insererAction(a,node,index)
 
@@ -846,15 +854,24 @@ class Node:
     def addAction(node,action):
         ''' Ajoute une action au noeud node, en fin de liste des actions '''
         REDIS.rpush('N'+str(node.num)+':actions',action.num)
+        keyAct = 'Act'+str(action.num)
+        REDIS.set(keyAct+':node',node.num)
+        action.node = node
 
     def lPushAction(node,action):
         ''' Ajoute une action au noeud node, au début de liste des actions '''
         REDIS.lpush('N'+str(node.num)+':actions',action.num)
+        keyAct = 'Act'+str(action.num)
+        REDIS.set(keyAct+':node',node.num)
+        action.node = node
     
     def insertAction(node,beforeAction,action):
         ''' Ajoute une action au noeud node juste après l'action beforeAction '''
         key = 'N' + str(node.num) + ':actions'
         REDIS.linsert(key,'after',beforeAction, action.num)
+        keyAct = 'Act'+str(action.num)
+        REDIS.set(keyAct+':node',node.num)
+        action.node = node
     
     def insertActionByIndex(node,index,action):
         ''' Ajoute une action au noeud node juste après l'action située à l'indice index '''
@@ -878,13 +895,16 @@ class Node:
     def removeAction(node,action):
         ''' Retire l'action du noeud node '''
         REDIS.lrem('N'+str(node.num)+':actions',0,action.num)
-
+        action.node = NodeCst.NULL
+        keyAct = 'Act'+str(action.num)
+        REDIS.set(keyAct+':node',-1)
         
 
 class Action:
 
-    def __init__(self, num, func, *params):
+    def __init__(self, num, node, func, *params):
         self.num = num
+        self.node = node
         self.func = func
         self.params = list(params)
 
@@ -894,6 +914,7 @@ class Action:
     def save(self):
         key = 'Act'+str(self.num)
         REDIS.set(key+':fonction',self.func)
+        REDIS.set(key+':node',self.node.num)
         if len(self.params) != 0:
             REDIS.rpush(key+':params',*self.params)
 
@@ -901,8 +922,9 @@ class Action:
     def getAction(num):
         key = 'Act'+str(num)
         func = REDIS.get(key+':fonction')
+        node = Node(int(REDIS.get(key+':node')))
         params = REDIS.lrange(key+':params',0,-1)
-        return Action(num,func,*params)
+        return Action(num,node, func,*params)
 
     @staticmethod
     def getNextActionId():
@@ -919,8 +941,9 @@ class Action:
     @staticmethod
     def delAction(num):
         key = 'Act'+str(num)
-        func = REDIS.delete(key+':fonction')
-        params = REDIS.delete(key+':params')
+        REDIS.delete(key+':fonction')
+        REDIS.delete(key+':params')
+        REDIS.delete(key+':node')
 
 class NodeCst:
     NULL = Node(-1)

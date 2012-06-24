@@ -19,8 +19,19 @@ public class MapInfos extends JavaScriptObject{
 	
 	public final native JsArray<LienInfos> getBateauxTransports() /*-{return this.bateaux_transports}-*/;
 	public final native JsArray<LienInfos> getCargos() /*-{return this.cargos}-*/;
-	public final native JsArray<LienInfos> getVoilliers() /*-{return this.voilliers}-*/;
+	public final native JsArray<LienInfos> getVoiliers() /*-{return this.voiliers}-*/;
 
+	
+	public final native JsArray<BatimentInfos> getColoniesD() /*-{return this.coloniesD}-*/;
+	public final native JsArray<BatimentInfos> getVillesD() /*-{return this.villesD}-*/;
+	
+	public final native JsArray<LienInfos> getRoutesD() /*-{return this.routesD}-*/;
+	
+	public final native JsArray<LienInfos> getBateauxTransportsD() /*-{return this.bateaux_transportsD}-*/;
+	public final native JsArray<LienInfos> getCargosD() /*-{return this.cargosD}-*/;
+	public final native JsArray<LienInfos> getVoiliersD() /*-{return this.voiliersD}-*/;
+	
+	
 }
 
 abstract class PionJoueurInfos extends JavaScriptObject{

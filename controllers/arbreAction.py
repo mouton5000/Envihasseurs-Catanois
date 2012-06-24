@@ -31,6 +31,6 @@ def makeNodeBody(node):
         action = Action.getAction(num)
         params = action.params
         strParams = '['+', '.join(['"'+str(p)+'"' for p in params])+']'
-        actions.append('{"func":"'+action.func+'", "params":'+strParams+'}')
+        actions.append('{"num":'+action.num+', "func":"'+action.func+'", "params":'+strParams+'}')
     body +=', '.join(actions)+']}'
     return body

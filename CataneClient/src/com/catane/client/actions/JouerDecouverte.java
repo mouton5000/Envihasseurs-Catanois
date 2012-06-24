@@ -12,8 +12,8 @@ public class JouerDecouverte extends Action {
 	
 	private Ressources res1, res2;
 	private Terre terre;
-	public JouerDecouverte(Terre terre, Ressources res1, Ressources res2) {
-		super(TITLE);
+	public JouerDecouverte(int num, Terre terre, Ressources res1, Ressources res2) {
+		super(num, TITLE);
 		this.terre =terre;
 		this.res1 = res1;
 		this.res2 = res2;

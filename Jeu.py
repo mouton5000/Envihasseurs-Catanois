@@ -495,6 +495,7 @@ def translate_evoluer_bateau(j,bateau_num_str):
 def peut_evoluer_bateau(j,bateau):
     ''' Le joueur j peut faire evoluer le bateau si il n'est pas en ruine, si le bateau est a lui, si le bateau est en zone d'échange, si le bateau n'est pas un voilier et si il peut payer l'évolution.'''
     bdd = j.bdd
+
     if j.num != bateau.joueur:
         raise BateauError(BateauError.NON_PROPRIETAIRE)
     if not bateau.en_position_echange(bdd):

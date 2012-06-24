@@ -8,6 +8,7 @@ import com.catane.client.developpements.DeveloppementWidget;
 import com.catane.client.echanges.EchangesWidget;
 import com.catane.client.genInfos.GenInfoWidget;
 import com.catane.client.infosWidgets.InfoWidget;
+import com.catane.client.map.Map;
 import com.catane.client.map.MapWidget;
 import com.catane.client.map.Terre;
 import com.catane.client.options.OptionsWidget;
@@ -45,6 +46,7 @@ public class CataneClient implements EntryPoint {
 
 			@Override
 			public void displayError() {
+
 				secondStep();
 			}
 
@@ -138,7 +140,33 @@ public class CataneClient implements EntryPoint {
 		dockPanel.setStyleName("hPanel");
 		RootPanel.get().add(dockPanel);
 		
-		Terre.getTerre(0).choose();
+		
+		
+		refreshAll();
+	}
+	
+	/**
+	 * Rafraichissement quand on modifie la terre choisie.
+	 */
+	public void refreshFromTerre(){
+		info.refreshInfos();
+		Map.getLittleMap().draw();
+	}
+	
+	/**
+	 * Rafraichissement quand on déplace l'action vide
+	 */
+	public void refreshMoveEmptyNode(){
+		info.refreshInfos();
+		Map.getLittleMap().refreshDiff();
+	}
+	
+	/**
+	 * Rafraichissement de tout.
+	 */
+	public void refreshAll(){
+		info.refreshInfos();
+		Map.getLittleMap().refresh();
 	}
 }
 

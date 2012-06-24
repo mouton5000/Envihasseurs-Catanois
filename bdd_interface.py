@@ -29,7 +29,7 @@ class BDD:
         else:
             return self.bdd.get(key)
 
-    def incr(self,key,nb):
+    def incr(self,key,nb=1):
         i = int(self.get(key))+nb
         self.set(key, i)
         return str(i)

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.catane.client.CataneClient;
-import com.catane.client.infosWidgets.InfoWidget;
 
 
 public class Terre {
@@ -52,12 +51,7 @@ public class Terre {
 	
 	public void choose(){
 		chosenOne = this;
-		Map.getLittleMap().draw();
-		InfoWidget iw = CataneClient.instance.info;
-		iw.getLb().setSelectedIndex(index);
-		iw.refreshInfos();
-		
-		
+		CataneClient.instance.refreshFromTerre();
 	}
 	
 }

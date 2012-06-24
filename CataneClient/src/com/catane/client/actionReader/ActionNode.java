@@ -63,5 +63,22 @@ public class ActionNode {
 		this.nsib = nsib;
 	}
 	
+
+	public void choose(int actionIndex){
+		if(actionIndex != -1){
+			getAction(actionIndex).choose();
+		}
+		else
+		{
+			ActionNode f = getFather();
+			if(f != null){
+				f.getAction(f.getNbActions()-1).choose();
+			}
+			else
+			{
+				Action.chooseNull();
+			}
+		}
+	}
 	
 }
