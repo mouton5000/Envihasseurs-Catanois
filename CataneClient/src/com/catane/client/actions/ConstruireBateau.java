@@ -1,21 +1,22 @@
 package com.catane.client.actions;
 
+import com.catane.client.actions.DeplacerBateau.PopupWidget;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class DeplacerBateau  extends Action {
+public final class ConstruireBateau extends Action {
 
-	private static final String TITLE = "Déplacer bateau";
+private static final String TITLE = "Construire bateau";
 	
-	private int bnum;
 	private int position;
-	public DeplacerBateau(int num, int bnum, int position) {
+	private int num;
+	public ConstruireBateau(int num, int position) {
 		super(num, TITLE);
 		this.position = position;
-		this.bnum = bnum;
+		this.num = num;
 		init();
 	}
 
@@ -28,7 +29,7 @@ public class DeplacerBateau  extends Action {
 		private Label l;
 		private Button b;
 		public PopupWidget() {
-			l = new Label("Déplacement du bateau "+bnum+" en position "+position);
+			l = new Label("Construction du bateau "+num+" en position "+position);
 			b = new Button("Voir");
 			VerticalPanel vp = new VerticalPanel();
 			vp.add(l);
@@ -36,4 +37,5 @@ public class DeplacerBateau  extends Action {
 			this.initWidget(vp);
 		}
 	}
+
 }

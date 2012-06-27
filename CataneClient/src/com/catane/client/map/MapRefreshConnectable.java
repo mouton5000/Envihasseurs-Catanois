@@ -1,9 +1,5 @@
 package com.catane.client.map;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
-import com.catane.client.User;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
@@ -74,126 +70,146 @@ public class MapRefreshConnectable extends MapConnectable {
 				rout = routs.get(i);
 				this.addLien(rout, LinkType.ROUTE);
 			}
-
+			
 			/*
 			 * Bateaux : on vérifie si deux bateaux n'ont pas la même 
 			 * position, ils ne seront pas affichés pareils.
 			 */
-			JsArray<LienInfos> transp = jmap.getBateauxTransports();
-			JsArray<LienInfos> cargs = jmap.getCargos();
-			JsArray<LienInfos> voils = jmap.getVoiliers();
+			JsArray<BateauInfos> transp = jmap.getBateauxTransports();
+			JsArray<BateauInfos> cargs = jmap.getCargos();
+			JsArray<BateauInfos> voils = jmap.getVoiliers();
 
-
-			ArrayList<LienInfos> transpSeuls = new ArrayList<LienInfos>();
-			ArrayList<LienInfos> cargsSeuls = new ArrayList<LienInfos>();
-			ArrayList<LienInfos> voilsSeuls = new ArrayList<LienInfos>();
-			ArrayList<ArrayList<LienInfos>> batMultiples = new ArrayList<ArrayList<LienInfos>>();
-			HashSet<Integer> deletedTransp = new HashSet<Integer>();
-			HashSet<Integer> deletedCargs = new HashSet<Integer>();
-			HashSet<Integer> deletedVoils = new HashSet<Integer>();
-
-
-			ArrayList<LienInfos> mult = new ArrayList<LienInfos>();
-
-			LienInfos li;
+			
+			LienInfos trans;
 			for(int i = 0; i<transp.length(); i++){
-				if(deletedTransp.contains(i))
-					continue;
-				li = transp.get(i);
-				for(int j = i+1; j<transp.length(); j++){
-					if (equalsPosBateaux(li, transp.get(j)))
-					{
-						deletedTransp.add(j);
-						mult.add(transp.get(j));
-					}
-
-				}
-				for(int j = 0; j<cargs.length(); j++){
-					if (equalsPosBateaux(li, cargs.get(j)))
-					{
-						deletedCargs.add(j);
-						mult.add(cargs.get(j));
-					}
-				}
-				for(int j = 0; j<voils.length(); j++){
-					if (equalsPosBateaux(li, voils.get(j)))
-					{
-						deletedVoils.add(j);
-						mult.add(voils.get(j));
-					}
-				}
-
-				if(mult.size() == 0)
-					transpSeuls.add(li);
-				else{
-					mult.add(li);
-					batMultiples.add(mult);
-					mult = new ArrayList<LienInfos>();
-				}
+				trans = transp.get(i);
+				this.addLien(trans, LinkType.TRANSPORT);
 			}
-
+			
+			
+			LienInfos carg;
 			for(int i = 0; i<cargs.length(); i++){
-				if(deletedCargs.contains(i))
-					continue;
-
-				li = cargs.get(i);
-				for(int j = i+1; j<cargs.length(); j++){
-					if (equalsPosBateaux(li, cargs.get(j)))
-					{
-						deletedCargs.add(j);
-						mult.add(cargs.get(j));
-					}
-				}
-				for(int j = 0; j<voils.length(); j++){
-					if (equalsPosBateaux(li, voils.get(j)))
-					{
-						deletedVoils.add(j);
-						mult.add(voils.get(j));
-					}
-				}
-
-				if(mult.size() == 0)
-					cargsSeuls.add(li);
-				else{
-					mult.add(li);
-					batMultiples.add(mult);
-					mult = new ArrayList<LienInfos>();
-				}
+				carg = cargs.get(i);
+				this.addLien(carg, LinkType.CARGO);
 			}
-
+			
+			LienInfos voil;
 			for(int i = 0; i<voils.length(); i++){
-				if(deletedVoils.contains(i))
-					continue;
-				li = voils.get(i);
-				for(int j = i+1; j<voils.length(); j++){
-					if (equalsPosBateaux(li, voils.get(j)))
-					{
-						deletedVoils.add(j);
-						mult.add(voils.get(j));
-					}
-				}
-
-				if(mult.size() == 0)
-					voilsSeuls.add(li);
-				else{
-					mult.add(li);
-					batMultiples.add(mult);
-					mult = new ArrayList<LienInfos>();
-				}
+				voil = voils.get(i);
+				this.addLien(voil, LinkType.VOILIER);
 			}
+			
+			
+//			ArrayList<LienInfos> transpSeuls = new ArrayList<LienInfos>();
+//			ArrayList<LienInfos> cargsSeuls = new ArrayList<LienInfos>();
+//			ArrayList<LienInfos> voilsSeuls = new ArrayList<LienInfos>();
+//			ArrayList<ArrayList<LienInfos>> batMultiples = new ArrayList<ArrayList<LienInfos>>();
+//			HashSet<Integer> deletedTransp = new HashSet<Integer>();
+//			HashSet<Integer> deletedCargs = new HashSet<Integer>();
+//			HashSet<Integer> deletedVoils = new HashSet<Integer>();
 
 
-			for(LienInfos trans : transpSeuls)
-				this.addLien(trans,LinkType.TRANSPORT);
+//			ArrayList<LienInfos> mult = new ArrayList<LienInfos>();
+//
+//			LienInfos li;
+//			for(int i = 0; i<transp.length(); i++){
+//				if(deletedTransp.contains(i))
+//					continue;
+//				li = transp.get(i);
+//				for(int j = i+1; j<transp.length(); j++){
+//					if (equalsPosBateaux(li, transp.get(j)))
+//					{
+//						deletedTransp.add(j);
+//						mult.add(transp.get(j));
+//					}
+//
+//				}
+//				for(int j = 0; j<cargs.length(); j++){
+//					if (equalsPosBateaux(li, cargs.get(j)))
+//					{
+//						deletedCargs.add(j);
+//						mult.add(cargs.get(j));
+//					}
+//				}
+//				for(int j = 0; j<voils.length(); j++){
+//					if (equalsPosBateaux(li, voils.get(j)))
+//					{
+//						deletedVoils.add(j);
+//						mult.add(voils.get(j));
+//					}
+//				}
+//
+//				if(mult.size() == 0)
+//					transpSeuls.add(li);
+//				else{
+//					mult.add(li);
+//					batMultiples.add(mult);
+//					mult = new ArrayList<LienInfos>();
+//				}
+//			}
+//
+//			for(int i = 0; i<cargs.length(); i++){
+//				if(deletedCargs.contains(i))
+//					continue;
+//
+//				li = cargs.get(i);
+//				for(int j = i+1; j<cargs.length(); j++){
+//					if (equalsPosBateaux(li, cargs.get(j)))
+//					{
+//						deletedCargs.add(j);
+//						mult.add(cargs.get(j));
+//					}
+//				}
+//				for(int j = 0; j<voils.length(); j++){
+//					if (equalsPosBateaux(li, voils.get(j)))
+//					{
+//						deletedVoils.add(j);
+//						mult.add(voils.get(j));
+//					}
+//				}
+//
+//				if(mult.size() == 0)
+//					cargsSeuls.add(li);
+//				else{
+//					mult.add(li);
+//					batMultiples.add(mult);
+//					mult = new ArrayList<LienInfos>();
+//				}
+//			}
+//
+//			for(int i = 0; i<voils.length(); i++){
+//				if(deletedVoils.contains(i))
+//					continue;
+//				li = voils.get(i);
+//				for(int j = i+1; j<voils.length(); j++){
+//					if (equalsPosBateaux(li, voils.get(j)))
+//					{
+//						deletedVoils.add(j);
+//						mult.add(voils.get(j));
+//					}
+//				}
+//
+//				if(mult.size() == 0)
+//					voilsSeuls.add(li);
+//				else{
+//					mult.add(li);
+//					batMultiples.add(mult);
+//					mult = new ArrayList<LienInfos>();
+//				}
+//			}
 
-			for(LienInfos carg : cargsSeuls)
-				this.addLien(carg,LinkType.CARGO);		
-			for(LienInfos voil : voilsSeuls)
-				this.addLien(voil,LinkType.VOILLIER);
 
-			for(ArrayList<LienInfos> batMult : batMultiples){
-				this.addBatMult(batMult);
-			}
+//			for(LienInfos trans : transp)
+//				this.addLien(trans,LinkType.TRANSPORT);
+//
+//			for(LienInfos carg : cargs)
+//				this.addLien(carg,LinkType.CARGO);		
+//			for(LienInfos voil : voils)
+//				this.addLien(voil,LinkType.VOILIER);
+
+//			for(ArrayList<LienInfos> batMult : batMultiples){
+//				this.addBatMult(batMult);
+//			}
 
 			map.draw();
 		}

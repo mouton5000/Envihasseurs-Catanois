@@ -121,15 +121,19 @@ public class ActionReader extends DrawingArea {
 			if(ag.getParent() != this)
 				this.add(ag);
 		}
-
-	}
-
-	private void listDown(){
-		fAcIndex++;
+		
+		if(fAcIndex != 0 && mup.getParent()!=this)
+			this.add(mup);
+		if(fAcIndex == 0 && mup.getParent()==this)
+			this.remove(mup);
 		if(fAcIndex < node.getNbActions()-(actionGroups.size()-1) && mdown.getParent()!=this)
 			this.add(mdown);
 		if(fAcIndex >= node.getNbActions()-(actionGroups.size()-1) && mdown.getParent()==this)
 			this.remove(mdown);
+	}
+
+	private void listDown(){
+		fAcIndex++;
 		if(mup.getParent()!=this)
 			this.add(mup);
 		drawActions();
@@ -138,10 +142,6 @@ public class ActionReader extends DrawingArea {
 
 	private void listUp(){
 		fAcIndex--;
-		if(fAcIndex != 0 && mup.getParent()!=this)
-			this.add(mup);
-		if(fAcIndex == 0 && mup.getParent()==this)
-			this.remove(mup);
 		if(mdown.getParent()!=this)
 			this.add(mdown);
 		drawActions();

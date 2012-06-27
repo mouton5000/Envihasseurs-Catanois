@@ -20,7 +20,6 @@ public class ActionGroup extends Group {
 	private Path upButton;
 	private Path downButton;
 	private Rectangle contour;
-	private ActionReader ar;
 
 	private static final int TEXT_PADDING = 10;
 	private static final int LEFT_PADDING = 10;
@@ -32,7 +31,6 @@ public class ActionGroup extends Group {
 	}
 	
 	public ActionGroup(final Action action, final ActionReader ar) {
-		this.ar = ar;
 		this.title = new Text(TEXT_PADDING, TEXT_PADDING,"");
 		this.deleteButton = new DeleteButton();
 		this.detailButton = new DetailButton();

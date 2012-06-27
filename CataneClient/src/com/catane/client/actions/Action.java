@@ -54,6 +54,19 @@ public abstract class Action {
 			int pos = Integer.valueOf(params.get(0));
 			a = new EvoluerColonie(num,pos);
 		}
+		else if(func.equals("construire_bateau")){
+			int pos = Integer.valueOf(params.get(0));
+			a = new ConstruireBateau(num,pos);
+		}
+		else if(func.equals("evoluer_bateau")){
+			int bnum = Integer.valueOf(params.get(0));
+			a = new EvoluerBateau(num,bnum);
+		}
+		else if(func.equals("deplacer_bateau")){
+			int bnum = Integer.valueOf(params.get(0));
+			int pos = Integer.valueOf(params.get(1));
+			a = new DeplacerBateau(num,bnum,pos);
+		}
 		return a;
 	}
 	

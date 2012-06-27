@@ -1,11 +1,7 @@
 package com.catane.client.map;
 
-import com.catane.client.User;
-import com.catane.client.map.MapConnectable.BatimentType;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 
 public class MapDiffConnectable extends MapConnectable {
 
@@ -43,6 +39,29 @@ public class MapDiffConnectable extends MapConnectable {
 				this.removeLien(routD, LinkType.ROUTE);
 			}
 			
+			
+			
+			JsArray<BateauInfos> transpD = jmap.getBateauxTransportsD();
+			BateauInfos transD;
+			for(int i = 0; i<transpD.length(); i++){
+				transD = transpD.get(i);
+				this.removeLien(transD, LinkType.TRANSPORT);
+			}
+			
+			JsArray<BateauInfos> cargsD = jmap.getCargosD();
+			BateauInfos cargD;
+			for(int i = 0; i<cargsD.length(); i++){
+				cargD = cargsD.get(i);
+				this.removeLien(cargD, LinkType.CARGO);
+			}
+			
+			JsArray<BateauInfos> voilsD = jmap.getVoiliersD();
+			BateauInfos voilD;
+			for(int i = 0; i<voilsD.length(); i++){
+				voilD = voilsD.get(i);
+				this.removeLien(voilD, LinkType.VOILIER);
+			}
+			
 			JsArray<BatimentInfos> cols = jmap.getColonies();
 			BatimentInfos col;
 			for(int i = 0; i<cols.length(); i++){
@@ -63,6 +82,28 @@ public class MapDiffConnectable extends MapConnectable {
 			for(int i = 0; i<routs.length(); i++){
 				rout = routs.get(i);
 				this.addLien(rout, LinkType.ROUTE);
+			}
+			
+			
+			JsArray<BateauInfos> transp = jmap.getBateauxTransports();
+			BateauInfos trans;
+			for(int i = 0; i<transp.length(); i++){
+				trans = transp.get(i);
+				this.addLien(trans, LinkType.TRANSPORT);
+			}
+			
+			JsArray<BateauInfos> cargs = jmap.getCargos();
+			BateauInfos carg;
+			for(int i = 0; i<cargs.length(); i++){
+				carg = cargs.get(i);
+				this.addLien(carg, LinkType.CARGO);
+			}
+			
+			JsArray<BateauInfos> voils = jmap.getVoiliers();
+			BateauInfos voil;
+			for(int i = 0; i<voils.length(); i++){
+				voil = voils.get(i);
+				this.addLien(voil, LinkType.VOILIER);
 			}
 			
 			
@@ -115,10 +156,16 @@ public class MapDiffConnectable extends MapConnectable {
 			}
 		}
 		
+		Bateau b = null;
 		switch(type){
 		case ROUTE : {
 			map.removeRoute(hex,dir);
+			break;
 		}
+		default:
+			b = new Bateau(((BateauInfos)lien).getNum(), lien.getJoueur(), type);
+			map.removeBateau(b, hex, dir);
+			
 		}
 	
 

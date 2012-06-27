@@ -45,8 +45,7 @@ Bateau(2,1,p.it(101).lien(p.it(102)),Cartes.RIEN,Bateau.BateauType.CARGO,False).
 Bateau(3,1,p.it(7).lien(p.it(8)),Cartes.RIEN,Bateau.BateauType.VOILIER,False).save()
 Bateau(4,2,p.it(90).lien(p.it(100)),Cartes.RIEN,Bateau.BateauType.CARGO,False).save()
 Bateau(5,1,p.it(56).lien(p.it(57)),Cartes.RIEN,Bateau.BateauType.TRANSPORT,False).save()
-Bateau(6,3,p.it(90).lien(p.it(100)),Cartes.RIEN,Bateau.BateauType.VOILIER,False).save()
-
+Bateau(6,3,p.it(61).lien(p.it(71)),Cartes.RIEN,Bateau.BateauType.CARGO,False).save()
 
 cg = Tarifs.ROUTE*10 + Tarifs.COLONIE*10+ Tarifs.VILLE*10+Tarifs.BATEAU_TRANSPORT*10+Tarifs.CARGO*10+Tarifs.VOILIER*10
 cd = Tarifs.ROUTE*2
@@ -75,10 +74,10 @@ a2 = p.it(82).lien(p.it(92))
 a3 = p.it(62).lien(p.it(61))
 a4 = p.it(61).lien(p.it(71))
 act1 = Action(1, NodeCst.NULL, 'construire_route', a1.num)
-act2 = Action(2, NodeCst.NULL, 'construire_route', a2.num)
-act3 = Action(3, NodeCst.NULL, 'construire_colonie', i1.num)
-act4 = Action(4, NodeCst.NULL, 'evoluer_colonie', i1.num)
-#act5 = Action(5, NodeCst.NULL, 'evoluer_bateau', 7)
+act2 = Action(2, NodeCst.NULL, 'construire_bateau', a3.num)
+act3 = Action(3, NodeCst.NULL, 'evoluer_bateau', 7)
+act4 = Action(4, NodeCst.NULL, 'evoluer_bateau', 7)
+act5 = Action(5, NodeCst.NULL, 'deplacer_bateau', 7, a4.num)
 #act6 = Action(6, NodeCst.NULL, 'construire_route', a2.num)
 #act7 = Action(7, NodeCst.NULL, 'construire_route', a2.num)
         
@@ -86,7 +85,7 @@ act1.save()
 act2.save()
 act3.save()
 act4.save()
-#act5.save()
+act5.save()
 #act6.save()
 #act7.save()
 
@@ -94,7 +93,7 @@ n2.addAction(act1)
 n3.addAction(act2)
 n3.addAction(act3)
 n3.addAction(act4)
-#n3.addAction(act5)
+n3.addAction(act5)
 #n4.addAction(act6)
 #n5.addAction(act7)
         

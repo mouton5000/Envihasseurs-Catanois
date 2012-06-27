@@ -57,11 +57,5 @@ final class HexagonePath extends PionPath{
 		return c;
 	}
 	
-	
-	/*
-	 * On associe à l'hexagone un certain nombres de chemins. Ces chemins seront la pluspart du temps
-	 * invisibles, mais affichés quand un hexagoneInfo le demandera.
-	 */
-	
-	
+
 }

@@ -8,7 +8,7 @@ public abstract class PionJoueurPath extends PionPath{
 	
 	public PionJoueurPath(int i) {
 		super(0,0);
-		this.setJoueur(i);
+		this.joueur = i;
 	}
 
 	public int getJoueur() {

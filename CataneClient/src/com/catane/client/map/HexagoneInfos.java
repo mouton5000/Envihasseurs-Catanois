@@ -1,11 +1,17 @@
 package com.catane.client.map;
 
+import java.util.ArrayList;
+
+import org.vaadin.gwtgraphics.client.DrawingArea;
 import org.vaadin.gwtgraphics.client.VectorObject;
+
+import com.catane.client.User;
+
 
 public final class HexagoneInfos {
 
 	private Terre terre;
-	
+
 	private HexagoneInfos left;
 	private HexagoneInfos right;
 	private HexagoneInfos up;
@@ -14,37 +20,52 @@ public final class HexagoneInfos {
 	private HexagoneInfos upRight;
 	private HexagoneInfos downLeft;
 	private HexagoneInfos downRight;
-	
+
 	private int num;
 	private String color;
+
+	/**
+	 * Si vrai, alors il y a un brigand, sinon un pirate, si null, rien.
+	 */
 	private VoleurPath voleur;
 	private PionPath pastille;
+
 	private PionJoueurPath intLeft;
 	private PionJoueurPath intRight;
-	
+
 	private RoutePath routLeft;
 	private RoutePath routUp;
 	private RoutePath routRight;
+
+
+	private ArrayList<Bateau> bateauxLeft;
+	private ArrayList<Bateau> bateauxUp;
+	private ArrayList<Bateau> bateauxRight;
 	private VectorObject batLeft;
 	private VectorObject batUp;
 	private VectorObject batRight;
-	
-	
+
+
 	public HexagoneInfos(int num, Terre terre) {
 		this.num = num;
 		this.terre = terre;
+
+		bateauxLeft = new ArrayList<Bateau>();
+		bateauxUp = new ArrayList<Bateau>();
+		bateauxRight = new ArrayList<Bateau>();
+
 	}
 
 	public Terre getTerre(){
 		return terre;
 	}
-	
-	
+
+
 	public HexagoneInfos getLeft() {
 		return left;
 	}
 
-	
+
 	public void setLeft(HexagoneInfos left) {
 		this.left = left;
 	}
@@ -109,10 +130,8 @@ public final class HexagoneInfos {
 		return voleur;
 	}
 
-	public void setVoleur(VoleurPath voleur) {
+	public void setVoleur(VoleurPath voleur){
 		this.voleur = voleur;
-		if(voleur!=null)
-			voleur.setHi(this);
 	}
 
 	public PionPath getPastille() {
@@ -173,11 +192,135 @@ public final class HexagoneInfos {
 			routUp.setHi(this);
 	}
 
+	private void addBat(Bateau b, ArrayList<Bateau> bats, SideDirection dir){
+		if(bats.add(b)){
+			VectorObject vo = null;
+			User u = User.getPlayer(b.getJoueur());
+			if(bats.size() == 1){
+				switch(b.getType()){
+				case TRANSPORT:
+					vo = new TransportPath(b.getJoueur(), dir);
+					break;
+				case CARGO:
+					vo = new CargoPath(b.getJoueur(), dir);
+					break;
+				case VOILIER:
+					vo = new VoilierPath(b.getJoueur(), dir);
+					break;
+				}
+			}
+			else
+			{
+				ArrayList<Integer> ar = new ArrayList<Integer>();
+				for(Bateau bp : bats)
+					ar.add(bp.getJoueur());
+				vo = new BateauxGroup(ar, dir);
+				if(ar.contains(User.getMe().getNumber()))
+					u = User.getMe();
+
+			}
+
+			switch(dir){
+			case LEFT :
+				setBatLeft(vo);
+				break;
+			case RIGHT:
+				setBatRight(vo);
+				break;
+			case NONE:
+				setBatUp(vo);
+				break;
+
+			}
+			String color = u.getColor().getColorCode();
+
+			if(vo instanceof PionJoueurPath)
+				((PionJoueurPath) vo).setFillColor(color);
+			else
+				((BateauxGroup) vo).setFillColor(color);
+		}
+	}
+
+	private void removeBat(Bateau b, ArrayList<Bateau> bats, SideDirection dir){
+		if(bats.remove(b)){
+			VectorObject vo = null;
+			User u = null;
+			if(bats.size() == 1){
+				Bateau bp = bats.get(0);
+				switch(bp.getType()){
+				case TRANSPORT:
+					vo = new TransportPath(bp.getJoueur(), dir);
+					break;
+				case CARGO:
+					vo = new CargoPath(bp.getJoueur(), dir);
+					break;
+				case VOILIER:
+					vo = new VoilierPath(bp.getJoueur(), dir);
+					break;
+				}
+				u = User.getPlayer(bp.getJoueur());
+			}
+			else if(bats.size() > 1)
+			{
+				ArrayList<Integer> ar = new ArrayList<Integer>();
+				for(Bateau bp : bats)
+					ar.add(bp.getJoueur());
+				vo = new BateauxGroup(ar, dir);
+				if(ar.contains(User.getMe().getNumber()))
+					u = User.getMe();
+			}
+
+			/*
+			 * S'il n'y a plus de bataeu, vo est null
+			 */
+			switch(dir){
+			case LEFT :
+				setBatLeft(vo);
+				break;
+			case RIGHT:
+				setBatRight(vo);
+				break;
+			case NONE:
+				setBatUp(vo);
+				break;
+
+			}
+
+			if(vo != null){
+				String color = u.getColor().getColorCode();
+
+				if(vo instanceof PionJoueurPath)
+					((PionJoueurPath) vo).setFillColor(color);
+				else
+					((BateauxGroup) vo).setFillColor(color);
+			}
+		}
+	}
+
 	public VectorObject getBatLeft() {
 		return batLeft;
 	}
 
-	public void setBatLeft(VectorObject arLeft) {
+	public void addBatLeft(Bateau b){
+		ArrayList<Bateau> bats = bateauxLeft;
+		SideDirection dir = SideDirection.LEFT;
+		addBat(b,bats,dir);
+	}
+
+	public void removeBatLeft(Bateau b){
+		ArrayList<Bateau> bats = bateauxLeft;
+		SideDirection dir = SideDirection.LEFT;
+		removeBat(b,bats,dir);
+	}
+
+	public void clearBatLeft(){
+		bateauxLeft.clear();
+		setBatLeft(null);
+	}
+
+	private void setBatLeft(VectorObject arLeft) {
+		if(batLeft != null && batLeft.getParent() != null)
+			((DrawingArea)batLeft.getParent()).remove(batLeft);
 		this.batLeft = arLeft;
 		if(arLeft instanceof PionJoueurPath && arLeft != null)
 			((PionJoueurPath) arLeft).setHi(this);
@@ -187,7 +330,26 @@ public final class HexagoneInfos {
 		return batUp;
 	}
 
-	public void setBatUp(VectorObject arUp) {
+	public void addBatUp(Bateau b){
+		ArrayList<Bateau> bats = bateauxUp;
+		SideDirection dir = SideDirection.NONE;
+		addBat(b,bats,dir);
+	}
+
+	public void removeBatUp(Bateau b){
+		ArrayList<Bateau> bats = bateauxUp;
+		SideDirection dir = SideDirection.NONE;
+		removeBat(b,bats,dir);
+	}
+
+	public void clearBatUp(){
+		bateauxUp.clear();
+		setBatUp(null);
+	}
+
+	private void setBatUp(VectorObject arUp) {
+		if(batUp != null && batUp.getParent() != null)
+			((DrawingArea)batUp.getParent()).remove(batUp);
 		this.batUp = arUp;
 		if(arUp instanceof PionJoueurPath && batLeft != null)
 			((PionJoueurPath) arUp).setHi(this);
@@ -197,7 +359,26 @@ public final class HexagoneInfos {
 		return batRight;
 	}
 
-	public void setBatRight(VectorObject arRight) {
+	public void addBatRight(Bateau b){
+		ArrayList<Bateau> bats = bateauxRight;
+		SideDirection dir = SideDirection.RIGHT;
+		addBat(b,bats,dir);
+	}
+
+	public void removeBatRight(Bateau b){
+		ArrayList<Bateau> bats = bateauxRight;
+		SideDirection dir = SideDirection.RIGHT;
+		removeBat(b,bats,dir);
+	}
+
+	public void clearBatRight(){
+		bateauxRight.clear();
+		setBatRight(null);
+	}
+
+	private void setBatRight(VectorObject arRight) {
+		if(batRight != null && batRight.getParent() != null)
+			((DrawingArea)batRight.getParent()).remove(batRight);
 		this.batRight = arRight;
 		if(arRight instanceof PionJoueurPath && arRight != null)
 			((PionJoueurPath) arRight).setHi(this);
@@ -210,11 +391,11 @@ public final class HexagoneInfos {
 	public String getColor() {
 		return color;
 	}
-	
+
 	public void setColor(String color) {
 		this.color = color;
 	}
-	
-	
-	
+
+
+
 }

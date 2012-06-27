@@ -1,7 +1,5 @@
 package com.catane.client.map;
 
-import java.util.ArrayList;
-
 import com.catane.client.User;
 import com.catane.client.requests.Connectable;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -19,7 +17,7 @@ public abstract class MapConnectable implements Connectable{
 	}
 
 	protected enum BatimentType {COLONIE,VILLE};
-	protected enum LinkType {ROUTE, TRANSPORT, CARGO, VOILLIER};
+	protected enum LinkType {ROUTE, TRANSPORT, CARGO, VOILIER};
 
 
 	protected void addBatiment(BatimentInfos bat, BatimentType type){
@@ -99,6 +97,7 @@ public abstract class MapConnectable implements Connectable{
 		}
 
 		PionJoueurPath pjp = null;
+		Bateau b = null;
 		switch(type){
 		case ROUTE:{
 
@@ -112,66 +111,68 @@ public abstract class MapConnectable implements Connectable{
 			});
 			break;
 		}
-		case TRANSPORT:{
-			pjp = new TransportPath(lien.getJoueur(), dir);
-			pjp.addClickHandler(new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					map.mch.onBateauTransportClick(event);
-				}
+		default:
+			b = new Bateau(((BateauInfos)lien).getNum(), lien.getJoueur(), type);
+//		case TRANSPORT:{
+//			pjp = new TransportPath(lien.getJoueur(), dir);
+//			pjp.addClickHandler(new ClickHandler() {
+//				@Override
+//				public void onClick(ClickEvent event) {
+//					map.mch.onBateauTransportClick(event);
+//				}
+//
+//			});
+//			break;
+//		}
+//		case CARGO:{
+//			pjp = new CargoPath(lien.getJoueur(), dir);
+//			pjp.addClickHandler(new ClickHandler() {
+//				@Override
+//				public void onClick(ClickEvent event) {
+//					map.mch.onCargoClick(event);
+//				}
+//
+//			});
+//			break;
+//		}
+//		case VOILIER:{
+//			pjp = new VoilierPath(lien.getJoueur(), dir);
+//			pjp.addClickHandler(new ClickHandler() {
+//				@Override
+//				public void onClick(ClickEvent event) {
+//					map.mch.onVoilierClick(event);
+//				}
+//
+//			});
+//			break;
+//		}
 
-			});
-			break;
 		}
-		case CARGO:{
-			pjp = new CargoPath(lien.getJoueur(), dir);
-			pjp.addClickHandler(new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					map.mch.onCargoClick(event);
-				}
-
-			});
-			break;
-		}
-		case VOILLIER:{
-			pjp = new VoilierPath(lien.getJoueur(), dir);
-			pjp.addClickHandler(new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					map.mch.onVoilierClick(event);
-				}
-
-			});
-			break;
-		}
-
-		}
-
 
 		switch(dir){
 		case LEFT:
 			if(type == LinkType.ROUTE)
 				map.plateau.get(hex-1).setRoutLeft((RoutePath)pjp);
 			else
-				map.plateau.get(hex-1).setBatLeft(pjp);
+				map.plateau.get(hex-1).addBatLeft(b);
 			break;
 		case NONE:
 			if(type == LinkType.ROUTE)
 				map.plateau.get(hex-1).setRoutUp((RoutePath)pjp);
 			else
-				map.plateau.get(hex-1).setBatUp(pjp);
+				map.plateau.get(hex-1).addBatUp(b);
 			break;
 		case RIGHT:
 			if(type == LinkType.ROUTE)
 				map.plateau.get(hex-1).setRoutRight((RoutePath)pjp);
 			else
-				map.plateau.get(hex-1).setBatRight(pjp);
+				map.plateau.get(hex-1).addBatRight(b);
 			break;
 
 		}
 
-		pjp.setFillColor(User.getPlayer(lien.getJoueur()).getColor().getColorCode());
+		if(pjp != null)
+			pjp.setFillColor(User.getPlayer(lien.getJoueur()).getColor().getColorCode());
 	}
 
 
@@ -188,75 +189,75 @@ public abstract class MapConnectable implements Connectable{
 
 
 
-	protected void addBatMult(ArrayList<LienInfos> batMult) {
-		int[] tab1 = Map.getHexagoneFromIntersection(batMult.get(0).getPosition1());
-		int[] tab2 = Map.getHexagoneFromIntersection(batMult.get(0).getPosition2());
-
-		SideDirection dir;
-		int hex;
-
-
-		if(tab1[0] == tab2[0]){
-			dir = SideDirection.NONE;
-			hex = tab1[0];
-		}
-		else{
-			boolean tab1Left = tab1[1] == 0;
-			boolean t1Abovt2 = (tab1[0] < tab2[0] || (tab1[0] >= 2*Map.MAP_HW*(Map.MAP_HH-1) 
-					&& tab2[0] <= 2*Map.MAP_HW));
-			if(tab1Left){
-				if(t1Abovt2){
-					dir = SideDirection.LEFT;
-					hex = tab1[0];
-				}
-				else{
-					dir = SideDirection.RIGHT;
-					hex = tab2[0];
-				}
-			}
-			else{
-				if(t1Abovt2){
-					dir = SideDirection.RIGHT;
-					hex = tab1[0];
-				}
-				else{
-					dir = SideDirection.LEFT;
-					hex = tab2[0];
-				}
-			}
-		}
-		ArrayList<Integer> joueurs = new ArrayList<Integer>();
-		for(LienInfos li : batMult)
-			joueurs.add(li.getJoueur());
-
-		BateauxGroup bat = new BateauxGroup(joueurs, dir);
-
-		switch(dir){
-		case LEFT:
-			map.plateau.get(hex-1).setBatLeft(bat);
-			break;
-		case NONE:
-			map.plateau.get(hex-1).setBatUp(bat);
-			break;
-		case RIGHT:
-			map.plateau.get(hex-1).setBatRight(bat);
-			break;
-		}
-
-		bat.addClickHandler(new ClickHandler() {
-			@Override
-			public void onClick(ClickEvent event) {
-				map.mch.onBateauxMultipleClick(event);
-			}
-
-		});
-
-		User me = User.getMe();
-		if(joueurs.contains(me.getNumber())){
-			bat.setFillColor(me.getColor().getColorCode());
-		}
-		else
-			bat.setFillColor(User.getPlayer(batMult.get(0).getJoueur()).getColor().getColorCode());
-	}
+//	protected void addBatMult(ArrayList<LienInfos> batMult) {
+//		int[] tab1 = Map.getHexagoneFromIntersection(batMult.get(0).getPosition1());
+//		int[] tab2 = Map.getHexagoneFromIntersection(batMult.get(0).getPosition2());
+//
+//		SideDirection dir;
+//		int hex;
+//
+//
+//		if(tab1[0] == tab2[0]){
+//			dir = SideDirection.NONE;
+//			hex = tab1[0];
+//		}
+//		else{
+//			boolean tab1Left = tab1[1] == 0;
+//			boolean t1Abovt2 = (tab1[0] < tab2[0] || (tab1[0] >= 2*Map.MAP_HW*(Map.MAP_HH-1) 
+//					&& tab2[0] <= 2*Map.MAP_HW));
+//			if(tab1Left){
+//				if(t1Abovt2){
+//					dir = SideDirection.LEFT;
+//					hex = tab1[0];
+//				}
+//				else{
+//					dir = SideDirection.RIGHT;
+//					hex = tab2[0];
+//				}
+//			}
+//			else{
+//				if(t1Abovt2){
+//					dir = SideDirection.RIGHT;
+//					hex = tab1[0];
+//				}
+//				else{
+//					dir = SideDirection.LEFT;
+//					hex = tab2[0];
+//				}
+//			}
+//		}
+//		ArrayList<Integer> joueurs = new ArrayList<Integer>();
+//		for(LienInfos li : batMult)
+//			joueurs.add(li.getJoueur());
+//
+//		BateauxGroup bat = new BateauxGroup(joueurs, dir);
+//
+//		switch(dir){
+//		case LEFT:
+//			map.plateau.get(hex-1).setBatLeft(bat);
+//			break;
+//		case NONE:
+//			map.plateau.get(hex-1).setBatUp(bat);
+//			break;
+//		case RIGHT:
+//			map.plateau.get(hex-1).setBatRight(bat);
+//			break;
+//		}
+//
+//		bat.addClickHandler(new ClickHandler() {
+//			@Override
+//			public void onClick(ClickEvent event) {
+//				map.mch.onBateauxMultipleClick(event);
+//			}
+//
+//		});
+//
+//		User me = User.getMe();
+//		if(joueurs.contains(me.getNumber())){
+//			bat.setFillColor(me.getColor().getColorCode());
+//		}
+//		else
+//			bat.setFillColor(User.getPlayer(batMult.get(0).getJoueur()).getColor().getColorCode());
+//	}
 
 }

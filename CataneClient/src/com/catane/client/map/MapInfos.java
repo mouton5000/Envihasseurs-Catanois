@@ -17,9 +17,9 @@ public class MapInfos extends JavaScriptObject{
 	
 	public final native JsArray<LienInfos> getRoutes() /*-{return this.routes}-*/;
 	
-	public final native JsArray<LienInfos> getBateauxTransports() /*-{return this.bateaux_transports}-*/;
-	public final native JsArray<LienInfos> getCargos() /*-{return this.cargos}-*/;
-	public final native JsArray<LienInfos> getVoiliers() /*-{return this.voiliers}-*/;
+	public final native JsArray<BateauInfos> getBateauxTransports() /*-{return this.bateaux_transports}-*/;
+	public final native JsArray<BateauInfos> getCargos() /*-{return this.cargos}-*/;
+	public final native JsArray<BateauInfos> getVoiliers() /*-{return this.voiliers}-*/;
 
 	
 	public final native JsArray<BatimentInfos> getColoniesD() /*-{return this.coloniesD}-*/;
@@ -27,9 +27,9 @@ public class MapInfos extends JavaScriptObject{
 	
 	public final native JsArray<LienInfos> getRoutesD() /*-{return this.routesD}-*/;
 	
-	public final native JsArray<LienInfos> getBateauxTransportsD() /*-{return this.bateaux_transportsD}-*/;
-	public final native JsArray<LienInfos> getCargosD() /*-{return this.cargosD}-*/;
-	public final native JsArray<LienInfos> getVoiliersD() /*-{return this.voiliersD}-*/;
+	public final native JsArray<BateauInfos> getBateauxTransportsD() /*-{return this.bateaux_transportsD}-*/;
+	public final native JsArray<BateauInfos> getCargosD() /*-{return this.cargosD}-*/;
+	public final native JsArray<BateauInfos> getVoiliersD() /*-{return this.voiliersD}-*/;
 	
 	
 }
@@ -62,4 +62,15 @@ class LienInfos extends PionJoueurInfos{
 	}	
 	public final native int getPosition1() /*-{return this.position1}-*/;
 	public final native int getPosition2() /*-{return this.position2}-*/;
+}
+
+/**
+ * Informatins concernant un bateau sur la carte
+ * @author mouton
+ *
+ */
+class BateauInfos extends LienInfos{
+	protected BateauInfos(){
+	}	
+	public final native int getNum() /*-{return this.num}-*/;
 }

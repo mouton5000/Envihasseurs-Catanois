@@ -90,13 +90,12 @@ def displayMapOf(bdd):
             routes.append([arrete,route.joueur])
         bateaux = Bateau.getBateaux(arrete,bdd)
         for bateau in bateaux:
-            t = [arrete,bateau.joueur]
             if bateau.etat == Bateau.BateauType.TRANSPORT:
-                bateaux_transport.append(t)
+                bateaux_transport.append(bateau)
             elif bateau.etat == Bateau.BateauType.CARGO:
-                cargos.append(t)
+                cargos.append(bateau)
             else:
-                voiliers.append(t) 
+                voiliers.append(bateau) 
         
 
     body += '"routes":'
@@ -145,8 +144,7 @@ def makeRouteBody(route):
     return '{"position1":'+str(route[0].int1)+', "position2":'+str(route[0].int2)+', "joueur":'+str(jnum)+'}'
 
 def makeBateauBody(bat):
-    jnum = bat[1]
-    return '{"position1":'+str(bat[0].int1)+', "position2":'+str(bat[0].int2)+', "joueur":'+str(jnum)+'}'
+    return '{"num":'+str(bat.num)+', "position1":'+str(bat.position.int1)+', "position2":'+str(bat.position.int2)+', "joueur":'+str(bat.joueur)+'}'
 
 def makePionBody(name, tab, func):
     body = '"'+name+'":'
@@ -263,17 +261,17 @@ def diffOf(bdd,bdd2):
     for btNum in btNum2:
         bateau = Bateau.getBateau(btNum,bdd2)
         if not btNum in btNum1:
-            bateaux_transport.append([bateau.position,j.num])
+            bateaux_transport.append(bateau)
         else:
             bateauD = Bateau.getBateau(btNum,bdd)
             if(bateau.position != bateauD.position):
-                bateaux_transport.append([bateau.position,j.num])
-                bateaux_transportD.append([bateauD.position,j.num])
+                bateaux_transport.append(bateau)
+                bateaux_transportD.append(bateauD)
 
     for btNum in btNum1:
         if not btNum in btNum2:
             bateau = Bateau.getBateau(btNum,bdd)
-            bateaux_transportD.append([bateau.position,j.num])
+            bateaux_transportD.append(bateau)
     
     
     cargos = []
@@ -281,26 +279,36 @@ def diffOf(bdd,bdd2):
     crNum2 = j2.getCargos()
     crNum1 = j.getCargos()
     for crNum in crNum2:
+        bateau = Bateau.getBateau(crNum,bdd2)
         if not crNum in crNum1:
-            bateau = Bateau.getBateau(crNum,bdd2)
-            cargos.append([bateau.position,j.num])
+            cargos.append(bateau)
+        else:
+            bateauD = Bateau.getBateau(crNum,bdd)
+            if(bateau.position != bateauD.position):
+                cargos.append(bateau)
+                cargosD.append(bateauD)
     for crNum in crNum1:
         if not crNum in crNum2:
             bateau = Bateau.getBateau(crNum,bdd)
-            cargosD.append([bateau.position,j.num])
+            cargosD.append(bateau)
     
     voiliers = []
     voiliersD = []
     vlNum2 = j2.getVoiliers()
     vlNum1 = j.getVoiliers()
     for vlNum in vlNum2:
+        bateau = Bateau.getBateau(vlNum,bdd2)
         if not vlNum in vlNum1:
-            bateau = Bateau.getBateau(vlNum,bdd2)
-            voiliers.append([bateau.position,j.num])
+            voiliers.append(bateau)
+        else:
+            bateauD = Bateau.getBateau(vlNum,bdd)
+            if(bateau.position != bateauD.position):
+                voiliers.append(bateau)
+                voiliersD.append(bateauD)
     for vlNum in vlNum1:
         if not vlNum in vlNum2:
             bateau = Bateau.getBateau(vlNum,bdd)
-            voiliersD.append([bateau.position,j.num])
+            voiliersD.append(bateau)
     
     body += makePionBody("bateaux_transports", bateaux_transport, makeBateauBody)
     body += ','

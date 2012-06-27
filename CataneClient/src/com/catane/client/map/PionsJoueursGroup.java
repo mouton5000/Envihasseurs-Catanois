@@ -22,7 +22,6 @@ public abstract class PionsJoueursGroup extends Group{
 	
 	public PionsJoueursGroup(ArrayList<Integer> joueurs) {
 		super();
-		this.setJoueurs(joueurs);
 		nbPions = new Text(textOffSet, textOffSet, String.valueOf(joueurs.size()));
 		nbPions.setFillColor("black");
 		
@@ -37,6 +36,8 @@ public abstract class PionsJoueursGroup extends Group{
 		rectNbPions.setFillColor("white");
 		super.add(circNbPions);
 		super.add(nbPions);
+		
+		this.joueurs = joueurs;
 	}
 	
 	@Override

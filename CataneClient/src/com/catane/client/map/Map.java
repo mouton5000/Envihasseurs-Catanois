@@ -190,7 +190,7 @@ public class Map extends DrawingArea {
 			if((rp = hi.getRoutUp()) != null){
 				int x = coords[0];
 				int y = coords[1]-getHLongueur();
-				
+
 				rp.setX(x);
 				rp.setY(y);
 				rp.setFillOpacity(opacity);
@@ -201,7 +201,7 @@ public class Map extends DrawingArea {
 			if((rp = hi.getRoutRight()) != null){
 				int x = coords[0]+getHLargeur()*3/2;
 				int y = coords[1]-getHLongueur()/2;
-				
+
 				rp.setX(x);
 				rp.setY(y);
 				rp.setFillOpacity(opacity);
@@ -280,19 +280,19 @@ public class Map extends DrawingArea {
 				if(vo.getParent() == this){
 					this.remove(vo);
 				}
-				hi.setBatLeft(null);
+				hi.clearBatLeft();
 			}
 			if((vo = hi.getBatRight()) != null){
 				if(vo.getParent() == this){
 					this.remove(vo);
 				}
-				hi.setBatRight(null);
+				hi.clearBatRight();
 			}
 			if((vo = hi.getBatUp()) != null){
 				if(vo.getParent() == this){
 					this.remove(vo);
 				}
-				hi.setBatUp(null);
+				hi.clearBatUp();
 			}
 			if((vo = hi.getIntLeft()) != null){
 				if(vo.getParent() == this){
@@ -368,6 +368,22 @@ public class Map extends DrawingArea {
 				if(vo.getParent() == this)
 					this.remove(vo);
 			}
+			break;
+
+		}
+	}
+
+	void removeBateau(Bateau b, int hex, SideDirection dir){
+		HexagoneInfos hi = plateau.get(hex-1);
+		switch(dir){
+		case LEFT: 
+			hi.removeBatLeft(b);
+			break;
+		case NONE:
+			hi.removeBatUp(b);
+			break;
+		case RIGHT:
+			hi.removeBatRight(b);
 			break;
 
 		}
@@ -634,15 +650,15 @@ public class Map extends DrawingArea {
 		p = infos.getRoutLeft();
 		if(p != null && p.getParent() == this)
 			this.remove(p);
-		
+
 		p = infos.getRoutUp();
 		if(p != null && p.getParent() == this)
 			this.remove(p);
-		
+
 		p = infos.getRoutRight();
 		if(p != null && p.getParent() == this)
 			this.remove(p);
-		
+
 		p = infos.getBatLeft();
 		if(p != null && p.getParent() == this)
 			this.remove(p);
